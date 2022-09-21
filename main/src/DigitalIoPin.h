@@ -1,12 +1,11 @@
 class DigitalIoPin {
 public:
- DigitalIoPin(int port, int pin, bool input = true, bool pullup = true, bool invert = false);
- DigitalIoPin(const DigitalIoPin &) = delete;
+ DigitalIoPin(int _port, int _pin, bool input = true, bool pullup = true, bool _invert = false);
+ DigitalIoPin(const DigitalIoPin &) = delete; //no copy constructor allowed
  virtual ~DigitalIoPin();
  bool read();
  void write(bool value);
 private:
- // add these as needed
  int port;
  int pin;
  bool invert;
