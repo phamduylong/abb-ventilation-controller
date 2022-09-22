@@ -41,7 +41,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lpc_chip_15xx/inc}&quot;"/>
 								</option>
 								<option id="com.crt.advproject.cpp.misc.dialect.919575627" superClass="com.crt.advproject.cpp.misc.dialect" useByScannerDiscovery="true" value="com.crt.advproject.misc.dialect.c++11" valueType="enumerated"/>
+<<<<<<< HEAD
 								<option id="com.crt.advproject.cpp.fpu.1338545732" superClass="com.crt.advproject.cpp.fpu" useByScannerDiscovery="true"/>
+=======
+>>>>>>> iopin-class-branch
 								<inputType id="com.crt.advproject.compiler.cpp.input.1102217437" superClass="com.crt.advproject.compiler.cpp.input"/>
 							</tool>
 							<tool id="com.crt.advproject.gcc.exe.debug.799280351" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.debug">
@@ -114,7 +117,11 @@
 								</inputType>
 							</tool>
 							<tool id="com.crt.advproject.link.exe.debug.522670556" name="MCU Linker" superClass="com.crt.advproject.link.exe.debug">
+<<<<<<< HEAD
 								<option id="com.crt.advproject.link.gcc.hdrlib.981228029" superClass="com.crt.advproject.link.gcc.hdrlib"/>
+=======
+								<option id="com.crt.advproject.link.gcc.hdrlib.1420393766" superClass="com.crt.advproject.link.gcc.hdrlib"/>
+>>>>>>> iopin-class-branch
 							</tool>
 							<tool id="com.crt.advproject.tool.debug.debug.1636802774" name="MCU Debugger" superClass="com.crt.advproject.tool.debug.debug"/>
 						</toolChain>
