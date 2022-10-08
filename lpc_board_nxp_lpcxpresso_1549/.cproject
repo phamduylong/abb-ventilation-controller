@@ -29,7 +29,7 @@
 							<tool id="com.crt.advproject.cpp.lib.debug.675557742" name="MCU C++ Compiler" superClass="com.crt.advproject.cpp.lib.debug">
 								<option id="com.crt.advproject.cpp.hdrlib.256325548" superClass="com.crt.advproject.cpp.hdrlib" useByScannerDiscovery="false"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.559464572" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false"/>
-								<option id="com.crt.advproject.cpp.fpu.670712033" superClass="com.crt.advproject.cpp.fpu"/>
+								<option id="com.crt.advproject.cpp.fpu.670712033" superClass="com.crt.advproject.cpp.fpu" useByScannerDiscovery="true"/>
 							</tool>
 							<tool id="com.crt.advproject.gcc.lib.debug.326990449" name="MCU C Compiler" superClass="com.crt.advproject.gcc.lib.debug">
 								<option id="com.crt.advproject.gcc.arch.482614676" name="Architecture" superClass="com.crt.advproject.gcc.arch" useByScannerDiscovery="true" value="com.crt.advproject.gcc.target.cm3" valueType="enumerated"/>
@@ -47,7 +47,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lpc_chip_15xx/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/inc}&quot;"/>
 								</option>
-								<option id="com.crt.advproject.gcc.fpu.980845889" superClass="com.crt.advproject.gcc.fpu"/>
+								<option id="com.crt.advproject.gcc.fpu.980845889" superClass="com.crt.advproject.gcc.fpu" useByScannerDiscovery="true"/>
 								<inputType id="com.crt.advproject.compiler.input.1544071183" superClass="com.crt.advproject.compiler.input"/>
 							</tool>
 							<tool id="com.crt.advproject.gas.lib.debug.574998630" name="MCU Assembler" superClass="com.crt.advproject.gas.lib.debug">
