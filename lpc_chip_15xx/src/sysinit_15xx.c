@@ -50,7 +50,7 @@
 /* Clock and PLL initialization based on the internal oscillator */
 void Chip_SetupIrcClocking(void)
 {
-	volatile int i;
+	//volatile int i;
 
 	/* Powerup main IRC (likely already powered up) */
 	Chip_SYSCTL_PowerUp(SYSCTL_POWERDOWN_IRC_PD);

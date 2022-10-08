@@ -17,11 +17,11 @@ DigitalIoPin::DigitalIoPin(int port, int pin, bool input, bool pullup, bool inve
 		else pin_modes |= IOCON_MODE_PULLDOWN;
 
 		Chip_IOCON_PinMuxSet(LPC_IOCON, port, pin, pin_modes);
-    	Chip_GPIO_SetPinDIRInput(LPC_GPIO, port, pin);
+		Chip_GPIO_SetPinDIRInput(LPC_GPIO, port, pin);
 	}
 	else {
 		Chip_IOCON_PinMuxSet(LPC_IOCON, port, pin, IOCON_MODE_INACT | IOCON_DIGMODE_EN);
-    	Chip_GPIO_SetPinDIROutput(LPC_GPIO, port, pin);
+		Chip_GPIO_SetPinDIROutput(LPC_GPIO, port, pin);
 	}
 }
 /**
