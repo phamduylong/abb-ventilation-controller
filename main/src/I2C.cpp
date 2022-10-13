@@ -1,10 +1,3 @@
-/*
- * I2C.cpp
- *
- *  Created on: 29 Sep 2022
- *      Author: marin
- */
-
 #include "I2C.h"
 
 bool I2C::i2c_initialised = false;

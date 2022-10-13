@@ -1,10 +1,3 @@
-/*
- * LpcUart.h
- *
- *  Created on: 4.2.2019
- *      Author: keijo
- */
-
 #ifndef LPCUART_H_
 #define LPCUART_H_
 
@@ -49,7 +42,7 @@ private:
 	LPC_USART_T *uart;
 	IRQn_Type irqn;
 	/* currently we support only fixed size ring buffers */
-	static const int UART_RB_SIZE = 128;
+	static const int UART_RB_SIZE = 256;
 	/* Transmit and receive ring buffers */
 	RINGBUFF_T txring;
 	RINGBUFF_T rxring;
