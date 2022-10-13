@@ -9,6 +9,8 @@
 #include <cr_section_macros.h>
 #include "DigitalIoPin.h"
 #include "LpcUart.h"
+#include "I2C.h"
+#include "I2CDevice.h"
 
 int main(void) {
 
@@ -28,6 +30,10 @@ int main(void) {
 	LpcPinMap rxpin = { 0, 13 }; // receive pin that goes to debugger's UART->USB converter
 	LpcUartConfig cfg = { LPC_USART0, 115200, UART_CFG_DATALEN_8 | UART_CFG_PARITY_NONE | UART_CFG_STOPLEN_1, false, txpin, rxpin, none, none };
 	LpcUart uart(cfg);
+
+	//I2C device. (Sensirion SDP610_125kPa pressure sensor)
+    I2C i2c;
+    I2CDevice i2c_sSDP610_pressure(&i2c, (uint8_t)0x40);
 
 	volatile static int i = 0 ;
 	while(1) {
