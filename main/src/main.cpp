@@ -10,6 +10,8 @@
 #include "DigitalIoPin.h"
 #include "LpcUart.h"
 #include "LiquidCrystal.h"
+#include "I2C.h"
+#include "I2CDevice.h"
 
 static volatile int counter = 0;
 static volatile unsigned int systicks = 0;
@@ -90,6 +92,10 @@ int main(void) {
     lcd.begin(16,2);
     lcd.setCursor(0,0);
 	lcd.print("Septentrinoalis");
+
+	//I2C device. (Sensirion SDP610_125kPa pressure sensor)
+    I2C i2c;
+    I2CDevice i2c_sSDP610_pressure(&i2c, (uint8_t)0x40);
 
 	while(1) {
 		Sleep(100);
