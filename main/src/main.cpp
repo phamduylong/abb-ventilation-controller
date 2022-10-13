@@ -9,6 +9,39 @@
 #include <cr_section_macros.h>
 #include "DigitalIoPin.h"
 #include "LpcUart.h"
+#include "LiquidCrystal.h"
+
+static volatile int counter = 0;
+static volatile unsigned int systicks = 0;
+#ifdef __cplusplus
+extern "C" {
+#endif
+/**
+ * @brief	Handle interrupt from SysTick timer
+ * @return	Nothing
+ */
+void SysTick_Handler(void)
+{
+	systicks++;
+	if(counter > 0) counter--;
+}
+
+unsigned int get_ticks(void)
+{
+	return systicks;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+void Sleep(int ms)
+{
+	counter = ms;
+	while(counter > 0) {
+		__WFI();
+	}
+}
 
 int main(void) {
 
@@ -21,6 +54,15 @@ int main(void) {
 	Board_Init();
 #endif
 #endif
+	//RIT
+    Chip_RIT_Init(LPC_RITIMER);
+	
+	//SysTick
+	uint32_t sysTickRate;
+	Chip_Clock_SetSysTickClockDiv(1);
+	sysTickRate = Chip_Clock_GetSysTickClockRate();
+	SysTick_Config(sysTickRate / 1000);
+
 
 	//UART setup
 	LpcPinMap none = {-1, -1}; // unused pin has negative values in it
@@ -29,10 +71,28 @@ int main(void) {
 	LpcUartConfig cfg = { LPC_USART0, 115200, UART_CFG_DATALEN_8 | UART_CFG_PARITY_NONE | UART_CFG_STOPLEN_1, false, txpin, rxpin, none, none };
 	LpcUart uart(cfg);
 
-	volatile static int i = 0 ;
+	//LCD pins init.
+    DigitalIoPin rs(0, 29, false, true, false);
+    DigitalIoPin en(0, 9, false, true, false);
+    DigitalIoPin d4(0, 10, false, true, false);
+    DigitalIoPin d5(0, 16, false, true, false);
+    DigitalIoPin d6(1, 3, false, true, false);
+    DigitalIoPin d7(0, 0, false, true, false);
+    rs.write(false);
+    en.write(false);
+    d4.write(false);
+    d5.write(false);
+    d6.write(false);
+    d7.write(false);
+
+    //LCD
+    LiquidCrystal lcd(&rs, &en, &d4, &d5, &d6, &d7, false);
+    lcd.begin(16,2);
+    lcd.setCursor(0,0);
+	lcd.print("Septentrinoalis");
+
 	while(1) {
-		i++ ;
-		__asm volatile ("nop");
+		Sleep(100);
 	}
 	return 0 ;
 }
