@@ -1,1 +1,66 @@
+#General build artifacts
+*.mk
+*.slo
+*.lo
+*.obj
+*.o
+*.a
+*.lai
+*.la
+*.lib
+*.elf
+*.hex
+*.axf
+*.d
+*.lst
+*.map
+*.plg
+*.lnp
+*.crf
+*.tra
+*.sct
+*.bak
+*.dep
+*.launch
+*makefile
+*.ld
+*.bin
+*.log
+*.su
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+#MDK-ARM
+*.__i
+*.htm
+*.uvgui.*
+*.uvopt
+*.axf
+
+#Mac
+.DS_Store
+
+# Executables
+*.exe
+*.out
+*.app
+/Debug/
 /.metadata/
+
+#Eclipse
+.metadata
+
+# MCUXpresso additional folders
+*.settings/
+.mcuexpressoide_package_support/
