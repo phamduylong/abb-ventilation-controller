@@ -2,13 +2,17 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const path = require('path');
 const app = express();
+
+app.use(bodyParser.urlencoded({extended: true}));
+app.set('view engine', 'ejs');
+app.set("views", (path.join(__dirname, "views")));
 
 const port = process.env.PORT || 3000;
 
 app.get('/', async (req, res) => {
-    res.sendStatus(200).end();
+    res.render('home');
 })
 
 app.listen(port, () => {
