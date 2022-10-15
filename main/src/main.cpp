@@ -9,6 +9,7 @@
 #include <cr_section_macros.h>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include "DigitalIoPin.h"
 #include "LpcUart.h"
 #include "systick.h"
@@ -25,6 +26,15 @@
 #define PASSWORD    "SmartIot"
 #define BROKER_IP   "192.168.1.254"
 #define BROKER_PORT  1883
+
+//DEBUG DEFINES //Leave only one ON, or none.
+#define MODBUS_TEST 0
+#define FAN_TEST 0
+#define HUM_TEMP_TEST 1
+#define CO2_TEST 0
+#define PRES_TEST 0
+#define MQTT_TEST 0
+// /DEBUG DEFINES
 
 static volatile int counter = 0;
 static volatile unsigned int systicks = 0;
@@ -63,10 +73,27 @@ void Sleep(int ms)
 	}
 }
 
+#if MODBUS_TEST
 void abbModbusTest();
+#endif
+#if MQTT_TEST
 void socketTest();
 void mqttTest();
+#endif
+#if FAN_TEST
 void produalModbusTest();
+#endif
+#if HUM_TEMP_TEST
+void humidity_test();
+#endif
+#if CO2_TEST
+void co2_test();
+#endif
+#if PRES_TEST
+void pressure_test();
+#endif
+
+float binary32_to_float(const unsigned int bin32);
 
 int main(void) {
 
@@ -112,11 +139,18 @@ int main(void) {
 	lcd.setCursor(0,0);
 	lcd.print("Septentrinoalis");
 
-	//I2C device. (Sensirion SDP610_125kPa pressure sensor)
-	I2C i2c;
-	I2CDevice i2c_sSDP610_pressure(&i2c, (uint8_t)0x40);
-
-	//produalModbusTest();
+	#if FAN_TEST
+	produalModbusTest();
+	#endif
+	#if HUM_TEMP_TEST
+	humidity_test();
+	#endif
+	#if CO2_TEST
+	co2_test();
+	#endif
+	#if PRES_TEST
+	pressure_test();
+	#endif
 
 	while(1) {
 		Sleep(100);
@@ -124,7 +158,8 @@ int main(void) {
 	return 0 ;
 }
 
-#if 1
+// Produal MIO 12-V (Fan)
+#if FAN_TEST
 void produalModbusTest()
 {
 	ModbusMaster node(1); // Create modbus object that connects to slave id 1
@@ -151,7 +186,91 @@ void produalModbusTest()
 }
 #endif
 
-#if 0   // example that uses modbus library directly
+// Vaisala HMP60 relative humidity and temperature sensor
+#if HUM_TEMP_TEST
+void humidity_test() {
+	ModbusMaster node(241);
+	node.begin(9600);
+
+	ModbusRegister rh0 (&node, 0x0000);
+	ModbusRegister rh1 (&node, 0x0001);
+	ModbusRegister t0 (&node, 0x0002);
+	ModbusRegister t1 (&node, 0x0003);
+
+	unsigned int temp = 0;
+	unsigned int humidity = 0;
+	printf("Temperature\n");
+	while(1) {
+		temp = 0;
+		humidity = 0;
+		Sleep(5000);
+		//Temperature
+		temp = temp | t1.read();
+		temp = temp << 16;
+		temp = temp | t0.read();
+		printf("Temp = %08X\n", temp);
+		float t = binary32_to_float(temp);
+		printf("Decoded temp: %f\n", t);
+		//Humidity
+		humidity |= rh1.read();
+		humidity <<= 16;
+		humidity |= rh0.read();
+		printf("R Humidity = %08x\n", humidity);
+		float hum = binary32_to_float(humidity);
+		printf("Decoded hum: %f\n", hum);
+	}
+}
+#endif
+//Convertion of 32 binary representation of decimal to float via pointer.
+float binary32_to_float(const unsigned int bin32) {
+	return *((float *)&bin32);
+}
+//Redundant complex convertion of 32 binary representation of decimal to float.
+/*
+float binary32_to_float(const unsigned int bin32) {
+	float res = 0;
+	//Get and decode exponent part.
+	int8_t exponent = ((bin32 & 0x7f800000) >> 23) - 127;
+	//Get fraction part.
+	unsigned int fraction = bin32 & 0x007fffff;
+	//Add implicit 24 bit to fraction.
+	fraction |= 0x00800000;
+	//Sum fraction.
+	float to_add = 1;
+	unsigned int i = 0x00800000;
+	do {
+		if(fraction & i) res += to_add;
+		to_add /= 2;
+		i >>= 1;
+	} while(i > 0x00000000);
+	//Multiply the sum by the base 2 to the power of the exponent.
+	res *= pow(2, exponent);
+	//Get sign.
+	if(bin32 >> 31) res *= -1;
+	return res;
+}
+*/
+
+// Vaisala GMP252 CO2 probe
+#if CO2_TEST
+void co2_test() {
+	ModbusMaster node(240);
+	node.begin(9600);
+
+
+}
+#endif
+
+// Sensirion SDP610 – 120Pa pressure sensor
+#if PRES_TEST
+void pressure_test() {
+	//I2C device. (Sensirion SDP610_125kPa pressure sensor)
+	I2C i2c;
+	I2CDevice i2c_sSDP610_pressure(&i2c, (uint8_t)0x40);
+}
+#endif
+
+#if MODBUS_TEST   // example that uses modbus library directly
 void printRegister(ModbusMaster& node, uint16_t reg)
 {
 	uint8_t result;
@@ -264,7 +383,7 @@ void abbModbusTest()
 // WEB STUFF ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0  // example of opening a plain socket
+#if MQTT_TEST  // example of opening a plain socket
 void socketTest()
 {
 
@@ -296,7 +415,7 @@ void socketTest()
 }
 #endif
 
-#if 0
+#if MQTT_TEST
 
 void messageArrived(MessageData* data)
 {
