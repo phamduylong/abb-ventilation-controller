@@ -30,8 +30,8 @@
 //DEBUG DEFINES //Leave only one ON, or none.
 #define MODBUS_TEST 0
 #define FAN_TEST 0
-#define HUM_TEMP_TEST 1
-#define CO2_TEST 0
+#define HUM_TEMP_TEST 0
+#define CO2_TEST 1
 #define PRES_TEST 0
 #define MQTT_TEST 0
 // /DEBUG DEFINES
@@ -196,6 +196,8 @@ void humidity_test() {
 	ModbusRegister rh1 (&node, 0x0001);
 	ModbusRegister t0 (&node, 0x0002);
 	ModbusRegister t1 (&node, 0x0003);
+	//TODO: add 0x0200 reg -> error status. 0 - yes, 1 - no error.
+	// add error code regs and error code handling. (already in separate class)
 
 	unsigned int temp = 0;
 	unsigned int humidity = 0;
@@ -210,14 +212,14 @@ void humidity_test() {
 		temp = temp | t0.read();
 		printf("Temp = %08X\n", temp);
 		float t = binary32_to_float(temp);
-		printf("Decoded temp: %f\n", t);
+		printf("Decoded temp: %f C\n", t);
 		//Humidity
 		humidity |= rh1.read();
 		humidity <<= 16;
 		humidity |= rh0.read();
 		printf("R Humidity = %08x\n", humidity);
 		float hum = binary32_to_float(humidity);
-		printf("Decoded hum: %f\n", hum);
+		printf("Decoded hum: %f %%\n", hum);
 	}
 }
 #endif
@@ -256,8 +258,24 @@ float binary32_to_float(const unsigned int bin32) {
 void co2_test() {
 	ModbusMaster node(240);
 	node.begin(9600);
+	//TODO: add 0x0100 and 0x0101 regs handling.
+	//Add 0x0800 and 0x0801 status regs handling.
 
-
+	ModbusRegister co2_reg(&node, 0x0000);
+	ModbusRegister co2_reg2(&node, 0x0001);
+	unsigned int co2_hex = 0;
+	printf("CO2\n");
+	while(1) {
+		Sleep(5000);
+		//CO2
+		co2_hex = 0;
+		co2_hex |= co2_reg2.read();
+		co2_hex <<= 16;
+		co2_hex |= co2_reg.read();
+		printf("CO2 = %08X\n", co2_hex);
+		float co2 = binary32_to_float(co2_hex);
+		printf("Decoded co2: %f ppm\n", co2);
+	}
 }
 #endif
 
