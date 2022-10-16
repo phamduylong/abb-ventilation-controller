@@ -73,14 +73,29 @@
             justify-content: center;
         }
     </style>
+
+    <script type="text/javascript">
+        function toggleSwitch() {
+            const auto_switch = document.getElementById('auto-switch');
+            const switch_status = document.getElementById('switch-status');
+            console.log(auto_switch.checked);
+            if(!auto_switch.checked) {
+                switch_status.innerText = "AUTO MODE IS OFF";
+            } else {
+                switch_status.innerText = "AUTO MODE IS ON";
+            }
+        }
+    </script>
+
 </head>
 <body>
     <div id="switch-container">
-        <p>Auto mode</p>
+        <p id="switch-status">AUTO MODE IS OFF</p>
         <label class="switch">
-            <input type="checkbox">
+            <input type="checkbox" id="auto-switch" onchange="toggleSwitch()">
             <span class="slider round"></span>
         </label>
     </div>
+
 </body>
 </html>
