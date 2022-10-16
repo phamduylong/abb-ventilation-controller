@@ -84,18 +84,20 @@
             } else {
                 switch_status.innerText = "AUTO MODE IS ON";
             }
+
+            sessionStorage.setItem("auto-mode", auto_switch.checked);
         }
     </script>
 
 </head>
 <body>
-    <div id="switch-container">
-        <p id="switch-status">AUTO MODE IS OFF</p>
-        <label class="switch">
-            <input type="checkbox" id="auto-switch" onchange="toggleSwitch()">
-            <span class="slider round"></span>
-        </label>
-    </div>
+        <div id="switch-container">
+            <p id="switch-status">AUTO MODE IS OFF</p>
+            <label class="switch">
+                <input type="checkbox" id="auto-switch" onchange="toggleSwitch()">
+                <span class="slider round"></span>
+            </label>
+        </div>
 
 </body>
 </html>
