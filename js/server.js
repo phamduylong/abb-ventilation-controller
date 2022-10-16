@@ -13,6 +13,12 @@ const port = process.env.PORT || 3000;
 
 app.get('/', async (req, res) => {
     res.render('home');
+});
+
+app.post('/mode', async (req, res) => {
+    const mode = req.body;
+    console.log("BODY: ", mode);
+    res.redirect('/');
 })
 
 app.listen(port, () => {
