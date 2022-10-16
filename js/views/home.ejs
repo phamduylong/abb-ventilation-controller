@@ -4,100 +4,103 @@
     <meta charset="UTF-8">
     <title></title>
     <style>
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        input:checked + .slider {
-            background-color: green;
-        }
-
-        input:focus + .slider {
-            box-shadow: 0 0 1px #2196F3;
-        }
-
-        input:checked + .slider:before {
-            -webkit-transform: translateX(26px);
-            -ms-transform: translateX(26px);
-            transform: translateX(26px);
-        }
-
-        /* Rounded sliders */
-        .slider.round {
-            border-radius: 34px;
-        }
-
-        .slider.round:before {
-            border-radius: 50%;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: gray;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
-
-        #switch-container {
-            font-size: 16px;
-            font-family: Calibri;
-            margin: 10px;
-            text-align: center;
-        }
-
         body {
-            display: flex;
-            justify-content: center;
+            text-align: center;
+            background-size: 300% 300%;
+            background-image: linear-gradient(
+                    -45deg,
+                    rgba(59,173,227,1) 0%,
+                    rgba(87,111,230,1) 25%,
+                    rgba(152,68,183,1) 51%,
+                    rgba(255,53,127,1) 100%
+            );
+            animation: AnimateBG 20s ease infinite;
+        }
+
+        input {
+            border-top: none;
+            border-right: none;
+            border-left: none;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 0 5px;
+            height: 40px;
+            width: 100%;
+            font-size: 16px;
+            background: none;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            height: 50px;
+            border: 1px solid;
+            border-radius: 25px;
+            font-size: 20px;
+            background-color: #2691d9;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        #center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 10px;
+            padding: 0 60px;
+            box-sizing: border-box;
+        }
+
+        header {
+            margin-top: 20px;
+        }
+
+        label {
+            position: relative;
+            left: -37.5%;
+        }
+
+        hr {
+            margin-bottom: 40px;
+        }
+
+        #signup {
+            margin: 15px;
         }
     </style>
 
     <script type="text/javascript">
-        function toggleSwitch() {
-            const auto_switch = document.getElementById('auto-switch');
-            const switch_status = document.getElementById('switch-status');
-            console.log(auto_switch.checked);
-            if(!auto_switch.checked) {
-                switch_status.innerText = "AUTO MODE IS OFF";
-            } else {
-                switch_status.innerText = "AUTO MODE IS ON";
-            }
 
-            sessionStorage.setItem("auto-mode", auto_switch.checked);
-        }
     </script>
 
 </head>
 <body>
-        <div id="switch-container">
-            <p id="switch-status">AUTO MODE IS OFF</p>
-            <label class="switch">
-                <input type="checkbox" id="auto-switch" onchange="toggleSwitch()">
-                <span class="slider round"></span>
-            </label>
-        </div>
+    <div id="center">
+        <header><b>LOGIN</b></header>
+        <hr/>
+        <form method="post" action="/login">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+
+            <br/>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+
+            <br/>
+
+            <button type="submit">Login</button>
+
+            <div id="signup">Need more accounts? <a href="/signup">Sign Up</a></div>
+
+        </form>
+    </div>
+
 
 </body>
 </html>
