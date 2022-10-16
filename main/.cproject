@@ -561,6 +561,9 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="main_11-5-1.com.crt.advproject.projecttype.exe.646150335" name="Executable" projectType="com.crt.advproject.projecttype.exe"/>
 	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="com.crt.config">
 		<projectStorage>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&#13;
@@ -595,5 +598,4 @@
 	</storageModule>
 	<storageModule moduleId="refreshScope"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
-	<storageModule moduleId="scannerConfiguration"/>
 </cproject>
