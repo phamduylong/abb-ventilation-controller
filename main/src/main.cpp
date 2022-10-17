@@ -22,6 +22,10 @@
 #include "I2C.h"
 #include "I2CDevice.h"
 #include "sPressureSDP610.h"
+#include "SimpleMenu.h"
+#include "IntegerEdit.h"
+#include "DecimalEdit.h"
+#include "IntegerUnitEdit.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -124,52 +128,91 @@ int main(void) {
 	Chip_RIT_Init(LPC_RITIMER);
 	
 	//SysTick
-	uint32_t sysTickRate;
-	Chip_Clock_SetSysTickClockDiv(1);
-	sysTickRate = Chip_Clock_GetSysTickClockRate();
-	SysTick_Config(sysTickRate / 1000);
+
 
 	//LCD pins init.
-	DigitalIoPin rs(0, 29, false, true, false);
-	DigitalIoPin en(0, 9, false, true, false);
-	DigitalIoPin d4(0, 10, false, true, false);
-	DigitalIoPin d5(0, 16, false, true, false);
-	DigitalIoPin d6(1, 3, false, true, false);
-	DigitalIoPin d7(0, 0, false, true, false);
-	rs.write(false);
-	en.write(false);
-	d4.write(false);
-	d5.write(false);
-	d6.write(false);
-	d7.write(false);
+
 
 	//LCD
-	LiquidCrystal lcd(&rs, &en, &d4, &d5, &d6, &d7, false);
-	lcd.begin(16,2);
-	lcd.setCursor(0,0);
-	lcd.print("Septentrinoalis");
+	Chip_RIT_Init(LPC_RITIMER);
+	    uint32_t sysTickRate;
+		Chip_Clock_SetSysTickClockDiv(1);
+		sysTickRate = Chip_Clock_GetSysTickClockRate();
+		SysTick_Config(sysTickRate / 1000);
+	    DigitalIoPin rs(0, 8, false, false, false);
+	    DigitalIoPin en(1, 6, false, false, false);
+	    DigitalIoPin d4(1, 8, false, false, false);
+	    DigitalIoPin d5(0, 5, false, false, false);
+	    DigitalIoPin d6(0, 6, false, false, false);
+	    DigitalIoPin d7(0, 7, false, false, false);
 
-	#if FAN_TEST
-	produalModbusTest();
-	#endif
-	#if HUM_TEMP_TEST
-	humidity_test();
-	#endif
-	#if CO2_TEST
-	co2_test();
-	#endif
-	#if PRES_TEST
-	pressure_test();
-	#endif
-	#if FAN_PRES_TEST
-	fan_pressure_test();
-	#endif
+	    DigitalIoPin sw1(0, 17 ,true ,true, true);
+	    DigitalIoPin sw2(1, 11 ,true ,true, true);
+	    DigitalIoPin sw3(1, 9 ,true ,true, true); //The pins and ports needed to be changed
+	    // TODO: insert code here
 
-	while(1) {
-		Sleep(100);
+
+	    LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
+	    // configure display geometry
+	    lcd->begin(16, 2);
+	    // set the cursor to column 0, line 1
+	    // (note: line 1 is the second row, since counting begins with 0):
+	    lcd->setCursor(0, 0);
+	    lcd->clear();
+	    SimpleMenu menu; /* this could also be allocated from the heap */
+	    IntegerUnitEdit *pressure= new IntegerUnitEdit(lcd, std::string("Pressure"),120,0,1,std::string("Pa"));
+	    IntegerUnitEdit *fan= new IntegerUnitEdit(lcd,std::string("Speed"),100,0,5,std::string("%"));
+
+	    menu.addItem(new MenuItem(pressure));
+	    menu.addItem(new MenuItem(fan));
+	    pressure->setValue(0);
+	    fan->setValue(5);
+	    int timer = 0;
+	    int delay = 0;
+
+
+	    menu.event(MenuItem::show); // display first menu item
+	    /* simulate button presses */
+	    while(1){
+	    	timer = millis();
+
+
+
+	    	if(timer == 10000 || timer == delay){
+	    		if(timer != 0 ){
+	    			menu.event(MenuItem::back);
+	    			delay = timer + 10000;
+	    		}
+	    	}
+	    	if(sw1.read()){
+	    		delay = timer + 10000;
+	    		while(sw1.read());
+	    		menu.event(MenuItem::up);
+
+
+	    	}
+
+	    	if(sw2.read()){
+	    		delay = timer + 10000;
+	    		while(sw2.read());
+	    		menu.event(MenuItem::down);
+
+	    	}
+
+	    	if(sw3.read()){
+	    		delay = timer + 10000;
+	    		while(sw3.read());
+	    		menu.event(MenuItem::ok);
+
+	    	}
+
+	    }
+
+		return 0 ;
 	}
-	return 0 ;
-}
+
+
+
 
 // Produal MIO 12-V (Fan)
 #if FAN_TEST
@@ -321,10 +364,10 @@ uint8_t crc8(uint8_t *data, size_t size) {
 	uint8_t crc = 0x00;
 	uint8_t byteCtr;
 	//calculates 8-Bit checksum with given polynomial
-	for (byteCtr = 0; byteCtr < size; ++byteCtr) { 
+	for (byteCtr = 0; byteCtr < size; ++byteCtr) {
 		crc ^= (data[byteCtr]);
 		for (uint8_t bit = 8; bit > 0; --bit) {
-			if (crc & 0x80) crc = (crc << 1) ^ 0x131; //P(x)=x^8+x^5+x^4+1 = 0001 0011 0001 
+			if (crc & 0x80) crc = (crc << 1) ^ 0x131; //P(x)=x^8+x^5+x^4+1 = 0001 0011 0001
 			else crc = (crc << 1);
 		}
 	}
