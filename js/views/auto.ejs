@@ -123,11 +123,10 @@
 <br/>
 
 <div id="input-container">
-    <h3>PRESSURE LEVEL IS <%=pressure%></h3>
+    <h3>PRESSURE LEVEL IS <%=pressure%>Pa</h3>
     <form action="/pressure" method="post">
-        <header>PRESSURE LEVEL CAN ONLY BE IN RANGE <b>0-120</b></header><br/>
-        <label for="pressure">Pressure level in Pa</label><br/>
-        <input type="number" min="0" max="120" id="pressure" name="pressure"><br/>
+        <label for="pressure">Change pressure level (0-120) Pa</label><br/>
+        <input type="number" min="0" max="120" id="pressure" name="pressure" required><br/>
         <input type="submit">
     </form>
 

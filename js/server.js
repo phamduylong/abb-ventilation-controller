@@ -19,10 +19,35 @@ app.set("views", (path.join(__dirname, "views")));
 
 const port = process.env.PORT || 3000;
 
+
+app.get('/signup', (req, res) => {
+    res.render('something');
+});
+
+
+app.post('/signup', (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+    hashPassword(password).then(hashedPassword => {
+        console.log("AFTER HASH: ", hashedPassword);
+        const newUser = {username, hashedPassword};
+        addUser(newUser).then(msg => res.send(msg)).catch(err_msg => res.send(err_msg));
+    }).catch(err => res.send(err));
+});
+
+
+
 app.use(auth);
 
 app.get('/', async (req, res) => {
-    res.render('auto');
+    //default view
+    res.render('auto', {pressure: 0});
+});
+
+app.get('/logout', auth, (req, res) => {
+    res.status = 401;
+    const err = new Error("LOGGED OUT");
+    res.sendStatus(401);
 });
 
 app.get('/auto', async (req, res) => {
@@ -33,47 +58,29 @@ app.get('/manual', async (req, res) => {
     res.render('manual');
 });
 
-/*
-app.post('/login', async (req, res) => {
-    let query_obj = {username: req.body.username};
-    MongoClient.connect(url, function(err, db) {
-        if (err) throw err;
-        const dbo = db.db("users");
-        dbo.collection("users").find(query_obj).toArray((err, user_arr) => {
-            if(user_arr[0] !== undefined) {
-                verifyPassword(req.body.password, user_arr[0].hashedPassword)
-                    .then((equal) => {
-
-                        if(equal) {
-                            return res.redirect('/auto');  //auto mode as default
-                        } else {
-                            console.log("YOU ENTERED AN INCORRECT PASSWORD YOU IDIOT!");
-                            const err = new Error("WRONG PASSWORD");
-                            return res.redirect('/');
-                        }
-                    })
-                    .catch((err_msg) => {
-                        const err = new Error(err_msg);
-                        return res.redirect('/');
-                    });
-            } else {
-                console.log("NO SUCH USER");
-                const err = new Error("NO SUCH USER");
-                return res.redirect('/');
-            }
-        });
-    });
-});
-*/
-
-
 app.post('/pressure', async (req, res) => {
     const pressure = req.body.pressure || 0;
     console.log(`PRESSURE LEVEL: ${pressure} Pa`);
     res.render('auto', {pressure: pressure});
-})
+});
 
 
 app.listen(port, () => {
     console.log(`SERVER UP ON PORT ${port}`);
 });
+
+
+const addUser = (newUser) => {
+    return new Promise((resolve, reject) => {
+        MongoClient.connect(url, function (err, db) {
+            if (err) reject("FAILED TO CONNECT TO DATABASE");
+            const dbo = db.db("users");
+            dbo.collection("users").insertOne(newUser, function (err, res) {
+                if (err) reject("FAILED TO ADD NEW USER TO DATABASE. PLEASE TRY AGAIN.");
+                console.log("NEW USER: ", newUser.username);
+                resolve("SIGNED UP SUCCESSFULLY");
+                db.close();
+            })
+        });
+    })
+}
