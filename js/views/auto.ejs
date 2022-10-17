@@ -72,6 +72,27 @@
             display: flex;
             justify-content: center;
         }
+
+        #input-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: inline-block;
+            text-align: center;
+        }
+
+        input[type="number"] {
+            width: 50%;
+            margin: 20px;
+        }
+
+        input[type="submit"] {
+            width: 25%;
+            margin: 20px;
+        }
+
+
     </style>
 
     <script type="text/javascript">
@@ -99,6 +120,17 @@
         <span class="slider round"></span>
     </label>
 </div>
+<br/>
 
+<div id="input-container">
+    <h3>PRESSURE LEVEL IS <%=pressure%></h3>
+    <form action="/pressure" method="post">
+        <header>PRESSURE LEVEL CAN ONLY BE IN RANGE <b>0-120</b></header><br/>
+        <label for="pressure">Pressure level in Pa</label><br/>
+        <input type="number" min="0" max="120" id="pressure" name="pressure"><br/>
+        <input type="submit">
+    </form>
+
+</div>
 </body>
 </html>
