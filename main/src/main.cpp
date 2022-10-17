@@ -24,6 +24,10 @@
 #include "sPressureSDP610.h"
 #include "sco2GMP252.h"
 #include "srhtHMP60.h"
+#include "SimpleMenu.h"
+#include "IntegerEdit.h"
+#include "DecimalEdit.h"
+#include "IntegerUnitEdit.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -31,14 +35,14 @@
 #define BROKER_PORT  1883
 
 //DEBUG DEFINES //Leave only one ON, or none.
+#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
 #define MODBUS_TEST 0
 #define FAN_TEST 0
-#define HUM_TEMP_TEST 1
+#define HUM_TEMP_TEST 0
 #define CO2_TEST 0
 #define PRES_TEST 0
 #define FAN_PRES_TEST 0
 #define MQTT_TEST 0
-
 //sw1 - A2 - 1 8
 //sw2 - A3 - 0 5
 //sw3 - A4 - 0 6
@@ -129,25 +133,9 @@ int main(void) {
 	sysTickRate = Chip_Clock_GetSysTickClockRate();
 	SysTick_Config(sysTickRate / 1000);
 
-	//LCD pins init.
-	DigitalIoPin rs(0, 29, false, true, false);
-	DigitalIoPin en(0, 9, false, true, false);
-	DigitalIoPin d4(0, 10, false, true, false);
-	DigitalIoPin d5(0, 16, false, true, false);
-	DigitalIoPin d6(1, 3, false, true, false);
-	DigitalIoPin d7(0, 0, false, true, false);
-	rs.write(false);
-	en.write(false);
-	d4.write(false);
-	d5.write(false);
-	d6.write(false);
-	d7.write(false);
-
-	//LCD
-	LiquidCrystal lcd(&rs, &en, &d4, &d5, &d6, &d7, false);
-	lcd.begin(16,2);
-	lcd.setCursor(0,0);
-	lcd.print("Septentrinoalis");
+	/////////////////////////////////////////////////////////////////
+	//Here go all initialisations, needed for still existing tests.//
+	/////////////////////////////////////////////////////////////////
 
 	#if FAN_TEST
 	produalModbusTest();
@@ -165,11 +153,95 @@ int main(void) {
 	fan_pressure_test();
 	#endif
 
-	while(1) {
-		Sleep(100);
+	/////////////////////////////////////////////////////////
+	//Menu test. Works only in case if other tests are off.//
+	/////////////////////////////////////////////////////////
+
+	//LCD pins init.
+#if LPC_PROJ
+	DigitalIoPin rs(0, 29, false, true, false);
+	DigitalIoPin en(0, 9, false, true, false);
+	DigitalIoPin d4(0, 10, false, true, false);
+	DigitalIoPin d5(0, 16, false, true, false);
+	DigitalIoPin d6(1, 3, false, true, false);
+	DigitalIoPin d7(0, 0, false, true, false);
+#else
+	DigitalIoPin rs(0, 8, false, false, false);
+	DigitalIoPin en(1, 6, false, false, false);
+	DigitalIoPin d4(1, 8, false, false, false);
+	DigitalIoPin d5(0, 5, false, false, false);
+	DigitalIoPin d6(0, 6, false, false, false);
+	DigitalIoPin d7(0, 7, false, false, false);
+#endif
+	rs.write(false);
+	en.write(false);
+	d4.write(false);
+	d5.write(false);
+	d6.write(false);
+	d7.write(false);
+
+	//Buttons init
+#if LPC_PROJ
+	DigitalIoPin sw1(1, 8, true, true, true);
+	DigitalIoPin sw2(0, 5, true, true, true);
+	DigitalIoPin sw3(0, 6, true, true, true);
+#else
+	DigitalIoPin sw1(0, 17 ,true ,true, true);
+	DigitalIoPin sw2(1, 11 ,true ,true, true);
+	DigitalIoPin sw3(1, 9 ,true ,true, true);
+#endif
+	//LCD
+	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
+	// configure display geometry
+	lcd->begin(16, 2);
+	// set the cursor to column 0, line 1
+	// (note: line 1 is the second row, since counting begins with 0):
+	lcd->setCursor(0, 0);
+	lcd->clear();
+	SimpleMenu menu;
+	IntegerUnitEdit *pressure= new IntegerUnitEdit(lcd, std::string("Pressure"),120,0,1,std::string("Pa"));
+	IntegerUnitEdit *fan= new IntegerUnitEdit(lcd,std::string("Speed"),100,0,5,std::string("%"));
+
+	menu.addItem(new MenuItem(pressure));
+	menu.addItem(new MenuItem(fan));
+	pressure->setValue(0);
+	fan->setValue(5);
+	int timer = 0;
+	int delay = 0;
+
+	menu.event(MenuItem::show); // display first menu item
+	while(1){
+		timer = millis();
+
+		if(timer == 10000 || timer == delay){
+			if(timer != 0 ){
+				menu.event(MenuItem::back);
+				delay = timer + 10000;
+			}
+		}
+		if(sw1.read()){
+			delay = timer + 10000;
+			while(sw1.read());
+			menu.event(MenuItem::up);
+		}
+
+		if(sw2.read()){
+			delay = timer + 10000;
+			while(sw2.read());
+			menu.event(MenuItem::down);
+		}
+
+		if(sw3.read()){
+			delay = timer + 10000;
+			while(sw3.read());
+			menu.event(MenuItem::ok);
+		}
 	}
 	return 0 ;
 }
+
+
+
 
 // Produal MIO 12-V (Fan)
 #if FAN_TEST
