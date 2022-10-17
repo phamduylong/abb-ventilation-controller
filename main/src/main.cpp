@@ -21,6 +21,7 @@
 #include "LiquidCrystal.h"
 #include "I2C.h"
 #include "I2CDevice.h"
+#include "sPressureSDP610.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -32,8 +33,8 @@
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
 #define CO2_TEST 0
-#define PRES_TEST 0
-#define FAN_PRES_TEST 1
+#define PRES_TEST 1
+#define FAN_PRES_TEST 0
 #define MQTT_TEST 0
 
 //sw1 - A2 - 1 8
@@ -101,7 +102,7 @@ void pressure_test();
 #if FAN_PRES_TEST
 void fan_pressure_test();
 #endif
-uint8_t crc8(uint8_t *data, size_t size);
+//uint8_t crc8(uint8_t *data, size_t size);
 float binary32_to_float(const unsigned int bin32);
 
 int main(void) {
@@ -294,69 +295,27 @@ void co2_test() {
 // Sensirion SDP610 – 125Pa pressure sensor
 #if PRES_TEST
 void pressure_test() {
-	//I2C device. (Sensirion SDP610_125Pa pressure sensor)
-	I2C i2c;
-	const uint8_t addr = 0x40;
-	I2CDevice i2c_sSDP610_pressure(&i2c, addr);
-	uint8_t com = 0xF1;
-	uint8_t pres_raw[3] = {0};
-	uint16_t pres_value = 0;
-
-	//Bare i2c
-	/*
-	i2c.write(addr, &com, 1);
-	printf("Pressure\n");
-	while(1) {
-		Sleep(5000);
-		pres_raw[0] = 0;
-		pres_raw[1] = 0;
-		pres_raw[2] = 0;
-		Sleep(1000);
-		printf("-------------------\n");
-		if (i2c.read(addr, pres_raw, 3)) {
-			printf("Pres: %02x%02x\n", pres_raw[0], pres_raw[1]);
-			printf("Pres CRC8: %02x\n", pres_raw[2]);
-			printf("Calc CRC: %02x\n", crc8(pres_raw, 2));
-			pres_value = 0;
-			pres_value = pres_raw[0];
-			pres_value <<= 8;
-			pres_value |= pres_raw[1];
-			//printf("Pres value: %04x\n", pres_value);
-			pres_value /= 240;
-			printf("Pres: %d Pa\n", pres_value);
-		}
-		else {
-			printf("Error while reading.\n");
-		}
-		printf("-------------------\n");
-	}
-	*/
-
+	sPressureSDP610 spres;
+	float pres = 0;
 	//Attempt with I2CDevice.
 	printf("Pressure\n");
 	while(1) {
 		Sleep(5000);
 		printf("-------------------\n");
-		if (i2c_sSDP610_pressure.read(com, pres_raw, 3)) {
-			printf("Pres: %02x%02x\n", pres_raw[0], pres_raw[1]);
-			printf("Pres CRC8: %02x\n", pres_raw[2]);
-			printf("Calc CRC: %02x\n", crc8(pres_raw, 2));
-			pres_value = 0;
-			pres_value = pres_raw[0];
-			pres_value <<= 8;
-			pres_value |= pres_raw[1];
-			int16_t diff_pres = *((int16_t *)&pres_value);
-			float diff = (float)diff_pres / 240;
-			printf("Pres: %f Pa\n", diff);
+		if (spres.read(pres)) {
+			printf("Pres: %f Pa\n", pres);
+			printf("Time: %d\n", spres.get_elapsed_time());
 		}
 		else {
 			printf("Invalid pressure read.\n");
+			printf("Time: %d\n", spres.get_elapsed_time());
 		}
 		printf("-------------------\n");
 	}
 }
 #endif
 
+/*
 //crc-8 calculation.
 uint8_t crc8(uint8_t *data, size_t size) {
 	uint8_t crc = 0x00;
@@ -371,6 +330,7 @@ uint8_t crc8(uint8_t *data, size_t size) {
 	}
 	return crc;
 }
+*/
 
 #if FAN_PRES_TEST
 void fan_pressure_test() {
