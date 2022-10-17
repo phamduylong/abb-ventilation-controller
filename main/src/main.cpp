@@ -21,6 +21,7 @@
 #include "LiquidCrystal.h"
 #include "I2C.h"
 #include "I2CDevice.h"
+#include "sPressureSDP610.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -31,9 +32,15 @@
 #define MODBUS_TEST 0
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
-#define CO2_TEST 1
-#define PRES_TEST 0
+#define CO2_TEST 0
+#define PRES_TEST 1
+#define FAN_PRES_TEST 0
 #define MQTT_TEST 0
+
+//sw1 - A2 - 1 8
+//sw2 - A3 - 0 5
+//sw3 - A4 - 0 6
+//sw4 - A5 - 0 7
 // /DEBUG DEFINES
 
 static volatile int counter = 0;
@@ -92,7 +99,10 @@ void co2_test();
 #if PRES_TEST
 void pressure_test();
 #endif
-
+#if FAN_PRES_TEST
+void fan_pressure_test();
+#endif
+//uint8_t crc8(uint8_t *data, size_t size);
 float binary32_to_float(const unsigned int bin32);
 
 int main(void) {
@@ -150,6 +160,9 @@ int main(void) {
 	#endif
 	#if PRES_TEST
 	pressure_test();
+	#endif
+	#if FAN_PRES_TEST
+	fan_pressure_test();
 	#endif
 
 	while(1) {
@@ -279,12 +292,117 @@ void co2_test() {
 }
 #endif
 
-// Sensirion SDP610 – 120Pa pressure sensor
+// Sensirion SDP610 – 125Pa pressure sensor
 #if PRES_TEST
 void pressure_test() {
-	//I2C device. (Sensirion SDP610_125kPa pressure sensor)
+	sPressureSDP610 spres;
+	float pres = 0;
+	//Attempt with I2CDevice.
+	printf("Pressure\n");
+	while(1) {
+		Sleep(5000);
+		printf("-------------------\n");
+		if (spres.read(pres)) {
+			printf("Pres: %f Pa\n", pres);
+			printf("Time: %d\n", spres.get_elapsed_time());
+		}
+		else {
+			printf("Invalid pressure read.\n");
+			printf("Time: %d\n", spres.get_elapsed_time());
+		}
+		printf("-------------------\n");
+	}
+}
+#endif
+
+/*
+//crc-8 calculation.
+uint8_t crc8(uint8_t *data, size_t size) {
+	uint8_t crc = 0x00;
+	uint8_t byteCtr;
+	//calculates 8-Bit checksum with given polynomial
+	for (byteCtr = 0; byteCtr < size; ++byteCtr) { 
+		crc ^= (data[byteCtr]);
+		for (uint8_t bit = 8; bit > 0; --bit) {
+			if (crc & 0x80) crc = (crc << 1) ^ 0x131; //P(x)=x^8+x^5+x^4+1 = 0001 0011 0001 
+			else crc = (crc << 1);
+		}
+	}
+	return crc;
+}
+*/
+
+#if FAN_PRES_TEST
+void fan_pressure_test() {
+	//I2C device. (Sensirion SDP610_125Pa pressure sensor)
 	I2C i2c;
-	I2CDevice i2c_sSDP610_pressure(&i2c, (uint8_t)0x40);
+	const uint8_t addr = 0x40;
+	I2CDevice i2c_sSDP610_pressure(&i2c, addr);
+	uint8_t com = 0xF1;
+	uint8_t pres_raw[3] = {0};
+	uint16_t pres_value = 0;
+
+	DigitalIoPin sw1(1, 8, true, true, true); //speed up fan
+	DigitalIoPin sw2(0, 5, true, true, true); //slow down fan
+	DigitalIoPin sw3(0, 6, true, true, true); //read sensor
+
+	ModbusMaster node(1); // Create modbus object that connects to slave id 1
+	node.begin(9600); // set transmission rate - other parameters are set inside the object and can't be changed here
+
+	ModbusRegister AO1(&node, 0);
+	ModbusRegister DI1(&node, 4, false);
+
+	uint16_t fa = 0;
+	uint16_t prev_fa = 0;
+	bool sw1_pressed = false;
+    bool sw2_pressed = false;
+    bool sw3_pressed = false;
+	while(1) {
+		Sleep(1);
+        if(sw1.read()) {
+            sw1_pressed = true;
+        }
+        else if(sw1_pressed){
+            sw1_pressed = false;
+			if(fa < 10) fa++;
+        }
+        if(sw2.read()) {
+            sw2_pressed = true;
+        }
+        else if(sw2_pressed){
+            sw2_pressed = false;
+			if(fa > 0) fa--;
+        }
+		if(sw3.read()) {
+            sw3_pressed = true;
+        }
+        else if(sw3_pressed){
+            sw3_pressed = false;
+			printf("Pressure\n-------------------\n");
+			if (i2c_sSDP610_pressure.read(com, pres_raw, 3)) {
+				printf("Pres: %02x%02x\n", pres_raw[0], pres_raw[1]);
+				printf("CRC: %s\n", (pres_raw[2] == crc8(pres_raw, 2)) ? "OK" : "ERROR");
+				pres_value = 0;
+				pres_value = pres_raw[0];
+				pres_value <<= 8;
+				pres_value |= pres_raw[1];
+				int16_t diff_pres = *((int16_t *)&pres_value);
+				float diff = (float)diff_pres / 240;
+				printf("Pres: %f Pa\n", diff);
+			}
+			else {
+				printf("Invalid pressure read.\n");
+			}
+			printf("*******\n");
+			printf("DI1=%4d\n", DI1.read());
+			printf("-------------------\n");
+        }
+
+		if(prev_fa != fa) {
+			prev_fa = fa;
+			AO1.write(fa * 100);
+		}
+	}
 }
 #endif
 
