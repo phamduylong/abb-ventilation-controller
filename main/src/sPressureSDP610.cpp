@@ -33,7 +33,7 @@ bool sPressureSDP610::read(float &data, bool retry) {
 	uint8_t pres_raw[3] = {0};
 	uint16_t pres_value = 0;
 	unsigned int time = 0;
-	while (i) {
+	while (i && !success) {
 		Sleep(200);
 		time += 200;
 		success = this->sdp610.read(0xF1, pres_raw, 3);
