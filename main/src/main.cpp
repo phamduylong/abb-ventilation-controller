@@ -22,6 +22,8 @@
 #include "I2C.h"
 #include "I2CDevice.h"
 #include "sPressureSDP610.h"
+#include "sco2GMP252.h"
+#include "srhtHMP60.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -31,9 +33,9 @@
 //DEBUG DEFINES //Leave only one ON, or none.
 #define MODBUS_TEST 0
 #define FAN_TEST 0
-#define HUM_TEMP_TEST 0
+#define HUM_TEMP_TEST 1
 #define CO2_TEST 0
-#define PRES_TEST 1
+#define PRES_TEST 0
 #define FAN_PRES_TEST 0
 #define MQTT_TEST 0
 
@@ -102,8 +104,6 @@ void pressure_test();
 #if FAN_PRES_TEST
 void fan_pressure_test();
 #endif
-//uint8_t crc8(uint8_t *data, size_t size);
-float binary32_to_float(const unsigned int bin32);
 
 int main(void) {
 
@@ -202,92 +202,34 @@ void produalModbusTest()
 // Vaisala HMP60 relative humidity and temperature sensor
 #if HUM_TEMP_TEST
 void humidity_test() {
-	ModbusMaster node(241);
-	node.begin(9600);
-
-	ModbusRegister rh0 (&node, 0x0000);
-	ModbusRegister rh1 (&node, 0x0001);
-	ModbusRegister t0 (&node, 0x0002);
-	ModbusRegister t1 (&node, 0x0003);
-	//TODO: add 0x0200 reg -> error status. 0 - yes, 1 - no error.
-	// add error code regs and error code handling. (already in separate class)
-
-	unsigned int temp = 0;
-	unsigned int humidity = 0;
+	srhtHMP60 sensor;
+	float t = 0;
+	float rhum = 0;
 	printf("Temperature\n");
 	while(1) {
-		temp = 0;
-		humidity = 0;
 		Sleep(5000);
 		//Temperature
-		temp = temp | t1.read();
-		temp = temp << 16;
-		temp = temp | t0.read();
-		printf("Temp = %08X\n", temp);
-		float t = binary32_to_float(temp);
+		sensor.read_temp(t);
 		printf("Decoded temp: %f C\n", t);
 		//Humidity
-		humidity |= rh1.read();
-		humidity <<= 16;
-		humidity |= rh0.read();
-		printf("R Humidity = %08x\n", humidity);
-		float hum = binary32_to_float(humidity);
-		printf("Decoded hum: %f %%\n", hum);
+		sensor.read_rhum(rhum);
+		printf("Decoded hum: %f %%\n", rhum);
 	}
 }
 #endif
-//Convertion of 32 binary representation of decimal to float via pointer.
-float binary32_to_float(const unsigned int bin32) {
-	return *((float *)&bin32);
-}
-//Redundant complex convertion of 32 binary representation of decimal to float.
-/*
-float binary32_to_float(const unsigned int bin32) {
-	float res = 0;
-	//Get and decode exponent part.
-	int8_t exponent = ((bin32 & 0x7f800000) >> 23) - 127;
-	//Get fraction part.
-	unsigned int fraction = bin32 & 0x007fffff;
-	//Add implicit 24 bit to fraction.
-	fraction |= 0x00800000;
-	//Sum fraction.
-	float to_add = 1;
-	unsigned int i = 0x00800000;
-	do {
-		if(fraction & i) res += to_add;
-		to_add /= 2;
-		i >>= 1;
-	} while(i > 0x00000000);
-	//Multiply the sum by the base 2 to the power of the exponent.
-	res *= pow(2, exponent);
-	//Get sign.
-	if(bin32 >> 31) res *= -1;
-	return res;
-}
-*/
 
 // Vaisala GMP252 CO2 probe
 #if CO2_TEST
 void co2_test() {
-	ModbusMaster node(240);
-	node.begin(9600);
-	//TODO: add 0x0100 and 0x0101 regs handling.
-	//Add 0x0800 and 0x0801 status regs handling.
-
-	ModbusRegister co2_reg(&node, 0x0000);
-	ModbusRegister co2_reg2(&node, 0x0001);
-	unsigned int co2_hex = 0;
+	sco2GMP252 co2;
+	float data = 0;
 	printf("CO2\n");
 	while(1) {
 		Sleep(5000);
-		//CO2
-		co2_hex = 0;
-		co2_hex |= co2_reg2.read();
-		co2_hex <<= 16;
-		co2_hex |= co2_reg.read();
-		printf("CO2 = %08X\n", co2_hex);
-		float co2 = binary32_to_float(co2_hex);
-		printf("Decoded co2: %f ppm\n", co2);
+		printf("-------------------\n");
+		co2.read(data);
+		printf("Decoded co2: %f ppm\n", data);
+		printf("-------------------\n");
 	}
 }
 #endif
@@ -314,23 +256,6 @@ void pressure_test() {
 	}
 }
 #endif
-
-/*
-//crc-8 calculation.
-uint8_t crc8(uint8_t *data, size_t size) {
-	uint8_t crc = 0x00;
-	uint8_t byteCtr;
-	//calculates 8-Bit checksum with given polynomial
-	for (byteCtr = 0; byteCtr < size; ++byteCtr) { 
-		crc ^= (data[byteCtr]);
-		for (uint8_t bit = 8; bit > 0; --bit) {
-			if (crc & 0x80) crc = (crc << 1) ^ 0x131; //P(x)=x^8+x^5+x^4+1 = 0001 0011 0001 
-			else crc = (crc << 1);
-		}
-	}
-	return crc;
-}
-*/
 
 #if FAN_PRES_TEST
 void fan_pressure_test() {
