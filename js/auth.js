@@ -13,8 +13,6 @@ function auth (req, res, next){
         const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
         const username = auth[0];
         const password = auth[1];
-        console.log("USERNAME: ", username);
-        console.log("PASSWORD: ", password)
         let query_obj = { username: username };
         MongoClient.connect(url, function(err, db) {
             if (err) throw err;

@@ -84,12 +84,18 @@ const addUser = (newUser) => {
         MongoClient.connect(url, function (err, db) {
             if (err) reject("FAILED TO CONNECT TO DATABASE");
             const dbo = db.db("users");
-            dbo.collection("users").insertOne(newUser, function (err, res) {
-                if (err) reject("FAILED TO ADD NEW USER TO DATABASE. PLEASE TRY AGAIN.");
-                console.log("NEW USER: ", newUser.username);
-                resolve("SIGNED UP SUCCESSFULLY");
-                db.close();
-            })
+
+            dbo.collection("users").find({username: newUser.username}).toArray( (err, res) => {
+                if(res[0] !== undefined) return reject("USERNAME ALREADY TAKEN");
+                else {
+                    dbo.collection("users").insertOne(newUser, function (err, res) {
+                        if (err) reject("FAILED TO ADD NEW USER TO DATABASE. PLEASE TRY AGAIN.");
+                        console.log("NEW USER: ", newUser.username);
+                        return resolve("SIGNED UP SUCCESSFULLY");
+                        db.close();
+                    })
+                }
+            });
         });
     })
 }
