@@ -11,6 +11,9 @@ sco2GMP252::sco2GMP252(unsigned int retries) : node{240}, co2_reg{&node, 0x0000}
 	//TODO: add 0x0100 and 0x0101 regs handling.
 	//Add 0x0800 and 0x0801 status regs handling.
 	node.begin(9600);
+	this->node.begin(9600);
+	this->status = false;
+	this->elapsed_time = 0;
 }
 
 sco2GMP252::~sco2GMP252() {}

@@ -28,6 +28,7 @@
 #include "IntegerEdit.h"
 #include "DecimalEdit.h"
 #include "IntegerUnitEdit.h"
+#include "dFanMIO12V.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -41,7 +42,7 @@
 #define HUM_TEMP_TEST 0
 #define CO2_TEST 0
 #define PRES_TEST 0
-#define FAN_PRES_TEST 0
+#define FAN_PRES_TEST 1
 #define MQTT_TEST 0
 //sw1 - A2 - 1 8
 //sw2 - A3 - 0 5
@@ -331,23 +332,13 @@ void pressure_test() {
 
 #if FAN_PRES_TEST
 void fan_pressure_test() {
-	//I2C device. (Sensirion SDP610_125Pa pressure sensor)
-	I2C i2c;
-	const uint8_t addr = 0x40;
-	I2CDevice i2c_sSDP610_pressure(&i2c, addr);
-	uint8_t com = 0xF1;
-	uint8_t pres_raw[3] = {0};
-	uint16_t pres_value = 0;
+	sPressureSDP610 spres;
+	dFanMIO12V fan;
+	float pres = 0;
 
 	DigitalIoPin sw1(1, 8, true, true, true); //speed up fan
 	DigitalIoPin sw2(0, 5, true, true, true); //slow down fan
 	DigitalIoPin sw3(0, 6, true, true, true); //read sensor
-
-	ModbusMaster node(1); // Create modbus object that connects to slave id 1
-	node.begin(9600); // set transmission rate - other parameters are set inside the object and can't be changed here
-
-	ModbusRegister AO1(&node, 0);
-	ModbusRegister DI1(&node, 4, false);
 
 	uint16_t fa = 0;
 	uint16_t prev_fa = 0;
@@ -361,7 +352,7 @@ void fan_pressure_test() {
         }
         else if(sw1_pressed){
             sw1_pressed = false;
-			if(fa < 10) fa++;
+			if(fa < 200) fa++;
         }
         if(sw2.read()) {
             sw2_pressed = true;
@@ -375,29 +366,24 @@ void fan_pressure_test() {
         }
         else if(sw3_pressed){
             sw3_pressed = false;
-			printf("Pressure\n-------------------\n");
-			if (i2c_sSDP610_pressure.read(com, pres_raw, 3)) {
-				printf("Pres: %02x%02x\n", pres_raw[0], pres_raw[1]);
-				printf("CRC: %s\n", (pres_raw[2] == crc8(pres_raw, 2)) ? "OK" : "ERROR");
-				pres_value = 0;
-				pres_value = pres_raw[0];
-				pres_value <<= 8;
-				pres_value |= pres_raw[1];
-				int16_t diff_pres = *((int16_t *)&pres_value);
-				float diff = (float)diff_pres / 240;
-				printf("Pres: %f Pa\n", diff);
+			printf("-------------------\n");
+			if (spres.read(pres)) {
+				printf("Pres: %f Pa\n", pres);
+				printf("Time: %d\n", spres.get_elapsed_time());
 			}
 			else {
 				printf("Invalid pressure read.\n");
+				printf("Time: %d\n", spres.get_elapsed_time());
 			}
 			printf("*******\n");
-			printf("DI1=%4d\n", DI1.read());
+			printf("DI1=%4d\n", fan.get_aspeed());
+			printf("AO1=%4d\n", fan.get_speed());
 			printf("-------------------\n");
         }
 
 		if(prev_fa != fa) {
 			prev_fa = fa;
-			AO1.write(fa * 100);
+			fan.set_speed(fa * 10);
 		}
 	}
 }

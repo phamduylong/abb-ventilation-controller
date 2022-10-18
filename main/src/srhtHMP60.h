@@ -20,7 +20,8 @@ public:
 	bool read_rhum(float &data, bool retry = true);
 	bool get_status();
 	unsigned int get_elapsed_time();
-ModbusMaster node;
+private:
+	ModbusMaster node;
 	ModbusRegister rh0;
 	ModbusRegister rh1;
 	ModbusRegister t0;
