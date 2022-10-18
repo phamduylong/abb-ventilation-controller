@@ -359,7 +359,7 @@ void fan_pressure_test() {
         }
         else if(sw2_pressed){
             sw2_pressed = false;
-			if(fa > -20) fa--;
+			if(fa > 0) fa--;
         }
 		if(sw3.read()) {
             sw3_pressed = true;
@@ -377,13 +377,13 @@ void fan_pressure_test() {
 			}
 			printf("*******\n");
 			printf("DI1=%4d\n", fan.get_aspeed());
-			printf("AO1=%4d\n", fan.get_speed() * 100);
+			printf("AO1=%4d\n", fan.get_speed());
 			printf("-------------------\n");
         }
 
 		if(prev_fa != fa) {
 			prev_fa = fa;
-			fan.set_speed(fa * 100);
+			fan.set_speed(fa * 10);
 		}
 	}
 }
