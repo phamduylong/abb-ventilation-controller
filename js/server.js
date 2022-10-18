@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const {hashPassword, verifyPassword} = require("./pbkdf2");
+const {hashPassword} = require("./pbkdf2");
 const auth = require(path.join(__dirname, 'auth.js'));
 
 const MongoClient = require('mongodb').MongoClient;
@@ -29,7 +29,7 @@ app.post('/signup', (req, res) => {
     const password = req.body.password;
     hashPassword(password).then(hashedPassword => {
         console.log("AFTER HASH: ", hashedPassword);
-        const newUser = {username, hashedPassword};
+        const newUser = {username, hashedPassword, logins: []};
         addUser(newUser).then(msg => res.send(msg)).catch(err_msg => res.send(err_msg));
     }).catch(err => res.send(err));
 });
@@ -41,17 +41,18 @@ app.use(auth);
 app.get('/', async (req, res) => {
     //default view
     res.render('auto', {pressure: 0});
-})
+});
 
 app.get('/statistics/temperature', async (req, res) => {
     res.render('temp_stats');
 });
 
 app.get('/temp_data', async (req, res) => {
+    //random data for testing purposes
     const data = {x: [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
         y: [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4]};
     res.json(data);
-})
+});
 
 app.get('/logout', auth, (req, res) => {
     res.status = 401;
@@ -86,16 +87,17 @@ const addUser = (newUser) => {
             const dbo = db.db("users");
 
             dbo.collection("users").find({username: newUser.username}).toArray( (err, res) => {
-                if(res[0] !== undefined) return reject("USERNAME ALREADY TAKEN");
+                if(res[0] !== undefined) reject("USERNAME ALREADY TAKEN");
                 else {
                     dbo.collection("users").insertOne(newUser, function (err, res) {
                         if (err) reject("FAILED TO ADD NEW USER TO DATABASE. PLEASE TRY AGAIN.");
                         console.log("NEW USER: ", newUser.username);
-                        return resolve("SIGNED UP SUCCESSFULLY");
-                        db.close();
-                    })
+                        console.log(res);
+                        resolve("SIGNED UP SUCCESSFULLY");
+                        db.close().then(r => console.log(r));
+                    });
                 }
             });
         });
-    })
+    });
 }

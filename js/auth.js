@@ -1,4 +1,4 @@
-const {verifyPassword, hashPassword} = require("./pbkdf2");
+const {verifyPassword} = require("./pbkdf2");
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017";
 function auth (req, res, next){
@@ -18,15 +18,26 @@ function auth (req, res, next){
             if (err) throw err;
             const dbo = db.db("users");
             dbo.collection("users").find(query_obj).toArray((err, user_arr) => {
-                if(user_arr[0] !== undefined) {
-                    verifyPassword(password, user_arr[0].hashedPassword)
+                const user = user_arr[0];
+                if(user !== undefined) {
+                    verifyPassword(password, user.hashedPassword)
                         .then((equal) => {
 
                             if(equal) {
                                 res.status = 200;
+                                const user_login_stamps = user.logins;
+                                const current_time = new Date();
+                                user_login_stamps.push(current_time.toString());
+                                const update_obj = {$set: {logins: user_login_stamps}};
+                                console.log(`User ${user.username} logged in at ${current_time.toString()}`);
+                                dbo.collection("users").updateOne({username: user.username}, update_obj,
+                                    (err, res) =>{
+                                    if(err) throw err;
+                                    console.log(res);
+                                })
                                 return next();
                             } else {
-                                console.log("YOU ENTERED AN INCORRECT PASSWORD YOU IDIOT!");
+                                console.log("YOU ENTERED AN INCORRECT PASSWORD!");
                                 const err = new Error("WRONG PASSWORD");
                                 res.status(401).set('WWW-Authenticate', 'Basic');
                                 return next(err);
@@ -34,12 +45,13 @@ function auth (req, res, next){
                         })
                         .catch((err_msg) => {
                             const err = new Error(err_msg);
-                            res.status(401).set('WWW-Authenticate', 'Basic');
+                            res.status = 401;
+                            res.set('WWW-Authenticate', 'Basic');
                             return next(err);
                     });
                 } else {
-                    console.log("NO SUCH USER");
-                    const err = new Error("NO SUCH USER");
+                    console.log("USERNAME NOT FOUND");
+                    const err = new Error("USERNAME NOT FOUND");
                     res.status(401).set('WWW-Authenticate', 'Basic');
                     return next(err);
                 }
