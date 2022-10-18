@@ -19,7 +19,6 @@ app.set("views", (path.join(__dirname, "views")));
 
 const port = process.env.PORT || 3000;
 
-
 app.get('/signup', (req, res) => {
     res.render('signup');
 });
