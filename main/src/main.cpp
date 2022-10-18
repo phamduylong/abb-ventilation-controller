@@ -9,6 +9,7 @@
 #include <cr_section_macros.h>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include "DigitalIoPin.h"
 #include "LpcUart.h"
 #include "systick.h"
@@ -20,11 +21,33 @@
 #include "LiquidCrystal.h"
 #include "I2C.h"
 #include "I2CDevice.h"
+#include "sPressureSDP610.h"
+#include "sco2GMP252.h"
+#include "srhtHMP60.h"
+#include "SimpleMenu.h"
+#include "IntegerEdit.h"
+#include "DecimalEdit.h"
+#include "IntegerUnitEdit.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
 #define BROKER_IP   "192.168.1.254"
 #define BROKER_PORT  1883
+
+//DEBUG DEFINES //Leave only one ON, or none.
+#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
+#define MODBUS_TEST 0
+#define FAN_TEST 0
+#define HUM_TEMP_TEST 0
+#define CO2_TEST 0
+#define PRES_TEST 0
+#define FAN_PRES_TEST 0
+#define MQTT_TEST 0
+//sw1 - A2 - 1 8
+//sw2 - A3 - 0 5
+//sw3 - A4 - 0 6
+//sw4 - A5 - 0 7
+// /DEBUG DEFINES
 
 static volatile int counter = 0;
 static volatile unsigned int systicks = 0;
@@ -63,10 +86,28 @@ void Sleep(int ms)
 	}
 }
 
+#if MODBUS_TEST
 void abbModbusTest();
+#endif
+#if MQTT_TEST
 void socketTest();
 void mqttTest();
+#endif
+#if FAN_TEST
 void produalModbusTest();
+#endif
+#if HUM_TEMP_TEST
+void humidity_test();
+#endif
+#if CO2_TEST
+void co2_test();
+#endif
+#if PRES_TEST
+void pressure_test();
+#endif
+#if FAN_PRES_TEST
+void fan_pressure_test();
+#endif
 
 int main(void) {
 
@@ -92,13 +133,46 @@ int main(void) {
 	sysTickRate = Chip_Clock_GetSysTickClockRate();
 	SysTick_Config(sysTickRate / 1000);
 
+	/////////////////////////////////////////////////////////////////
+	//Here go all initialisations, needed for still existing tests.//
+	/////////////////////////////////////////////////////////////////
+
+	#if FAN_TEST
+	produalModbusTest();
+	#endif
+	#if HUM_TEMP_TEST
+	humidity_test();
+	#endif
+	#if CO2_TEST
+	co2_test();
+	#endif
+	#if PRES_TEST
+	pressure_test();
+	#endif
+	#if FAN_PRES_TEST
+	fan_pressure_test();
+	#endif
+
+	/////////////////////////////////////////////////////////
+	//Menu test. Works only in case if other tests are off.//
+	/////////////////////////////////////////////////////////
+
 	//LCD pins init.
+#if LPC_PROJ
 	DigitalIoPin rs(0, 29, false, true, false);
 	DigitalIoPin en(0, 9, false, true, false);
 	DigitalIoPin d4(0, 10, false, true, false);
 	DigitalIoPin d5(0, 16, false, true, false);
 	DigitalIoPin d6(1, 3, false, true, false);
 	DigitalIoPin d7(0, 0, false, true, false);
+#else
+	DigitalIoPin rs(0, 8, false, false, false);
+	DigitalIoPin en(1, 6, false, false, false);
+	DigitalIoPin d4(1, 8, false, false, false);
+	DigitalIoPin d5(0, 5, false, false, false);
+	DigitalIoPin d6(0, 6, false, false, false);
+	DigitalIoPin d7(0, 7, false, false, false);
+#endif
 	rs.write(false);
 	en.write(false);
 	d4.write(false);
@@ -106,25 +180,71 @@ int main(void) {
 	d6.write(false);
 	d7.write(false);
 
+	//Buttons init
+#if LPC_PROJ
+	DigitalIoPin sw1(1, 8, true, true, true);
+	DigitalIoPin sw2(0, 5, true, true, true);
+	DigitalIoPin sw3(0, 6, true, true, true);
+#else
+	DigitalIoPin sw1(0, 17 ,true ,true, true);
+	DigitalIoPin sw2(1, 11 ,true ,true, true);
+	DigitalIoPin sw3(1, 9 ,true ,true, true);
+#endif
 	//LCD
-	LiquidCrystal lcd(&rs, &en, &d4, &d5, &d6, &d7, false);
-	lcd.begin(16,2);
-	lcd.setCursor(0,0);
-	lcd.print("Septentrinoalis");
+	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
+	// configure display geometry
+	lcd->begin(16, 2);
+	// set the cursor to column 0, line 1
+	// (note: line 1 is the second row, since counting begins with 0):
+	lcd->setCursor(0, 0);
+	lcd->clear();
+	SimpleMenu menu;
+	IntegerUnitEdit *pressure= new IntegerUnitEdit(lcd, std::string("Pressure"),120,0,1,std::string("Pa"));
+	IntegerUnitEdit *fan= new IntegerUnitEdit(lcd,std::string("Speed"),100,0,5,std::string("%"));
 
-	//I2C device. (Sensirion SDP610_125kPa pressure sensor)
-	I2C i2c;
-	I2CDevice i2c_sSDP610_pressure(&i2c, (uint8_t)0x40);
+	menu.addItem(new MenuItem(pressure));
+	menu.addItem(new MenuItem(fan));
+	pressure->setValue(0);
+	fan->setValue(5);
+	int timer = 0;
+	int delay = 0;
 
-	//produalModbusTest();
+	menu.event(MenuItem::show); // display first menu item
+	while(1){
+		timer = millis();
 
-	while(1) {
-		Sleep(100);
+		if(timer == 10000 || timer == delay){
+			if(timer != 0 ){
+				menu.event(MenuItem::back);
+				delay = timer + 10000;
+			}
+		}
+		if(sw1.read()){
+			delay = timer + 10000;
+			while(sw1.read());
+			menu.event(MenuItem::up);
+		}
+
+		if(sw2.read()){
+			delay = timer + 10000;
+			while(sw2.read());
+			menu.event(MenuItem::down);
+		}
+
+		if(sw3.read()){
+			delay = timer + 10000;
+			while(sw3.read());
+			menu.event(MenuItem::ok);
+		}
 	}
 	return 0 ;
 }
 
-#if 1
+
+
+
+// Produal MIO 12-V (Fan)
+#if FAN_TEST
 void produalModbusTest()
 {
 	ModbusMaster node(1); // Create modbus object that connects to slave id 1
@@ -151,7 +271,139 @@ void produalModbusTest()
 }
 #endif
 
-#if 0   // example that uses modbus library directly
+// Vaisala HMP60 relative humidity and temperature sensor
+#if HUM_TEMP_TEST
+void humidity_test() {
+	srhtHMP60 sensor;
+	float t = 0;
+	float rhum = 0;
+	printf("Temperature\n");
+	while(1) {
+		Sleep(5000);
+		//Temperature
+		sensor.read_temp(t);
+		printf("Decoded temp: %f C\n", t);
+		//Humidity
+		sensor.read_rhum(rhum);
+		printf("Decoded hum: %f %%\n", rhum);
+	}
+}
+#endif
+
+// Vaisala GMP252 CO2 probe
+#if CO2_TEST
+void co2_test() {
+	sco2GMP252 co2;
+	float data = 0;
+	printf("CO2\n");
+	while(1) {
+		Sleep(5000);
+		printf("-------------------\n");
+		co2.read(data);
+		printf("Decoded co2: %f ppm\n", data);
+		printf("-------------------\n");
+	}
+}
+#endif
+
+// Sensirion SDP610 – 125Pa pressure sensor
+#if PRES_TEST
+void pressure_test() {
+	sPressureSDP610 spres;
+	float pres = 0;
+	//Attempt with I2CDevice.
+	printf("Pressure\n");
+	while(1) {
+		Sleep(5000);
+		printf("-------------------\n");
+		if (spres.read(pres)) {
+			printf("Pres: %f Pa\n", pres);
+			printf("Time: %d\n", spres.get_elapsed_time());
+		}
+		else {
+			printf("Invalid pressure read.\n");
+			printf("Time: %d\n", spres.get_elapsed_time());
+		}
+		printf("-------------------\n");
+	}
+}
+#endif
+
+#if FAN_PRES_TEST
+void fan_pressure_test() {
+	//I2C device. (Sensirion SDP610_125Pa pressure sensor)
+	I2C i2c;
+	const uint8_t addr = 0x40;
+	I2CDevice i2c_sSDP610_pressure(&i2c, addr);
+	uint8_t com = 0xF1;
+	uint8_t pres_raw[3] = {0};
+	uint16_t pres_value = 0;
+
+	DigitalIoPin sw1(1, 8, true, true, true); //speed up fan
+	DigitalIoPin sw2(0, 5, true, true, true); //slow down fan
+	DigitalIoPin sw3(0, 6, true, true, true); //read sensor
+
+	ModbusMaster node(1); // Create modbus object that connects to slave id 1
+	node.begin(9600); // set transmission rate - other parameters are set inside the object and can't be changed here
+
+	ModbusRegister AO1(&node, 0);
+	ModbusRegister DI1(&node, 4, false);
+
+	uint16_t fa = 0;
+	uint16_t prev_fa = 0;
+	bool sw1_pressed = false;
+    bool sw2_pressed = false;
+    bool sw3_pressed = false;
+	while(1) {
+		Sleep(1);
+        if(sw1.read()) {
+            sw1_pressed = true;
+        }
+        else if(sw1_pressed){
+            sw1_pressed = false;
+			if(fa < 10) fa++;
+        }
+        if(sw2.read()) {
+            sw2_pressed = true;
+        }
+        else if(sw2_pressed){
+            sw2_pressed = false;
+			if(fa > 0) fa--;
+        }
+		if(sw3.read()) {
+            sw3_pressed = true;
+        }
+        else if(sw3_pressed){
+            sw3_pressed = false;
+			printf("Pressure\n-------------------\n");
+			if (i2c_sSDP610_pressure.read(com, pres_raw, 3)) {
+				printf("Pres: %02x%02x\n", pres_raw[0], pres_raw[1]);
+				printf("CRC: %s\n", (pres_raw[2] == crc8(pres_raw, 2)) ? "OK" : "ERROR");
+				pres_value = 0;
+				pres_value = pres_raw[0];
+				pres_value <<= 8;
+				pres_value |= pres_raw[1];
+				int16_t diff_pres = *((int16_t *)&pres_value);
+				float diff = (float)diff_pres / 240;
+				printf("Pres: %f Pa\n", diff);
+			}
+			else {
+				printf("Invalid pressure read.\n");
+			}
+			printf("*******\n");
+			printf("DI1=%4d\n", DI1.read());
+			printf("-------------------\n");
+        }
+
+		if(prev_fa != fa) {
+			prev_fa = fa;
+			AO1.write(fa * 100);
+		}
+	}
+}
+#endif
+
+#if MODBUS_TEST   // example that uses modbus library directly
 void printRegister(ModbusMaster& node, uint16_t reg)
 {
 	uint8_t result;
@@ -264,7 +516,7 @@ void abbModbusTest()
 // WEB STUFF ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0  // example of opening a plain socket
+#if MQTT_TEST  // example of opening a plain socket
 void socketTest()
 {
 
@@ -296,7 +548,7 @@ void socketTest()
 }
 #endif
 
-#if 0
+#if MQTT_TEST
 
 void messageArrived(MessageData* data)
 {
