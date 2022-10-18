@@ -352,7 +352,7 @@ void fan_pressure_test() {
         }
         else if(sw1_pressed){
             sw1_pressed = false;
-			if(fa < 20) fa++;
+			if(fa < 200) fa++;
         }
         if(sw2.read()) {
             sw2_pressed = true;

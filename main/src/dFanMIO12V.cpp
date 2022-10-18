@@ -7,15 +7,11 @@ dFanMIO12V::dFanMIO12V(unsigned int retries) : node{1}, ao1{&node, 0x0000}, di1{
 	this->elapsed_time = 0;
 }
 
-dFanMIO12V::~dFanMIO12V() {
-	//Try to shut down the fan.
-	//Add error checking and retries.
-	ao1.write(0);
-	//Pray that it was set up.
-	this->speed = 0;
-}
+dFanMIO12V::~dFanMIO12V() {}
 
 bool dFanMIO12V::set_speed(int16_t v, bool retry) {
+	if (v < 0) v = 0;
+	else if (v > 1000) v = 1000;
 	//Add error checking
 	ao1.write(v);
 	//Pray that it was set up.
