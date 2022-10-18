@@ -21,7 +21,7 @@ const port = process.env.PORT || 3000;
 
 
 app.get('/signup', (req, res) => {
-    res.render('something');
+    res.render('signup');
 });
 
 
