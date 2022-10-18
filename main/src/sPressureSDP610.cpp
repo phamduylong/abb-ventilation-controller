@@ -15,7 +15,10 @@ uint8_t crc8(uint8_t *data, size_t size) {
 	return crc;
 }
 
-sPressureSDP610::sPressureSDP610(unsigned int retries) : i2c{}, sdp610{&i2c, 0x40}, retries(retries) {}
+sPressureSDP610::sPressureSDP610(unsigned int retries) : i2c{}, sdp610{&i2c, 0x40}, retries(retries) {
+	this->status = false;
+	this->elapsed_time = 0;
+}
 
 sPressureSDP610::~sPressureSDP610() {}
 

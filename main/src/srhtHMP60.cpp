@@ -10,7 +10,9 @@
 srhtHMP60::srhtHMP60(unsigned int retries) : node{241}, rh0{&node, 0x0000}, rh1{&node, 0x0001}, t0{&node, 0x0002}, t1{&node, 0x0003}, retries(retries) {
 	//TODO: add 0x0200 reg -> error status. 0 - yes, 1 - no error.
 	// add error code regs and error code handling.
-	node.begin(9600);
+	this->node.begin(9600);
+	this->status = false;
+	this->elapsed_time = 0;
 }
 
 srhtHMP60::~srhtHMP60() {}
