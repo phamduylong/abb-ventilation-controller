@@ -26,7 +26,7 @@ MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
 			res = got_modified;
 		}
 		else if(!pe->getStatus()){
-
+			pe->setFocus(false);
 		}
 		else if(!pe->getFocus()){
 			pe->setFocus(true);

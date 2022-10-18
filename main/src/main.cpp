@@ -28,6 +28,8 @@
 #include "IntegerEdit.h"
 #include "DecimalEdit.h"
 #include "IntegerUnitEdit.h"
+#include "IntegerShow.h"
+#include "DecimalShow.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -204,11 +206,14 @@ int main(void) {
 	SimpleMenu menu;
 	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"),true);
 	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),false);
+	DecimalShow *test = new DecimalShow(lcd, std::string("Light Intensity"),std::string("%"));
 
 	menu.addItem(new MenuItem(pressure));
 	menu.addItem(new MenuItem(fan));
+	menu.addItem(new MenuItem(test));
 	pressure->setValue(0);
 	fan->setValue(5);
+	test->setValue(95.5);
 	int timer = 0;
 	int delay = 0;
 	bool sw1_pressed = false; //"ok" button flag.
