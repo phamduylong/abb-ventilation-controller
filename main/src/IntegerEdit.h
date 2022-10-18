@@ -8,6 +8,7 @@
 #ifndef INTEGEREDIT_H_
 #define INTEGEREDIT_H_
 
+
 #include "PropertyEdit.h"
 #include "LiquidCrystal.h"
 #include <string>
@@ -15,7 +16,7 @@
 
 class IntegerEdit: public PropertyEdit {
 public:
-	IntegerEdit(LiquidCrystal *lcd_,LpcUart *lpc_, std::string editTitle,int max,int min);
+	IntegerEdit(LiquidCrystal *lcd_, std::string editTitle,int maximum,int minimum,int step,std::string unit);
 	virtual ~IntegerEdit();
 	void increment();
 	void decrement();
@@ -26,18 +27,20 @@ public:
 	void display();
 	int getValue();
 	void setValue(int value);
-	void print();
 private:
 	void save();
 	void displayEditValue();
 	LiquidCrystal *lcd;
 	std::string title;
+	int max;
+	int min;
+	int incrementValue;
+	std::string unitValue;
 	int value;
 	int edit;
 	bool focus;
-	int min;
-	int max;
-	LpcUart *lpc;
+
 };
+
 
 #endif /* INTEGEREDIT_H_ */

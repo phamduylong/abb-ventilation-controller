@@ -23,30 +23,18 @@ void SimpleMenu::addItem(MenuItem *item) {
 void SimpleMenu::event(MenuItem::menuEvent e) {
 	if(items.size() <= 0) return;
 
-//	if(e == MenuItem::ok){
-//				counter++;
-//				if(counter == 2){
-//					for(auto item : items){
-//						item->LPC_print();
-//						counter = 0;
-//					}
-//				}
-//			}
-
-
-
-	if(!items[position]->event(e)) {
+	switch (items[position]->event(e))
+	{
+	case MenuItem::unhandled:
 		if(e == MenuItem::up) position++;
 		else if(e == MenuItem::down) position--;
-
 
 		if(position < 0) position = items.size() - 1;
 		if(position >= (int) items.size()) position = 0;
 
 		items[position]->event(MenuItem::show);
-
-
-
-
+		break;
+	default:
+		break;
 	}
 }

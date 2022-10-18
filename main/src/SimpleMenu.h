@@ -7,6 +7,7 @@
 
 #ifndef SIMPLEMENU_H_
 #define SIMPLEMENU_H_
+
 #include <vector>
 
 #include "MenuItem.h"
@@ -21,7 +22,6 @@ public:
 private:
 	std::vector<MenuItem *> items;
 	int position;
-	LpcUart *lpc;
 	int counter;
 
 };
