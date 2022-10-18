@@ -28,6 +28,7 @@
 #include "IntegerEdit.h"
 #include "DecimalEdit.h"
 #include "IntegerUnitEdit.h"
+#include "dFanMIO12V.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
