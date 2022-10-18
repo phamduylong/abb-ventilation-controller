@@ -190,6 +190,9 @@ int main(void) {
 	DigitalIoPin sw2(1, 11 ,true ,true, true);
 	DigitalIoPin sw3(1, 9 ,true ,true, true);
 #endif
+
+
+
 	//LCD
 	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
 	// configure display geometry
@@ -199,12 +202,12 @@ int main(void) {
 	lcd->setCursor(0, 0);
 	lcd->clear();
 	SimpleMenu menu;
-	IntegerEdit *pressure = new IntegerEdit(lcd, std::string("Pressure"),120,0,1,std::string("Pa"));
-	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,5,std::string("%"));
+	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"));
+	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"));
 
 	menu.addItem(new MenuItem(pressure));
 	menu.addItem(new MenuItem(fan));
-	pressure->setValue(50);
+	pressure->setValue(0);
 	fan->setValue(5);
 	int timer = 0;
 	int delay = 0;
@@ -246,6 +249,9 @@ int main(void) {
 			sw3_pressed = false;
 			menu.event(MenuItem::ok);
 		}
+
+
+		int value = menu.getItemValue(fan);
 
 
 

@@ -19,12 +19,13 @@ IntegerEdit::~IntegerEdit() {
 }
 
 void IntegerEdit::increment() {
-	if(edit < max)edit+= incrementValue;
+	if(edit < max && edit+incrementValue <= max)edit+= incrementValue;
+	else{edit = max;}
 
 }
 
 void IntegerEdit::decrement() {
-	if(edit > min && edit != incrementValue)edit-= incrementValue;
+	if(edit > min && edit != incrementValue && edit > incrementValue)edit-= incrementValue;
 	else{edit = min;}
 
 }

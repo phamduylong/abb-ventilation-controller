@@ -26,7 +26,7 @@ MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
 			res = got_modified;
 		}
 		else {
-			pe->setFocus(true);;
+			pe->setFocus(true);
 		}
 		break;
 	case back:
@@ -53,4 +53,5 @@ MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
 
 	return res;
 }
+
 

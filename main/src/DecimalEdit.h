@@ -15,7 +15,7 @@
 
 class DecimalEdit: public PropertyEdit {
 public:
-	DecimalEdit(LiquidCrystal *lcd_,std::string editTitle,float max,float min,float step);
+	DecimalEdit(LiquidCrystal *lcd_,std::string editTitle,float maximum,float minimum,float step,std::string unit);
 	virtual ~DecimalEdit();
 	void increment();
 	void decrement();
@@ -31,12 +31,14 @@ private:
 	void displayEditValue();
 	LiquidCrystal *lcd;
 	std::string title;
+	float max;
+	float min;
+	float incrementValue;
+	std::string unitValue;
 	float value;
 	float edit;
 	bool focus;
-	float min;
-	float max;
-	float step;
+
 };
 
 #endif /* DECIMALEDIT_H_ */

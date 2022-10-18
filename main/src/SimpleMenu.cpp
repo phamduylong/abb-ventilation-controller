@@ -38,3 +38,8 @@ void SimpleMenu::event(MenuItem::menuEvent e) {
 		break;
 	}
 }
+
+float SimpleMenu::getItemValue(IntegerEdit *parameter){
+	float value = parameter->getValue();
+	return value;
+}

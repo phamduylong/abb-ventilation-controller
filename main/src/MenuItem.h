@@ -29,7 +29,6 @@ public:
 	MenuItem(PropertyEdit *property);
 	virtual ~MenuItem();
 	virtual MenuItem::menuItemEvent event(menuEvent e);
-
 private:
 	PropertyEdit *pe;
 
