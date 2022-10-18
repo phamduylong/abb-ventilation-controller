@@ -42,7 +42,17 @@ app.use(auth);
 app.get('/', async (req, res) => {
     //default view
     res.render('auto', {pressure: 0});
+})
+
+app.get('/statistics/temperature', async (req, res) => {
+    res.render('chart');
 });
+
+app.get('/temp_data', async (req, res) => {
+    const data = {x: [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
+        y: [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4]};
+    res.json(data);
+})
 
 app.get('/logout', auth, (req, res) => {
     res.status = 401;
