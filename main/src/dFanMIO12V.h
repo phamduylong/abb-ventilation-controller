@@ -8,7 +8,7 @@ class dFanMIO12V {
 public:
 	dFanMIO12V(unsigned int retries = 3);
 	virtual ~dFanMIO12V();
-	bool set_speeed(int16_t v, bool retry = true);
+	bool set_speed(int16_t v, bool retry = true);
 	int16_t get_speed();
 	int get_aspeed(bool retry = true);
 	bool get_status();

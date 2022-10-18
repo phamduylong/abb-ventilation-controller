@@ -15,7 +15,7 @@ dFanMIO12V::~dFanMIO12V() {
 	this->speed = 0;
 }
 
-bool dFanMIO12V::set_speeed(int16_t v, bool retry) {
+bool dFanMIO12V::set_speed(int16_t v, bool retry) {
 	//Add error checking
 	ao1.write(v);
 	//Pray that it was set up.
