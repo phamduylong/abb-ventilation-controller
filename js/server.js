@@ -45,7 +45,7 @@ app.get('/', async (req, res) => {
 })
 
 app.get('/statistics/temperature', async (req, res) => {
-    res.render('chart');
+    res.render('temp_stats');
 });
 
 app.get('/temp_data', async (req, res) => {
