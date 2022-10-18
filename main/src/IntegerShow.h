@@ -27,6 +27,7 @@ public:
 	int getValue();
 	void setValue(int value);
 	bool getStatus();
+	const char* getTitle();
 //	void deleteItem();
 
 private:
@@ -34,7 +35,6 @@ private:
 	void displayEditValue();
 	LiquidCrystal *lcd;
 	std::string title;
-
 	std::string unitValue;
 	int value;
 	int edit;

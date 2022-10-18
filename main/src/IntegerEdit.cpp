@@ -80,3 +80,7 @@ void IntegerEdit::setValue(int value) {
 	edit = value;
 	save();
 }
+const char* IntegerEdit::getTitle(){
+	return this->title.c_str();
+}
+

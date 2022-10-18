@@ -27,6 +27,7 @@ public:
 	int getValue();
 	void setValue(int value);
 	bool getStatus();
+	const char* getTitle();
 //	void deleteItem();
 
 private:

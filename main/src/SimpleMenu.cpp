@@ -17,7 +17,29 @@ SimpleMenu::~SimpleMenu() {
 }
 
 void SimpleMenu::addItem(MenuItem *item) {
-	items.push_back(item);
+
+	const char* name = item->getName();
+	int present = 1;
+	for(unsigned int i=0;i<items.size();i++){
+			if(items[i]->getName() == name){
+				present -=1;
+				break;
+			}
+		}
+	if(present){
+		items.push_back(item);
+	}
+
+}
+
+void SimpleMenu::deleteItem(MenuItem *item) {
+	const char* name = item->getName();
+
+	for(unsigned int i=0;i<items.size();++i){
+		if(name == items[i]->getName()){
+			items.erase(next(begin(items), + i));
+		}
+	}
 }
 
 void SimpleMenu::event(MenuItem::menuEvent e) {

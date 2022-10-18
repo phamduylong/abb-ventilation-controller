@@ -205,12 +205,15 @@ int main(void) {
 	lcd->clear();
 	SimpleMenu menu;
 	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"),true);
-	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),false);
+	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),true);
 	DecimalShow *test = new DecimalShow(lcd, std::string("Light Intensity"),std::string("%"));
+	DecimalShow *test2 = new DecimalShow(lcd, std::string("Light Intensity"),std::string("%"));
 
 	menu.addItem(new MenuItem(pressure));
 	menu.addItem(new MenuItem(fan));
+	menu.addItem(new MenuItem(fan));
 	menu.addItem(new MenuItem(test));
+	menu.addItem(new MenuItem(test2));
 	pressure->setValue(0);
 	fan->setValue(5);
 	test->setValue(95.5);
@@ -219,6 +222,7 @@ int main(void) {
 	bool sw1_pressed = false; //"ok" button flag.
 	bool sw2_pressed = false; //"down" button flag.
 	bool sw3_pressed = false; //"up" button flag.
+	bool deleted = false;
 
 	menu.event(MenuItem::show); // display first menu item
 	while(1){
@@ -255,8 +259,14 @@ int main(void) {
 			menu.event(MenuItem::ok);
 		}
 
+		if(deleted == false){
+			menu.deleteItem(new MenuItem(test));
+			deleted = true;
+		}
 
 
+//		const char* testing = pressure->getTitle();
+//		lcd->print(testing);
 
 
 

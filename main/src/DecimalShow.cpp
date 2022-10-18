@@ -77,5 +77,8 @@ void DecimalShow::setValue(int value) {
 	edit = value;
 	save();
 }
+const char* DecimalShow::getTitle(){
+	return this->title.c_str();
+}
 
 

@@ -27,6 +27,7 @@ public:
 	float getValue();
 	void setValue(float value);
 	bool getStatus();
+	const char* getTitle();
 private:
 	void save();
 	void displayEditValue();

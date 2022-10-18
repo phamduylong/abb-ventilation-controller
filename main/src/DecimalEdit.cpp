@@ -86,5 +86,10 @@ void DecimalEdit::setValue(float value) {
 	save();
 }
 
+const char* DecimalEdit::getTitle(){
+	return this->title.c_str();
+}
+
+
 
 

@@ -15,7 +15,11 @@ MenuItem::MenuItem(PropertyEdit *property): pe(property) {
 MenuItem::~MenuItem() {
 
 }
+const char* MenuItem::getName() {
 
+return pe->getTitle();
+
+}
 MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
 	MenuItem::menuItemEvent res = handled;
 	switch(e) {

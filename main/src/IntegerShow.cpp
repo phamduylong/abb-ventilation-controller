@@ -78,3 +78,6 @@ void IntegerShow::setValue(int value) {
 	edit = value;
 	save();
 }
+const char* IntegerShow::getTitle() {
+	return (this->title.c_str());
+}

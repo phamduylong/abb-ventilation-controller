@@ -29,6 +29,7 @@ public:
 	void setValue(int value);
 //	void deleteItem();
 	bool getStatus();
+	const char* getTitle();
 private:
 	void save();
 	void displayEditValue();
