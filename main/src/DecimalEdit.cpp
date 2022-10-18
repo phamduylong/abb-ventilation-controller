@@ -9,7 +9,7 @@
 #include <cstdio>
 #include "LpcUart.h"
 
-DecimalEdit::DecimalEdit(LiquidCrystal *lcd_, std::string editTitle,float maximum,float minimum,float step,std::string unit): lcd(lcd_), title(editTitle),max(maximum),min(minimum),incrementValue(step),unitValue(unit) {
+DecimalEdit::DecimalEdit(LiquidCrystal *lcd_, std::string editTitle,float maximum,float minimum,float step,std::string unit,bool modify): lcd(lcd_), title(editTitle),max(maximum),min(minimum),incrementValue(step),unitValue(unit),modifiable(modify) {
 	value = 0;
 	edit = 0;
 	focus = false;
@@ -45,6 +45,9 @@ void DecimalEdit::setFocus(bool focus) {
 
 bool DecimalEdit::getFocus() {
 	return this->focus;
+}
+bool DecimalEdit::getStatus(){
+	return this->modifiable;
 }
 
 void DecimalEdit::display() {

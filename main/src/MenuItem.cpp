@@ -20,12 +20,15 @@ MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
 	MenuItem::menuItemEvent res = handled;
 	switch(e) {
 	case ok:
-		if(pe->getFocus()) {
+		if(pe->getFocus() && pe->getStatus()) {
 			pe->accept();
 			pe->setFocus(false);
 			res = got_modified;
 		}
-		else {
+		else if(!pe->getStatus()){
+
+		}
+		else if(!pe->getFocus()){
 			pe->setFocus(true);
 		}
 		break;

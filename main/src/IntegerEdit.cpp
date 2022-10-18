@@ -9,7 +9,7 @@
 #include <cstdio>
 #include "LpcUart.h"
 
-IntegerEdit::IntegerEdit(LiquidCrystal *lcd_, std::string editTitle,int maximum,int minimum,int step,std::string unit): lcd(lcd_), title(editTitle),max(maximum),min(minimum),incrementValue(step),unitValue(unit) {
+IntegerEdit::IntegerEdit(LiquidCrystal *lcd_, std::string editTitle,int maximum,int minimum,int step,std::string unit,bool modify): lcd(lcd_), title(editTitle),max(maximum),min(minimum),incrementValue(step),unitValue(unit),modifiable(modify) {
 	value = 0;
 	edit = 0;
 	focus = false;
@@ -63,7 +63,9 @@ void IntegerEdit::display() {
 }
 
 
-
+bool IntegerEdit::getStatus(){
+	return this->modifiable;
+}
 void IntegerEdit::save() {
 	// set current value to be same as edit value
 	value = edit;

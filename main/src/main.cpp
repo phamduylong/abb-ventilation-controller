@@ -202,8 +202,8 @@ int main(void) {
 	lcd->setCursor(0, 0);
 	lcd->clear();
 	SimpleMenu menu;
-	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"));
-	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"));
+	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"),true);
+	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),false);
 
 	menu.addItem(new MenuItem(pressure));
 	menu.addItem(new MenuItem(fan));
@@ -251,7 +251,6 @@ int main(void) {
 		}
 
 
-		int value = menu.getItemValue(fan);
 
 
 

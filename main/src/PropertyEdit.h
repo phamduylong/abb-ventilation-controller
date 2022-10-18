@@ -19,6 +19,7 @@ public:
 	virtual void setFocus(bool focus) = 0;
 	virtual bool getFocus() = 0;
 	virtual void display() = 0;
+	virtual bool getStatus() = 0;
 };
 
 #endif /* PROPERTYEDIT_H_ */
