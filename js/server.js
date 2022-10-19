@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const {hashPassword, verifyPassword} = require("./pbkdf2");
-const auth = require(path.join(__dirname, 'auth.js'));
 
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017";
@@ -29,7 +28,7 @@ app.post('/signup', (req, res) => {
     const password = req.body.password;
     hashPassword(password).then(hashedPassword => {
         const newUser = {username, hashedPassword, logins: [], logouts: []};
-        addUser(newUser).then(msg => res.send(msg)).catch(err_msg => res.send(err_msg));
+        addUser(newUser).then(msg => res.redirect('/')).catch(err_msg => res.send(err_msg));
     }).catch(err => res.send(err));
 });
 
@@ -65,19 +64,21 @@ app.post('/login', (req, res) => {
                                     console.log(res);
                                 });
                             }
+                            res.cookie("login_err", 200);
                             return res.redirect('/auto');
                         } else {
-                            return res.send("INCORRECT PASSWORD D:");
+                            res.cookie("login_err", 401);
+                            return res.redirect('/');
                         }
                     })
                     .catch((err_msg) => {
-                        return res.send("VERIFICATION FAILED D: PLEASE TRY AGAIN");
+                        res.cookie("login_err", 401);
+                        return res.redirect('/');
                     });
             } else {
                 console.log("USERNAME NOT FOUND");
-                const err = new Error("USERNAME NOT FOUND");
-                res.status(401).set('WWW-Authenticate', 'Basic');
-                return res.send(err);
+                res.cookie("login_err", 401);
+                return res.redirect('/');
             }
         });
     });
@@ -178,7 +179,7 @@ const addUser = (newUser) => {
             dbo.collection("users").find({username: newUser.username}).toArray( (err, res) => {
                 if(res[0] !== undefined) reject("USERNAME ALREADY TAKEN");
                 else {
-                    dbo.collection("users").insertOne(newUser, function (err, res) {
+                    dbo.collection("users").insertOne(newUser, function (err) {
                         if (err) reject("FAILED TO ADD NEW USER TO DATABASE. PLEASE TRY AGAIN.");
                         resolve("SIGNED UP SUCCESSFULLY");
                         db.close().then(r => console.log(r));

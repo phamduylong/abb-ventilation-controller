@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sign Up</title>
+    <title>Home Page</title>
     <style>
         body {
             text-align: center;
@@ -72,17 +72,24 @@
         #signup {
             margin: 15px;
         }
+
+        #err {
+            margin:10px;
+            color: red;
+            font-weight: 700;
+        }
+
+
     </style>
 
-    <script type="text/javascript">
 
-    </script>
 
 </head>
 <body>
 <div id="center">
     <header><b>LOGIN</b></header>
     <hr/>
+    <div id="err"></div>
     <form method="post" action="/login">
         <label for="username">Username</label>
         <input type="text" id="username" name="username"
@@ -102,10 +109,23 @@
         <br/>
 
         <button type="submit">Login</button>
-
+        <div id="signup">Need an account? Sign up <a href="/signup">here</a></div>
     </form>
 </div>
-
+<script type="text/javascript">
+    console.log(document.cookie);
+    const cookies = document.cookie;
+    const cookie_pieces = cookies.split("; ");
+    console.log(cookie_pieces);
+    const err_str = cookie_pieces[cookie_pieces.length - 1];
+    console.log(err_str);
+    const err_code = Number(err_str.slice(err_str.length-3, err_str.length));
+    console.log(err_code)
+    if(err_code === 401) {
+        const err = document.getElementById("err");
+        err.innerText = "Username or password is incorrect"
+    }
+</script>
 
 </body>
 </html>

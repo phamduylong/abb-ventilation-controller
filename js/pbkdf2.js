@@ -31,7 +31,7 @@ const  verifyPassword = (pw, hashed_pw) =>{
         hash = Buffer.from(hash, 'hex');
 
         crypto.pbkdf2(pw, salt, iterations, hashBytes, digest, (err, verify) =>{
-            if (err){return rejected('Error while logging in');}
+            if (err){return rejected(err);}
             let equals = crypto.timingSafeEqual(hash, verify);
             resolved(equals);
         });
