@@ -1,0 +1,45 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Temperature Statistics</title>
+    <!--Load the AJAX API-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+    </script>
+
+</head>
+
+<body>
+<div><canvas id="myChart"></canvas></div>
+<script>
+    fetch('/user_data').then(tmp => tmp.json()).then(arr => {
+        console.log(arr);
+        const x = arr.x;
+        for(let i = 0; i < x.length; ++i) {
+            x[i] = new Date(x[i]).toString();
+        }
+        console.log(x);
+        new Chart("myChart", {
+            type: "line",
+            data: {
+                labels: x,
+                datasets: [{
+                    data: arr.y,
+                    borderColor: "black",
+                    fill: false
+                }]
+            },
+            options: {
+                legend: {display: false},
+                responsive: true,
+                title: {
+                    display: true,
+                    text: "Temperature per each sample"
+                }
+            }
+        });
+    })
+
+
+</script>
+</body>
+</html>

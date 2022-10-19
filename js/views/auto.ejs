@@ -109,10 +109,18 @@
             }
 
         }
+
+        function autoLogOut(e) {
+            e.preventDefault();
+
+        }
+        window.unload = (e) => {
+            window.open("/logout");
+        }
     </script>
 
 </head>
-<body>
+<body onunload="autoLogOut()">
 <div id="switch-container">
     <p id="switch-status">AUTO MODE IS ON</p>
     <label class="switch">

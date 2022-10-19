@@ -25,16 +25,17 @@ function auth (req, res, next){
 
                             if(equal) {
                                 res.status = 200;
-                                const user_login_stamps = user.logins;
-                                const current_time = new Date();
-                                user_login_stamps.push(current_time.toString());
-                                const update_obj = {$set: {logins: user_login_stamps}};
-                                console.log(`User ${user.username} logged in at ${current_time.toString()}`);
-                                dbo.collection("users").updateOne({username: user.username}, update_obj,
-                                    (err, res) =>{
-                                    if(err) throw err;
-                                    console.log(res);
-                                })
+                                if(req.cookies.curr_user !== user.username) {
+                                    res.cookie("curr_user", user.username);
+                                    res.cookie("loggedIn", true);
+                                    const update_obj = {$set: {logins: [...user.logins, Date.now()]}};
+                                    console.log(`User ${user.username} logged in at ${Date.now().toString()}`);
+                                    dbo.collection("users").updateOne({username: user.username}, update_obj,
+                                        (err, res) =>{
+                                            if(err) throw err;
+                                            console.log(res);
+                                        })
+                                }
                                 return next();
                             } else {
                                 console.log("YOU ENTERED AN INCORRECT PASSWORD!");
