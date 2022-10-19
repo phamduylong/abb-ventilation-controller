@@ -15,17 +15,25 @@ MenuItem::MenuItem(PropertyEdit *property): pe(property) {
 MenuItem::~MenuItem() {
 
 }
+const char* MenuItem::getName() {
 
-bool MenuItem::event(menuEvent e) {
-	bool handled = true;
+return pe->getTitle();
+
+}
+MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
+	MenuItem::menuItemEvent res = handled;
 	switch(e) {
 	case ok:
-		if(pe->getFocus()) {
+		if(pe->getFocus() && pe->getStatus()) {
 			pe->accept();
 			pe->setFocus(false);
+			res = got_modified;
 		}
-		else {
-			pe->setFocus(true);;
+		else if(!pe->getStatus()){
+			pe->setFocus(false);
+		}
+		else if(!pe->getFocus()){
+			pe->setFocus(true);
 		}
 		break;
 	case back:
@@ -34,26 +42,23 @@ bool MenuItem::event(menuEvent e) {
 			pe->setFocus(false);
 		}
 		else {
-			handled = false;
+			res = unhandled;
 		}
 		break;
 	case show:
 		break;
 	case up:
-		if(pe->getFocus()) {
-			pe->increment();
-		}
-		else handled = false;
+		if(pe->getFocus()) pe->increment();
+		else res = unhandled;
 		break;
 	case down:
-		if(pe->getFocus()) {
-			pe->decrement();
-		}
-		else handled = false;
+		if(pe->getFocus()) pe->decrement();
+		else res = unhandled;
 		break;
 	}
-	if(handled) pe->display();
+	if(res) pe->display();
 
-	return handled;
+	return res;
 }
+
 

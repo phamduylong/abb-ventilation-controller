@@ -4,7 +4,6 @@
  *  Created on: 1.2.2016
  *      Author: krl
  */
-
 #ifndef MENUITEM_H_
 #define MENUITEM_H_
 
@@ -21,12 +20,18 @@ public:
 		back,
 		show
 	};
+	enum menuItemEvent {
+			unhandled,
+			handled,
+			got_modified
+		};
+
 	MenuItem(PropertyEdit *property);
 	virtual ~MenuItem();
-	virtual bool event(menuEvent e);
+	virtual MenuItem::menuItemEvent event(menuEvent e);
+	const char* getName();
 private:
 	PropertyEdit *pe;
 
 };
-
 #endif /* MENUITEM_H_ */

@@ -9,7 +9,7 @@
 #include <cstdio>
 #include "LpcUart.h"
 
-IntegerEdit::IntegerEdit(LiquidCrystal *lcd_, LpcUart *lpc_ ,std::string editTitle,int maximum,int minimum): lcd(lcd_), lpc(lpc_), title(editTitle),max(maximum),min(minimum) {
+IntegerEdit::IntegerEdit(LiquidCrystal *lcd_, std::string editTitle,int maximum,int minimum,int step,std::string unit,bool modify): lcd(lcd_), title(editTitle),max(maximum),min(minimum),incrementValue(step),unitValue(unit),modifiable(modify) {
 	value = 0;
 	edit = 0;
 	focus = false;
@@ -19,12 +19,14 @@ IntegerEdit::~IntegerEdit() {
 }
 
 void IntegerEdit::increment() {
-	if(edit < max)edit++;
+	if(edit < max && edit+incrementValue <= max)edit+= incrementValue;
+	else{edit = max;}
 
 }
 
 void IntegerEdit::decrement() {
-	if(edit > min)edit--;
+	if(edit > min && edit != incrementValue && edit > incrementValue)edit-= incrementValue;
+	else{edit = min;}
 
 }
 
@@ -52,20 +54,18 @@ void IntegerEdit::display() {
 	lcd->setCursor(0,1);
 	char s[17];
 	if(focus) {
-		snprintf(s, 17, "     [%4d]     ", edit);
+		snprintf(s, 17, "     [%2d]%4s  ", edit,unitValue.c_str());
 	}
 	else {
-		snprintf(s, 17, "      %4d      ", edit);
+		snprintf(s, 17, "      %2d %4s   ", edit,unitValue.c_str());
 	}
 	lcd->print(s);
 }
-void IntegerEdit::print(){
-	char s[128];
-	snprintf(s,128, "\r\n%s      %4d      \r\n", title.c_str(), value);
-	lpc->write(s);
+
+
+bool IntegerEdit::getStatus(){
+	return this->modifiable;
 }
-
-
 void IntegerEdit::save() {
 	// set current value to be same as edit value
 	value = edit;
@@ -80,3 +80,7 @@ void IntegerEdit::setValue(int value) {
 	edit = value;
 	save();
 }
+const char* IntegerEdit::getTitle(){
+	return this->title.c_str();
+}
+

@@ -26,8 +26,10 @@
 #include "srhtHMP60.h"
 #include "SimpleMenu.h"
 #include "IntegerEdit.h"
-#include "DecimalEdit.h"
+#include "IntegerShow.h"
 #include "IntegerUnitEdit.h"
+#include "DecimalEdit.h"
+#include "DecimalShow.h"
 #include "dFanMIO12V.h"
 
 #define SSID	    "SmartIotMQTT"
@@ -36,7 +38,7 @@
 #define BROKER_PORT  1883
 
 //DEBUG DEFINES //Leave only one ON, or none.
-#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
+#define LPC_PROJ 0 //Use this to switch from home-lpc to proj-lpc
 #define MODBUS_TEST 0
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
@@ -191,6 +193,9 @@ int main(void) {
 	DigitalIoPin sw2(1, 11 ,true ,true, true);
 	DigitalIoPin sw3(1, 9 ,true ,true, true);
 #endif
+
+
+
 	//LCD
 	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
 	// configure display geometry
@@ -200,19 +205,31 @@ int main(void) {
 	lcd->setCursor(0, 0);
 	lcd->clear();
 	SimpleMenu menu;
-	IntegerUnitEdit *pressure= new IntegerUnitEdit(lcd, std::string("Pressure"),120,0,1,std::string("Pa"));
-	IntegerUnitEdit *fan= new IntegerUnitEdit(lcd,std::string("Speed"),100,0,5,std::string("%"));
+	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"),true);
+	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),true);
+	DecimalShow *test = new DecimalShow(lcd, std::string("Light Intensity"),std::string("%"));
+	DecimalShow *test2 = new DecimalShow(lcd, std::string("Light Intensity"),std::string("%"));
 
 	menu.addItem(new MenuItem(pressure));
 	menu.addItem(new MenuItem(fan));
+	menu.addItem(new MenuItem(fan));
+	menu.addItem(new MenuItem(test));
+	menu.addItem(new MenuItem(test2));
 	pressure->setValue(0);
 	fan->setValue(5);
+	test->setValue(95.5);
 	int timer = 0;
 	int delay = 0;
+	bool sw1_pressed = false; //"ok" button flag.
+	bool sw2_pressed = false; //"down" button flag.
+	bool sw3_pressed = false; //"up" button flag.
+	bool deleted = false;
 
 	menu.event(MenuItem::show); // display first menu item
 	while(1){
+
 		timer = millis();
+
 
 		if(timer == 10000 || timer == delay){
 			if(timer != 0 ){
@@ -221,22 +238,39 @@ int main(void) {
 			}
 		}
 		if(sw1.read()){
+			sw1_pressed = true;
+		}else if(sw1_pressed){
 			delay = timer + 10000;
-			while(sw1.read());
+			sw1_pressed = false;
 			menu.event(MenuItem::up);
 		}
-
 		if(sw2.read()){
+			sw2_pressed = true;
+		}else if(sw2_pressed){
 			delay = timer + 10000;
-			while(sw2.read());
+			sw2_pressed = false;
 			menu.event(MenuItem::down);
 		}
 
 		if(sw3.read()){
+			sw3_pressed = true;
+		}else if(sw3_pressed){
 			delay = timer + 10000;
-			while(sw3.read());
+			sw3_pressed = false;
 			menu.event(MenuItem::ok);
 		}
+
+		if(deleted == false){
+			menu.deleteItem(new MenuItem(test));
+			deleted = true;
+		}
+
+
+//		const char* testing = pressure->getTitle();
+//		lcd->print(testing);
+
+
+
 	}
 	return 0 ;
 }
