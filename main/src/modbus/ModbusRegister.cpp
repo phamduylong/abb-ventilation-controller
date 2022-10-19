@@ -19,9 +19,9 @@ int ModbusRegister::read() {
 	return -1;
 }
 
-void ModbusRegister::write(int value)
+uint8_t ModbusRegister::write(int value)
 {
 	// write only if not
-	if(hr) m->writeSingleRegister(addr, value); // not checking if write succeeds
+	if(hr) return m->writeSingleRegister(addr, value); // not checking if write succeeds
 
 }

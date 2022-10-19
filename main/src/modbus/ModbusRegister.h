@@ -9,7 +9,7 @@ public:
 	ModbusRegister(const ModbusRegister &)  = delete;
 	virtual ~ModbusRegister();
 	int read();
-	void write(int value);
+	uint8_t write(int value);
 private:
 	ModbusMaster *m;
 	int addr;
