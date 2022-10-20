@@ -20,12 +20,12 @@ lcd(lcd_), title(editTitle), max(maximum), min(minimum), incrementValue(step), u
 DecimalEdit::~DecimalEdit() {}
 
 void DecimalEdit::increment() {
-	if(edit < max && edit+incrementValue <= max) edit += incrementValue;
+	if(edit + incrementValue <= max) edit += incrementValue;
 	else edit = max;
 }
 
 void DecimalEdit::decrement() {
-	if(edit > min && edit != incrementValue && edit > incrementValue) edit -= incrementValue;
+	if(edit - incrementValue >= min) edit -= incrementValue;
 	else edit = min;
 }
 

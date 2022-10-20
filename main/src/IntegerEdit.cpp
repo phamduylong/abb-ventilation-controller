@@ -20,12 +20,12 @@ lcd(lcd_), title(editTitle), max(maximum), min(minimum), incrementValue(step), u
 IntegerEdit::~IntegerEdit() {}
 
 void IntegerEdit::increment() {
-	if(edit < max && edit + incrementValue <= max) edit += incrementValue;
+	if(edit + incrementValue <= max) edit += incrementValue;
 	else edit = max;
 }
 
 void IntegerEdit::decrement() {
-	if(edit > min && edit != incrementValue && edit > incrementValue) edit -= incrementValue;
+	if(edit - incrementValue >= min) edit -= incrementValue;
 	else edit = min;
 }
 
