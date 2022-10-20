@@ -29,20 +29,20 @@
 #include "DecimalEdit.h"
 #include "IntegerUnitEdit.h"
 
-#define SSID	    "SmartIotMQTT"
-#define PASSWORD    "SmartIot"
-#define BROKER_IP   "192.168.1.254"
+#define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
+#define PASSWORD    "WAASAdb81" //SmartIot /* Use home wifi password */
+#define BROKER_IP   "10.0.1.3"  //192.168.1.254 /* Broker_IP is the home IP address */
 #define BROKER_PORT  1883
 
 //DEBUG DEFINES //Leave only one ON, or none.
-#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
+#define LPC_PROJ 0 //Use this to switch from home-lpc to proj-lpc
 #define MODBUS_TEST 0
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
 #define CO2_TEST 0
 #define PRES_TEST 0
 #define FAN_PRES_TEST 0
-#define MQTT_TEST 0
+#define MQTT_TEST 1
 //sw1 - A2 - 1 8
 //sw2 - A3 - 0 5
 //sw3 - A4 - 0 6
@@ -208,6 +208,9 @@ int main(void) {
 	fan->setValue(5);
 	int timer = 0;
 	int delay = 0;
+
+	//socketTest();
+	mqttTest();
 
 	menu.event(MenuItem::show); // display first menu item
 	while(1){

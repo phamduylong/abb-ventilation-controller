@@ -8,7 +8,7 @@ import json
 from paho.mqtt import client as mqtt_client
 
 # the following can be given as command line parameters
-default_broker = '192.168.1.10' # 1st parameter
+default_broker = '10.0.1.3' # 1st parameter 192.168.1.10
 default_port = 1883  # 2nd parameter
 default_pub_topic = "controller/status"  # 3rd parameter
 default_sub_topic = "controller/settings" # 4th parameter
