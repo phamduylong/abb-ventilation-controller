@@ -131,10 +131,17 @@ app.get('/user_data', async (req, res) => {
             if (err) throw err;
             if (arr[0] !== undefined) {
                 const user = arr[0];
-                const data = {x: user.logins, y:user.logouts - user.logins};
-                res.json(data);
+                const size = user.logins.length;
+                const logins = arr[0].logins.slice(0, size - 1);
+                console.log(logins.length);
+                console.log(user.logouts.length);
+                const data1 = {x: logins, y: user.logouts.map((v, i) => v - logins[i]), t: 0, z: 0};
+                console.log(data1);
+                res.json(data1);
             }
         });
+
+
     })
 });
 app.get('/logout', (req, res) => {
