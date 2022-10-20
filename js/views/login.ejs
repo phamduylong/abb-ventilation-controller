@@ -115,9 +115,9 @@
 <script type="text/javascript">
     console.log(document.cookie);
     const cookies = document.cookie;
-    const cookie_pieces = cookies.split("; ");
-    console.log(cookie_pieces);
-    const err_str = cookie_pieces[cookie_pieces.length - 1];
+    const index = cookies.indexOf("login_err=");
+    console.log(index);
+    const err_str = cookies.substring(index, index+13);
     console.log(err_str);
     const err_code = Number(err_str.slice(err_str.length-3, err_str.length));
     console.log(err_code)
