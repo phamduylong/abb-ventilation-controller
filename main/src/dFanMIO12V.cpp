@@ -10,13 +10,26 @@ dFanMIO12V::dFanMIO12V(unsigned int retries) : node{1}, ao1{&node, 0x0000}, di1{
 dFanMIO12V::~dFanMIO12V() {}
 
 bool dFanMIO12V::set_speed(int16_t v, bool retry) {
+	//Only values from 0 to 1000 allowed.
 	if (v < 0) v = 0;
 	else if (v > 1000) v = 1000;
-	//Add error checking
-	ao1.write(v);
-	//Pray that it was set up.
-	this->speed = v;
-	return true;
+
+	this->elapsed_time = 0;
+	unsigned int i = (retry ? this->retries : 1);
+	//Will be executed only once in case of success or !retry.
+	do {
+		this->status = !(this->ao1.write(v));
+		--i;
+		//On failure wait 100ms before next loop.
+		if(i && !this->status) {
+			Sleep(100);
+			this->elapsed_time += 100;
+		}
+	}while(!this->status && i);
+	//Set speed to the desired one only if it was set up.
+	if (this->status) this->speed = v;
+	
+	return this->status;
 }
 
 int16_t dFanMIO12V::get_speed() {
@@ -24,7 +37,7 @@ int16_t dFanMIO12V::get_speed() {
 }
 
 int dFanMIO12V::get_aspeed(bool retry) {
-	return di1.read();
+	return this->di1.read();
 }
 
 bool dFanMIO12V::get_status() {
