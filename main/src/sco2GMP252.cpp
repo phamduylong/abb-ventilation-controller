@@ -18,8 +18,8 @@ bool sco2GMP252::read(float &data, bool retry) {
 	int temp;
 	this->status = false;
 	this->elapsed_time = 0;
-	for (int i = 0; !this->status && i <= this->retries; i++) {
-		if (!retry) i = this->retries; //This will be the only attempt if we specified not to retry.
+	//In case of success or !retry code is executed only once.
+	for (unsigned int i = (retry ? 0 : this->retries); !this->status && i <= this->retries; ++i) {
 		co2_hex = 0;
 		temp = 0;
 		//Read second register value.
