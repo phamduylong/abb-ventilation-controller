@@ -20,13 +20,17 @@ lcd(lcd_), title(editTitle), max(maximum), min(minimum), incrementValue(step), u
 IntegerEdit::~IntegerEdit() {}
 
 void IntegerEdit::increment() {
-	if(edit + incrementValue <= max) edit += incrementValue;
-	else edit = max;
+	if(this->modifiable) {
+		if(edit + incrementValue <= max) edit += incrementValue;
+		else edit = max;
+	}
 }
 
 void IntegerEdit::decrement() {
-	if(edit - incrementValue >= min) edit -= incrementValue;
-	else edit = min;
+	if(this->modifiable) {
+		if(edit - incrementValue >= min) edit -= incrementValue;
+		else edit = min;
+	}
 }
 
 void IntegerEdit::accept() {
@@ -38,7 +42,7 @@ void IntegerEdit::cancel() {
 }
 
 void IntegerEdit::setFocus(bool focus) {
-	this->focus = focus;
+	if(this->modifiable) this->focus = focus;
 }
 
 bool IntegerEdit::getFocus() {
@@ -52,16 +56,20 @@ void IntegerEdit::display() {
 	lcd->setCursor(0,1);
 	char s[17];
 	if(focus) {
-		snprintf(s, 17, "     [%2d]%4s  ", edit,unitValue.c_str());
+		snprintf(s, 17, "     [%2d]%4s  ", edit, unitValue.c_str());
 	}
 	else {
-		snprintf(s, 17, "      %2d %4s   ", edit,unitValue.c_str());
+		snprintf(s, 17, "      %2d %4s   ", edit, unitValue.c_str());
 	}
 	lcd->print(s);
 }
 
 bool IntegerEdit::getStatus(){
 	return this->modifiable;
+}
+
+void IntegerEdit::setStatus(bool modify) {
+	this->modifiable = modify;
 }
 
 void IntegerEdit::save() {

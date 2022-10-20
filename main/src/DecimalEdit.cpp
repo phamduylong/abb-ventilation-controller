@@ -20,13 +20,17 @@ lcd(lcd_), title(editTitle), max(maximum), min(minimum), incrementValue(step), u
 DecimalEdit::~DecimalEdit() {}
 
 void DecimalEdit::increment() {
-	if(edit + incrementValue <= max) edit += incrementValue;
-	else edit = max;
+	if(this->modifiable) {
+		if(edit + incrementValue <= max) edit += incrementValue;
+		else edit = max;
+	}
 }
 
 void DecimalEdit::decrement() {
-	if(edit - incrementValue >= min) edit -= incrementValue;
-	else edit = min;
+	if(this->modifiable) {
+		if(edit - incrementValue >= min) edit -= incrementValue;
+		else edit = min;
+	}
 }
 
 void DecimalEdit::accept() {
@@ -38,7 +42,7 @@ void DecimalEdit::cancel() {
 }
 
 void DecimalEdit::setFocus(bool focus) {
-	this->focus = focus;
+	if(this->modifiable) this->focus = focus;
 }
 
 bool DecimalEdit::getFocus() {
@@ -49,6 +53,10 @@ bool DecimalEdit::getStatus(){
 	return this->modifiable;
 }
 
+void DecimalEdit::setStatus(bool modify) {
+	this->modifiable = modify;
+}
+
 void DecimalEdit::display() {
 	lcd->clear();
 	lcd->setCursor(0,0);
@@ -56,10 +64,10 @@ void DecimalEdit::display() {
 	lcd->setCursor(0,1);
 	char s[17];
 	if(focus) {
-		snprintf(s, 17, "     [%2.1f]%4s", edit,unitValue.c_str());
+		snprintf(s, 17, "     [%2.1f]%4s", edit, unitValue.c_str());
 	}
 	else {
-		snprintf(s, 17, "      %2.1f %4s", edit,unitValue.c_str());
+		snprintf(s, 17, "      %2.1f %4s", edit, unitValue.c_str());
 	}
 	lcd->print(s);
 }
