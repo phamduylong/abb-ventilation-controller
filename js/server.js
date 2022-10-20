@@ -70,7 +70,7 @@ app.post('/login', (req, res) => {
                     .then((equal) => {
 
                         if(equal) {
-                            res.status = 200;
+                            res.statusCode = 200;
                             if(req.cookies.curr_user !== user.username) {
                                 res.cookie("curr_user", user.username);
                                 res.cookie("loggedIn", true);
