@@ -1,10 +1,3 @@
-/*
- * sco2GMP252.h
- *
- *  Created on: 17 Oct 2022
- *      Author: Danii
- */
-
 #ifndef SCO2GMP252_H_
 #define SCO2GMP252_H_
 
