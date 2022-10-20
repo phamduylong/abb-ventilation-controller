@@ -92,6 +92,15 @@
             margin: 20px;
         }
 
+        #logout {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        #logout-btn {
+            width: 60%;
+        }
 
     </style>
 
@@ -132,6 +141,11 @@
         <input type="submit">
     </form>
 
+</div>
+<div>
+    <form action="/logout" id="logout">
+        <input id="logout-btn" type="submit" value="Log Out">
+    </form>
 </div>
 </body>
 </html>

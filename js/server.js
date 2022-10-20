@@ -1,5 +1,6 @@
 'use strict'
 
+const nocache = require('nocache');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -17,6 +18,7 @@ const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
+app.use(nocache());
 app.set('view engine', 'ejs');
 app.set("views", (path.join(__dirname, "views")));
 
@@ -24,16 +26,16 @@ app.set("views", (path.join(__dirname, "views")));
 
 
 const port = process.env.PORT || 3000;
-const mqtt_addr = 'mqtt://127.0.0.1:1883';
-const client = mqtt.connect(mqtt_addr, { clientId: 'node', clean: true});
+const broker_url = 'mqtt://127.0.0.1:1883';
+const client = mqtt.connect(broker_url, { clientId: 'node', clean: true });
 const serial_port_nr = "COM23";
 const serial_baud_rate = 115200;
 
 
-const serial_port = new SerialPort({path: serial_port_nr, baudRate: serial_baud_rate});
-const serial_parser = new ReadlineParser({delimiter: '\r\n'});
-serial_port.pipe(serial_parser);
 
+/*const serial_port = new SerialPort({path: serial_port_nr, baudRate: serial_baud_rate});
+const serial_parser = new ReadlineParser({delimiter: '\r\n'});
+serial_port.pipe(serial_parser);*/
 
 
 
@@ -49,8 +51,6 @@ app.post('/signup', (req, res) => {
         addUser(newUser).then(msg => res.redirect('/')).catch(err_msg => res.send(err_msg));
     }).catch(err => res.send(err));
 });
-
-//app.use(auth);
 
 app.get('/', async (req, res) => {
     //default view

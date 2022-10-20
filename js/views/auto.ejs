@@ -92,6 +92,16 @@
             margin: 20px;
         }
 
+        #logout {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        #logout-btn {
+            width: 60%;
+        }
+
 
     </style>
 
@@ -110,17 +120,10 @@
 
         }
 
-        function autoLogOut(e) {
-            e.preventDefault();
-
-        }
-        window.unload = (e) => {
-            window.open("/logout");
-        }
     </script>
 
 </head>
-<body onunload="autoLogOut()">
+<body>
 <div id="switch-container">
     <p id="switch-status">AUTO MODE IS ON</p>
     <label class="switch">
@@ -138,6 +141,13 @@
         <input type="submit">
     </form>
 
+</div>
+
+
+<div>
+<form action="/logout" id="logout">
+    <input id="logout-btn" type="submit" value="Log Out">
+</form>
 </div>
 </body>
 </html>
