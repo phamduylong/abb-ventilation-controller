@@ -8,38 +8,68 @@
 
 </head>
 
-<body>
+<body onload="fetching()">
 <div><canvas id="myChart"></canvas></div>
+<h2 id = "averageTime"></h2>
 <script>
-    fetch('/user_data').then(tmp => tmp.json()).then(arr => {
-        console.log(arr);
-        const x = arr.x;
-        for(let i = 0; i < x.length; ++i) {
-            x[i] = new Date(x[i]).toString();
-        }
-        console.log(x);
-        new Chart("myChart", {
-            type: "line",
-            data: {
-                labels: x,
-                datasets: [{
-                    data: arr.y,
-                    borderColor: "black",
-                    fill: false
-                }]
-            },
-            options: {
-                legend: {display: false},
-                responsive: true,
-                title: {
-                    display: true,
-                    text: "Temperature per each sample"
-                }
+    function fetching() {
+        fetch('/user_data').then(tmp => tmp.json()).then(arr => {
+            const x = arr.x;
+            const diff = arr.y;
+            const time_converted = [];
+            diff.forEach(ms => {
+                const days = Math.floor(ms / (24*60*60*1000));
+                const daysms = ms % (24*60*60*1000);
+                const hours = Math.floor(daysms / (60*60*1000));
+                const hoursms = ms % (60*60*1000);
+                const minutes = Math.floor(hoursms / (60*1000));
+                const minutesms = ms % (60*1000);
+                const sec = Math.floor(minutesms / 1000);
+                time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
+            });
+            console.log(time_converted);
+            for (let i = 0; i < x.length; ++i) {
+                x[i] = new Date(x[i]).toString();
             }
-        });
-    })
+
+            new Chart("myChart", {
+                type: "line",
+                data: {
+                    labels: arr.x,
+                    datasets: [
+                        {
+                            label: "Time used",
+                            data: arr.y,
+                            borderColor: "blue",
+                            fill: false,
+
+                        }
+                    ]
+
+                },
+
+
+                options: {
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    stacked: false,
+                    legend: {display: false},
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: "User login statistics"
+                    }
+                }
+            });
+
+        })
+    }
+
 
 
 </script>
+
 </body>
 </html>
