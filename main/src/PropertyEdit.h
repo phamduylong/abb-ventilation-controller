@@ -21,6 +21,7 @@ public:
 	virtual void display() = 0;
 	virtual bool getStatus() = 0;
 	virtual const char* getTitle() = 0;
+	virtual void setTitle(const char *new_title) = 0;
 };
 
 #endif /* PROPERTYEDIT_H_ */

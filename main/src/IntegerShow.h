@@ -15,7 +15,7 @@
 
 class IntegerShow: public PropertyEdit {
 public:
-	IntegerShow(LiquidCrystal *lcd_, std::string editTitle,std::string unit );
+	IntegerShow(LiquidCrystal *lcd_, std::string editTitle, std::string unit );
 	virtual ~IntegerShow();
 	void accept();
 	void cancel();
@@ -28,8 +28,7 @@ public:
 	void setValue(int value);
 	bool getStatus();
 	const char* getTitle();
-//	void deleteItem();
-
+	void setTitle(const char *new_title);
 private:
 	void save();
 	void displayEditValue();
@@ -39,11 +38,7 @@ private:
 	int value;
 	int edit;
 	bool focus;
-
-
 };
-
-
 
 
 #endif /* INTEGERSHOW_H_ */
