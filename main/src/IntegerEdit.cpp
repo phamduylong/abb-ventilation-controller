@@ -9,25 +9,24 @@
 #include <cstdio>
 #include "LpcUart.h"
 
-IntegerEdit::IntegerEdit(LiquidCrystal *lcd_, std::string editTitle,int maximum,int minimum,int step,std::string unit,bool modify): lcd(lcd_), title(editTitle),max(maximum),min(minimum),incrementValue(step),unitValue(unit),modifiable(modify) {
+IntegerEdit::IntegerEdit(LiquidCrystal *lcd_, std::string editTitle, int maximum, int minimum, int step, std::string unit, bool modify):
+lcd(lcd_), title(editTitle), max(maximum), min(minimum), incrementValue(step), unitValue(unit), modifiable(modify)
+{
 	value = 0;
 	edit = 0;
 	focus = false;
 }
 
-IntegerEdit::~IntegerEdit() {
-}
+IntegerEdit::~IntegerEdit() {}
 
 void IntegerEdit::increment() {
-	if(edit < max && edit+incrementValue <= max)edit+= incrementValue;
-	else{edit = max;}
-
+	if(edit < max && edit + incrementValue <= max) edit += incrementValue;
+	else edit = max;
 }
 
 void IntegerEdit::decrement() {
-	if(edit > min && edit != incrementValue && edit > incrementValue)edit-= incrementValue;
-	else{edit = min;}
-
+	if(edit > min && edit != incrementValue && edit > incrementValue) edit -= incrementValue;
+	else edit = min;
 }
 
 void IntegerEdit::accept() {
@@ -37,7 +36,6 @@ void IntegerEdit::accept() {
 void IntegerEdit::cancel() {
 	edit = value;
 }
-
 
 void IntegerEdit::setFocus(bool focus) {
 	this->focus = focus;
@@ -62,25 +60,29 @@ void IntegerEdit::display() {
 	lcd->print(s);
 }
 
-
 bool IntegerEdit::getStatus(){
 	return this->modifiable;
 }
+
 void IntegerEdit::save() {
 	// set current value to be same as edit value
 	value = edit;
 	// todo: save current value for example to EEPROM for permanent storage
 }
 
-
 int IntegerEdit::getValue() {
 	return value;
 }
+
 void IntegerEdit::setValue(int value) {
 	edit = value;
 	save();
 }
+
 const char* IntegerEdit::getTitle(){
 	return this->title.c_str();
 }
 
+void IntegerEdit::setTitle(const char *new_title) {
+	this->title = new_title;
+}

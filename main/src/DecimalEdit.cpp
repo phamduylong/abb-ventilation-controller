@@ -9,25 +9,24 @@
 #include <cstdio>
 #include "LpcUart.h"
 
-DecimalEdit::DecimalEdit(LiquidCrystal *lcd_, std::string editTitle,float maximum,float minimum,float step,std::string unit,bool modify): lcd(lcd_), title(editTitle),max(maximum),min(minimum),incrementValue(step),unitValue(unit),modifiable(modify) {
+DecimalEdit::DecimalEdit(LiquidCrystal *lcd_, std::string editTitle, float maximum, float minimum, float step, std::string unit, bool modify): 
+lcd(lcd_), title(editTitle), max(maximum), min(minimum), incrementValue(step), unitValue(unit), modifiable(modify)
+{
 	value = 0;
 	edit = 0;
 	focus = false;
 }
 
-DecimalEdit::~DecimalEdit() {
-}
+DecimalEdit::~DecimalEdit() {}
 
 void DecimalEdit::increment() {
-	if(edit < max && edit+incrementValue <= max)edit+= incrementValue;
-	else{edit = max;}
-
+	if(edit < max && edit+incrementValue <= max) edit += incrementValue;
+	else edit = max;
 }
 
 void DecimalEdit::decrement() {
-	if(edit > min && edit != incrementValue && edit > incrementValue)edit-= incrementValue;
-	else{edit = min;}
-
+	if(edit > min && edit != incrementValue && edit > incrementValue) edit -= incrementValue;
+	else edit = min;
 }
 
 void DecimalEdit::accept() {
@@ -38,7 +37,6 @@ void DecimalEdit::cancel() {
 	edit = value;
 }
 
-
 void DecimalEdit::setFocus(bool focus) {
 	this->focus = focus;
 }
@@ -46,6 +44,7 @@ void DecimalEdit::setFocus(bool focus) {
 bool DecimalEdit::getFocus() {
 	return this->focus;
 }
+
 bool DecimalEdit::getStatus(){
 	return this->modifiable;
 }
@@ -70,26 +69,25 @@ void DecimalEdit::display() {
 //	lpc->write(s);
 //}
 
-
 void DecimalEdit::save() {
 	// set current value to be same as edit value
 	value = edit;
 	// todo: save current value for example to EEPROM for permanent storage
 }
 
-
 float DecimalEdit::getValue() {
 	return value;
 }
+
 void DecimalEdit::setValue(float value) {
 	edit = value;
 	save();
 }
 
-const char* DecimalEdit::getTitle(){
+const char* DecimalEdit::getTitle() {
 	return this->title.c_str();
 }
 
-
-
-
+void DecimalEdit::setTitle(const char *new_title) {
+	this->title = new_title;
+}

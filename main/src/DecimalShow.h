@@ -15,7 +15,7 @@
 
 class DecimalShow: public PropertyEdit {
 public:
-	DecimalShow(LiquidCrystal *lcd_, std::string editTitle,std::string unit );
+	DecimalShow(LiquidCrystal *lcd_, std::string editTitle, std::string unit );
 	virtual ~DecimalShow();
 	void accept();
 	void cancel();
@@ -28,8 +28,7 @@ public:
 	void setValue(int value);
 	bool getStatus();
 	const char* getTitle();
-//	void deleteItem();
-
+	void setTitle(const char *new_title);
 private:
 	void save();
 	void displayEditValue();
@@ -40,11 +39,7 @@ private:
 	float value;
 	float edit;
 	bool focus;
-
-
 };
-
-
 
 
 #endif /* DECIMALSHOW_H_ */
