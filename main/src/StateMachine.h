@@ -31,6 +31,7 @@ private:
 	void sinit(const Event& e);
 	void sauto(const Event& e);
 	void smanual(const Event& e);
+	void ssensors(const Event& e);
 
 	//Sensor errors.
 	enum sErr {sErno, sErrht, sErco2, sErpres, sErfan};
@@ -55,15 +56,15 @@ private:
 	DecimalShow *mtemp;
 	DecimalShow *mco2;
 	IntegerEdit *mfanm;
-	DecimalShow *mpresm;
-	IntegerShow *mfana;
+	DecimalShow *mpresm; //Should be redundant.
+	IntegerShow *mfana; //Should be redundant.
 	DecimalEdit *mpresa;
 	MenuItem *mirhum;
 	MenuItem *mitemp;
 	MenuItem *mico2;
 	MenuItem *mifanm;
-	MenuItem *mipresm;
-	MenuItem *mifana;
+	MenuItem *mipresm; //Should be redundant.
+	MenuItem *mifana; //Should be redundant.
 	MenuItem *mipresa;
 
 	//Sensors and devices.

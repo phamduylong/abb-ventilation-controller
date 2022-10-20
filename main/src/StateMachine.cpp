@@ -16,25 +16,23 @@ StateMachine::StateMachine(LpcUart *uart, LiquidCrystal *lcd, bool fast) : uart(
 	this->mitemp = new MenuItem(this->mtemp);
 	this->mco2 = new DecimalShow(this->lcd, std::string("CO2 Level"), std::string("%"));
 	this->mico2 = new MenuItem(this->mco2);
-	//Maybe it is better to add flag and title swapping?
-	this->mfana = new IntegerShow(this->lcd, std::string("Fan Speed"), std::string("%"));
-	this->mifana = new MenuItem(this->mfana);
-	this->mfanm = new IntegerEdit(this->lcd, std::string("Fan Speed     M"), 100, 0, 10, std::string("%"), true);
+	this->mfana = new IntegerShow(this->lcd, std::string("Fan Speed"), std::string("%")); //Should be redundant.
+	this->mifana = new MenuItem(this->mfana); //Should be redundant.
+	this->mfanm = new IntegerEdit(this->lcd, std::string("Fan Speed"), 100, 0, 10, std::string("%"), true);
 	this->mifanm = new MenuItem(this->mfanm);
-	//Not quite what we need.
-	this->mpresa = new DecimalEdit(this->lcd, std::string("Pressure      M"), 100, 0, 10, std::string("%"), true);
+	this->mpresa = new DecimalEdit(this->lcd, std::string("Pressure"), 100, 0, 10, std::string("%"), true);
 	this->mipresa = new MenuItem(this->mpresa);
-	this->mpresm = new DecimalShow(this->lcd, std::string("Pressure"), std::string("%"));
-	this->mipresm = new MenuItem(this->mpresm);
+	this->mpresm = new DecimalShow(this->lcd, std::string("Pressure"), std::string("%")); //Should be redundant.
+	this->mipresm = new MenuItem(this->mpresm); //Should be redundant.
 
 	//Add all menu items to the menu, don't care for the mode just yet.
 	this->menu.addItem(this->mirhum);
 	this->menu.addItem(this->mitemp);
 	this->menu.addItem(this->mico2);
-	this->menu.addItem(this->mifana);
+	this->menu.addItem(this->mifana); //Should be redundant.
 	this->menu.addItem(this->mifanm);
 	this->menu.addItem(this->mipresa);
-	this->menu.addItem(this->mipresm);
+	this->menu.addItem(this->mipresm); //Should be redundant.
 
 	//Go into init state
 	this->currentState = &StateMachine::sinit;
@@ -49,14 +47,14 @@ StateMachine::~StateMachine() {
 	delete this->mitemp;
 	delete this->mco2;
 	delete this->mico2;
-	delete this->mfana;
-	delete this->mifana;
+	delete this->mfana; //Should be redundant.
+	delete this->mifana; //Should be redundant.
 	delete this->mfanm;
 	delete this->mifanm;
 	delete this->mpresa;
 	delete this->mipresa;
-	delete this->mpresm;
-	delete this->mipresm;
+	delete this->mpresm; //Should be redundant.
+	delete this->mipresm; //Should be redundant.
 }
 
 void StateMachine::SetState(state_ptr newState) {
@@ -110,7 +108,7 @@ void StateMachine::sauto(const Event& e) {
 		break;
 	case Event::eTick:
 		this->timer++;
-		if (this->timer >= this->timeout) SetState(&StateMachine::sinit);
+		if (this->timer >= this->timeout) SetState(&StateMachine::ssensors);
 		break;
 	default:
 		break;
@@ -132,7 +130,29 @@ void StateMachine::smanual(const Event& e) {
 		break;
 	case Event::eTick:
 		this->timer++;
-		if (this->timer >= this->timeout) SetState(&StateMachine::sinit);
+		if (this->timer >= this->timeout) SetState(&StateMachine::ssensors);
+		break;
+	default:
+		break;
+	}
+}
+
+void StateMachine::ssensors(const Event& e) {
+	switch (e.type) 
+	{
+	case Event::eEnter:
+		this->uart->write("Entered ssensors.\r\n");
+		this->timer = 0;
+		break;
+	case Event::eExit:
+		this->uart->write("Exited ssensors.\r\n");
+		break;
+	case Event::eSwitchAuto:
+
+		break;
+	case Event::eTick:
+		this->timer++;
+		if (this->timer >= this->timeout) SetState(&StateMachine::sauto);
 		break;
 	default:
 		break;
@@ -145,10 +165,10 @@ void StateMachine::smanual(const Event& e) {
 
 void StateMachine::check_sensors() {
 	//We should be able to communicate with all sensors.
-	sfrht_up = this->srht.read_rhum(this->rh, !fast);
-	sfrht_up = this->srht.read_temp(this->temp, !fast);
-	sfco2_up = this->sco2.read(this->co2, !fast);
+	sfrht_up = this->srht.read(this->temp, this->rh, !fast);
 	sfpres_up = this->spres.read(this->pres, !fast);
+	//CO2 sensor requires other sensors readings. (TODO: implement that functionality)
+	sfco2_up = this->sco2.read(this->co2, !fast);
 }
 
 void StateMachine::readRelHum() {
