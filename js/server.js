@@ -4,6 +4,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const mqtt = require('mqtt');
+const {SerialPort} = require('serialport');
+const {ReadlineParser} = require("@serialport/parser-readline");
 const {hashPassword, verifyPassword} = require("./pbkdf2");
 
 const MongoClient = require('mongodb').MongoClient;
@@ -17,7 +20,22 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.set("views", (path.join(__dirname, "views")));
 
+
+
+
 const port = process.env.PORT || 3000;
+const mqtt_addr = 'mqtt://127.0.0.1:1883';
+const client = mqtt.connect(mqtt_addr, { clientId: 'node', clean: true});
+const serial_port_nr = "COM23";
+const serial_baud_rate = 115200;
+
+
+const serial_port = new SerialPort({path: serial_port_nr, baudRate: serial_baud_rate});
+const serial_parser = new ReadlineParser({delimiter: '\r\n'});
+serial_port.pipe(serial_parser);
+
+
+
 
 app.get('/signup', (req, res) => {
     res.render('signup');
