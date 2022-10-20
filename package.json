@@ -10,6 +10,7 @@
     "express-session": "^1.17.3",
     "mongodb": "^4.10.0",
     "mqtt": "^4.3.7",
+    "nocache": "^3.0.4",
     "node-sessionstorage": "^1.0.0",
     "serialport": "^10.4.0"
   }
