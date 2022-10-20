@@ -44,7 +44,7 @@
 #define HUM_TEMP_TEST 0
 #define CO2_TEST 0
 #define PRES_TEST 0
-#define FAN_PRES_TEST 1
+#define FAN_PRES_TEST 0
 #define MQTT_TEST 0
 //sw1 - A2 - 1 8
 //sw2 - A3 - 0 5
@@ -197,6 +197,7 @@ int main(void) {
 
 
 	//LCD
+//	LiquidCrystal *lcd2 = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
 	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
 	// configure display geometry
 	lcd->begin(16, 2);
@@ -223,6 +224,7 @@ int main(void) {
 	bool sw1_pressed = false; //"ok" button flag.
 	bool sw2_pressed = false; //"down" button flag.
 	bool sw3_pressed = false; //"up" button flag.
+	bool control_action = false;
 	bool deleted = false;
 
 	menu.event(MenuItem::show); // display first menu item
@@ -240,24 +242,36 @@ int main(void) {
 		if(sw1.read()){
 			sw1_pressed = true;
 		}else if(sw1_pressed){
-			delay = timer + 10000;
 			sw1_pressed = false;
-			menu.event(MenuItem::up);
 		}
 		if(sw2.read()){
 			sw2_pressed = true;
-		}else if(sw2_pressed){
+		}else if(sw1_pressed && sw2_pressed) {
+			delay = timer + 10000;
+			sw1_pressed = false;
+			sw2_pressed = false;
+			menu.event(MenuItem::ok);
+		}
+		else if(sw2_pressed){
+
 			delay = timer + 10000;
 			sw2_pressed = false;
-			menu.event(MenuItem::down);
+			menu.event(MenuItem::up);
 		}
 
 		if(sw3.read()){
 			sw3_pressed = true;
-		}else if(sw3_pressed){
+		} else if (sw1_pressed && sw3_pressed) {
 			delay = timer + 10000;
 			sw3_pressed = false;
-			menu.event(MenuItem::ok);
+			sw1_pressed = false;
+			pressure->setStatus(!(pressure->getStatus()));
+
+		}
+		else if(sw3_pressed){
+			delay = timer + 10000;
+			sw3_pressed = false;
+			menu.event(MenuItem::down);
 		}
 
 		if(deleted == false){

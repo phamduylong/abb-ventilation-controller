@@ -55,6 +55,11 @@ bool DecimalEdit::getStatus(){
 
 void DecimalEdit::setStatus(bool modify) {
 	this->modifiable = modify;
+	if(this->focus) {
+		if(!this->modifiable) this->focus = false;
+		this->cancel();
+		this->display();
+	}
 }
 
 void DecimalEdit::display() {

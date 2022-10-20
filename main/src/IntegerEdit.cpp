@@ -70,6 +70,12 @@ bool IntegerEdit::getStatus(){
 
 void IntegerEdit::setStatus(bool modify) {
 	this->modifiable = modify;
+	if(this->focus) {
+		if(!this->modifiable) this->focus = false;
+		this->cancel();
+		this->display();
+	}
+
 }
 
 void IntegerEdit::save() {
