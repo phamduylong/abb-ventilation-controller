@@ -29,7 +29,7 @@
             });
             console.log(time_converted);
             for (let i = 0; i < x.length; ++i) {
-                x[i] = new Date(x[i]).toString();
+                x[i] = new Date(x[i]).toString().substring(0, 21);
             }
 
             new Chart("myChart", {
