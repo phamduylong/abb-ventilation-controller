@@ -56,12 +56,20 @@ bool sco2GMP252::read(float &data, bool retry) {
 	return this->status;
 }
 
+bool read(float &data, float temp, float rh, float pres, bool retry) {
+
+}
+
 bool sco2GMP252::get_status() {
 	return this->status;
 }
 
 unsigned int sco2GMP252::get_elapsed_time() {
 	return this->elapsed_time;
+}
+
+bool set_precise(bool mode, srhtHMP60 *srht, sPressureSDP610 *spres) {
+
 }
 
 //Convertion of 32 binary representation of decimal to float via pointer.
@@ -93,3 +101,7 @@ float binary32_to_float(const unsigned int bin32) {
 	return res;
 }
 */
+
+void sco2GMP252::read_sensors() {
+
+}
