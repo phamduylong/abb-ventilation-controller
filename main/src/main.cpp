@@ -208,15 +208,14 @@ int main(void) {
 	StateMachine base(lcd);
 	EventQueue events;
 
-//TODO: Add scrolling functionality.
+	unsigned int up_ok_held = 0;
+	unsigned int down_back_held = 0;
 	bool control_pressed = false; //control button flag.
 	bool up_ok_pressed = false; //"up"/"ok" button flag.
 	bool down_back_pressed = false; //"down"/"back" button flag.
 	bool auto_fast_pressed = false; //"auto"/"fast" button flag.
 	while(1) {
 		Sleep(1);
-		//Tick is given every 1 ms.
-		events.publish(Event(Event::eTick, 0));
 		//Control button
 		if(control.read()) {
 			control_pressed = true;
@@ -227,42 +226,47 @@ int main(void) {
 		//Up / Ok
 		if(up_ok.read()) {
 			up_ok_pressed = true;
+			++up_ok_held;
+			//Button held more than 1.5s, send rapid commands "up" if control is released.
+			if(!control_pressed && up_ok_held >= 1500) {
+				events.publish(Event(Event::eKey, MenuItem::up)); //Up
+				--up_ok_held; //Avoid overflow.
+			}
 		}
-		else if(up_ok_pressed && !control_pressed) { //Up
+		else if(up_ok_pressed) {
+			if(control_pressed) events.publish(Event(Event::eKey, MenuItem::ok)); //Ok
+			else events.publish(Event(Event::eKey, MenuItem::up)); //Up
 			up_ok_pressed = false;
-			events.publish(Event(Event::eKey, MenuItem::up));
-		}
-		else if(up_ok_pressed && control_pressed) { //Ok
-			up_ok_pressed = false;
-			control_pressed = false;
-			events.publish(Event(Event::eKey, MenuItem::ok));
+			up_ok_held = 0;
 		}
 		//Down / Back
 		if(down_back.read()) {
 			down_back_pressed = true;
+			++down_back_held;
+			//Button held more than 1.5s, send rapid commands "down" if control is released.
+			if(!control_pressed && down_back_held >= 1500) {
+				events.publish(Event(Event::eKey, MenuItem::down)); //Down
+				--down_back_held; //Avoid overflow.
+			}
 		}
-		else if(down_back_pressed && !control_pressed) { //Down
+		else if(down_back_pressed) { 
+			if(control_pressed) events.publish(Event(Event::eKey, MenuItem::back)); //Back
+			else events.publish(Event(Event::eKey, MenuItem::down)); //Down
 			down_back_pressed = false;
-			events.publish(Event(Event::eKey, MenuItem::down));
+			down_back_held = 0;
 		}
-		else if(down_back_pressed && control_pressed) { //Back
-			down_back_pressed = false;
-			control_pressed = false;
-			events.publish(Event(Event::eKey, MenuItem::back));
-		}
-		//Auto / Fast
+		//Auto / Fast (No rapid commands for you!)
 		if(auto_fast.read()) {
 			auto_fast_pressed = true;
 		}
-		else if(auto_fast_pressed && !control_pressed) { //Auto
+		else if(auto_fast_pressed) {
+			if(control_pressed) events.publish(Event(Event::eKey, StateMachine::eFastToggle)); //Fast
+			else events.publish(Event(Event::eKey, StateMachine::eAutoToggle)); //Auto
 			auto_fast_pressed = false;
-			events.publish(Event(Event::eKey, StateMachine::eAutoToggle));
 		}
-		else if(auto_fast_pressed && control_pressed) { //Fast
-			auto_fast_pressed = false;
-			control_pressed = false;
-			events.publish(Event(Event::eKey, StateMachine::eFastToggle));
-		}
+
+		//Tick is given every 1 ms.
+		events.publish(Event(Event::eTick, 0));
 
 		while (events.pending()) {
 			base.HandleState(events.consume());
