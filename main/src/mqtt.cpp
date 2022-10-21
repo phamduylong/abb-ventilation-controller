@@ -15,8 +15,7 @@ void message_arrived(MessageData *data){ //here should activate actuator to reac
 	//return message->payload;
 }
 
-mqtt::mqtt(MQTTClient &client_, Network &network_, char* ssid, char* pass, char* broker_ip, int broker_port ):
-		client(&client_),network(&network_), SSID(ssid), PASSWORD(pass), BROKER_IP(broker_ip), BROKER_PORT(broker_port) {
+mqtt::mqtt(char* ssid, char* pass, char* broker_ip, int broker_port ): SSID(ssid), PASSWORD(pass), BROKER_IP(broker_ip), BROKER_PORT(broker_port) {
 	// TODO Auto-generated constructor stub
 	connectData = MQTTPacket_connectData_initializer;
 }
@@ -27,19 +26,20 @@ mqtt::~mqtt() {
 }
 
 void mqtt::mqtt_init(){
-
 	unsigned char sendbuf[256], readbuf[256];
-	NetworkInit(network,SSID,PASSWORD);
-	MQTTClientInit(client, network, 30000, sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
+
+	NetworkInit(&network,SSID,PASSWORD);
+
+	MQTTClientInit(&client, &network, 30000, sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
 
 	char* address = (char*) BROKER_IP;
-	if ((rc = NetworkConnect(network, address, BROKER_PORT)) != 0)
+	if ((rc = NetworkConnect(&network, address, BROKER_PORT)) != 0)
 		printf("Return code from network connect is %d\n", rc);
 
 	connectData.MQTTVersion = 3;
-	connectData.clientID.cstring = (char *)"web_User";
+	connectData.clientID.cstring = (char *)"Ventilation_Web";
 
-	if ((rc = MQTTConnect(client, &connectData)) != 0)
+	if ((rc = MQTTConnect(&client, &connectData)) != 0)
 		printf("Return code from MQTT connect is %d\n", rc);
 	else
 		printf("MQTT Connected\n");
@@ -48,17 +48,26 @@ void mqtt::mqtt_init(){
 
 void mqtt::mqtt_subscribe(const char* sub_topic){
 
-	if ((rc = MQTTSubscribe(client, sub_topic, QOS2, message_arrived)) != 0)
+	if ((rc = MQTTSubscribe(&client, sub_topic, QOS2, message_arrived)) != 0)
 		printf("Return code from MQTT subscribe is %d\n", rc);
 }
 
 
-void mqtt::mqtt_publish(const char* pub_topic){
+void mqtt::mqtt_unsubscribe(const char* sub_topic){
+	if((rc = MQTTUnsubscribe(&client, sub_topci)) !=0){
+		printf("Topic is Unsubscribed .");
+	}
+}
+
+
+
+void mqtt::mqtt_publish(const char* pub_topic, SENSOR_DATA *data){
 
 	uint32_t sec = 0;
+
 	if(get_ticks() / 1000 != sec) {
 		MQTTMessage message;
-		char payload[30];
+		char payload[256];
 
 		sec = get_ticks() / 1000;
 		++count;
@@ -66,15 +75,16 @@ void mqtt::mqtt_publish(const char* pub_topic){
 		message.qos = QOS1;
 		message.retained = 0;
 		message.payload = payload;
-		sprintf(payload, "message number %d", count);
+		sprintf(payload, "{\"nr\": %d, \"Speed\": %d, \"Setpoint\": %d, \"Pressure\": %d, \"auto\": %s, \"error\": %s, \"co2\": %d, \"rh\": %d, \"temp\": %d}",
+				count, data->speed, data->setpoint, data->pressure, data->mode, data->error, data->co2, data->rh, data->temp);
 		message.payloadlen = strlen(payload);
 
-		if ((rc = MQTTPublish(client, pub_topic, &message)) != 0)
+		if ((rc = MQTTPublish(&client, pub_topic, &message)) != 0)
 			printf("Return code from MQTT publish is %d\n", rc);
 	}
 
 	// run MQTT for 100 ms
-	if ((rc = MQTTYield(client, 100)) != 0){
+	if ((rc = MQTTYield(&client, 100)) != 0){
 		printf("Return code from yield is %d\n", rc);
 	}
 
@@ -84,7 +94,7 @@ printf("MQTT connection closed!\n");
 
 void mqtt::mqtt_reconnect(){
 	if(rc != 0) {
-		NetworkDisconnect(network);
+		NetworkDisconnect(&network);
 		// we should re-establish connection!!
 		mqtt_init();
 	}

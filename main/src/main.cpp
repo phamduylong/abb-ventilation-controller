@@ -28,6 +28,8 @@
 #include "IntegerEdit.h"
 #include "DecimalEdit.h"
 #include "IntegerUnitEdit.h"
+#include "mqtt.h"
+
 
 #define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
 #define PASSWORD    "WAASAdb81" //SmartIot /* Use home wifi password */
@@ -43,6 +45,7 @@
 #define PRES_TEST 0
 #define FAN_PRES_TEST 0
 #define MQTT_TEST 1
+#define SOCKET_TEST 0
 //sw1 - A2 - 1 8
 //sw2 - A3 - 0 5
 //sw3 - A4 - 0 6
@@ -209,11 +212,16 @@ int main(void) {
 	int timer = 0;
 	int delay = 0;
 
-	//socketTest();
+
+	//client and network
+
+//	mqtt mqtt(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
+//	mqtt.mqtt_init();
 	mqttTest();
 
 	menu.event(MenuItem::show); // display first menu item
 	while(1){
+		//mqtt.mqtt_subscribe("test/sample");
 		timer = millis();
 
 		if(timer == 10000 || timer == delay){
@@ -519,7 +527,7 @@ void abbModbusTest()
 // WEB STUFF ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if MQTT_TEST  // example of opening a plain socket
+#if SOCKET_TEST  // example of opening a plain socket
 void socketTest()
 {
 
@@ -564,7 +572,7 @@ void mqttTest()
 	/* connect to mqtt broker, subscribe to a topic, send and receive messages regularly every 1 sec */
 	MQTTClient client;
 	Network network;
-	unsigned char sendbuf[256], readbuf[2556];
+	unsigned char sendbuf[256], readbuf[256];
 	int rc = 0, count = 0;
 	MQTTPacket_connectData connectData = MQTTPacket_connectData_initializer;
 
@@ -593,15 +601,19 @@ void mqttTest()
 		// send one message per second
 		if(get_ticks() / 1000 != sec) {
 			MQTTMessage message;
-			char payload[30];
+			char payload[256];
 
 			sec = get_ticks() / 1000;
 			++count;
 
+//			snprintf(msg, 128, "{\r\n\t\"samplenr\": %d, \r\n\t\"timestamp\": %llu, \r\n\t\"temperature\" :%d\r\n}\r\n", sampleId, timeStamp, temp);
+
+
+
 			message.qos = QOS1;
 			message.retained = 0;
 			message.payload = payload;
-			sprintf(payload, "message number %d", count);
+			sprintf(payload, "{\"nr\": %d, \"Speed\": %d, \"Setpoint\": %d, \"Pressure\": %d, \"auto\": %s, \"error\": %s, \"co2\": %d, \"rh\": %d, \"temp\": %d}", count, 23, 32, 10, "false", "false", 200, 37, 25);
 			message.payloadlen = strlen(payload);
 
 			if ((rc = MQTTPublish(&client, "test/sample/a", &message)) != 0)

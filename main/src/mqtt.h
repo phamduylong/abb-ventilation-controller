@@ -23,17 +23,17 @@
 class mqtt {
 public:
 
-	mqtt(MQTTClient &client_, Network &network_, char* ssid, char* pass, char* broker_ip, int broker_port);
+	mqtt(char* ssid, char* pass, char* broker_ip, int broker_port);
 	virtual ~mqtt();
 	void mqtt_init();
-	void mqtt_subscribe(const char* sub_msg);
-	void mqtt_publish(const char* pub_msg);
+	void mqtt_subscribe(const char* sub_topic);
+	void mqtt_publish(const char* pub_topic);
 	void mqtt_reconnect();
 
 
 private:
-	MQTTClient *client;
-	Network *network;
+	MQTTClient client;
+	Network network;
 	MQTTPacket_connectData connectData;
 	int rc;
 	int count;
