@@ -46,22 +46,22 @@ void mqtt::mqtt_init(){
 }
 
 
-void mqtt::mqtt_subscribe(const char* sub_topic){
+void mqtt::mqtt_subscribe(const char* topic){
 
-	if ((rc = MQTTSubscribe(&client, sub_topic, QOS2, message_arrived)) != 0)
+	if ((rc = MQTTSubscribe(&client, topic, QOS2, message_arrived)) != 0)
 		printf("Return code from MQTT subscribe is %d\n", rc);
 }
 
 
-void mqtt::mqtt_unsubscribe(const char* sub_topic){
-	if((rc = MQTTUnsubscribe(&client, sub_topci)) !=0){
-		printf("Topic is Unsubscribed .");
+void mqtt::mqtt_unsubscribe(const char* topic){
+	if((rc = MQTTUnsubscribe(&client, topic)) != 0){
+		printf("Unsubscribed from topic %s", sub_topic);
 	}
 }
 
 
 
-void mqtt::mqtt_publish(const char* pub_topic, SENSOR_DATA *data){
+void mqtt::mqtt_publish(const char* pub_topic, const char *data){
 
 	uint32_t sec = 0;
 
