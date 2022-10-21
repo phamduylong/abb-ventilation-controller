@@ -10,7 +10,7 @@
 
 class Event {
 public:
-	enum eventType {eEnter, eExit, eSwitchAuto, eTick, eCriticalError};
+	enum eventType {eEnter, eExit, eKey, eTick, eCriticalError};
 	Event(eventType e = eTick, int v = 0);
 	virtual ~Event();
 	eventType type;

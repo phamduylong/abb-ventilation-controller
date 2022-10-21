@@ -1,6 +1,6 @@
 #include "StateMachine.h"
 
-StateMachine::StateMachine(LpcUart *uart, LiquidCrystal *lcd, bool fast) : uart(uart), lcd(lcd), fast(fast) {
+StateMachine::StateMachine(LiquidCrystal *lcd, bool fast) : lcd(lcd), fast(fast) {
 	this->timeout = 100; //Buttons are read every millisecond. Sensors should be checked every 100ms.
 	this->rh = 0;
 	this->temp = 0;
@@ -72,7 +72,7 @@ void StateMachine::HandleState(const Event& e) {
  * @brief Handles initialisation.
  * @paragraph State Init. Initialises UI and enstablishes connection with sensors.
  * Nothing is modifiable.
- * @param e 
+ * @param e Event to handle.
  */
 void StateMachine::sinit(const Event& e) {
 	switch (e.type) 
@@ -88,6 +88,7 @@ void StateMachine::sinit(const Event& e) {
 		printf("Pressure  sensor state: %s\n", this->sfpres_up ? "UP" : "DOWN");
 		printf("CO2       sensor state: %s\n", this->sfco2_up ? "UP" : "DOWN");
 		// /Debug prints.
+		this->modeauto ? SetState(&StateMachine::sauto) : SetState(&StateMachine::smanual);
 		break;
 	case Event::eExit:
 		this->busy = false;
@@ -95,12 +96,10 @@ void StateMachine::sinit(const Event& e) {
 		this->screens_update();
 		printf("Exited sinit.\n");
 		break;
-	case Event::eSwitchAuto:
-		this->modeauto = !this->modeauto;
+	//Do nothing on tick and key press, we are too busy.
+	case Event::eKey:
 		break;
 	case Event::eTick:
-		this->timer++;
-		if (this->timer >= this->timeout) this->modeauto ? SetState(&StateMachine::sauto) : SetState(&StateMachine::smanual);
 		break;
 	default:
 		break;
@@ -130,13 +129,35 @@ void StateMachine::sauto(const Event& e) {
 		this->screen_lock(this->mpres);
 		printf("Exited sauto.\n");
 		break;
-	case Event::eSwitchAuto:
-		this->modeauto = false;
-		SetState(&StateMachine::ssensors);
+	case Event::eKey:
+		switch (e.value)
+		{
+		case MenuItem::up:
+			this->menu.event(MenuItem::up);
+			break;
+		case MenuItem::down:
+			this->menu.event(MenuItem::down);
+			break;
+		case MenuItem::ok:
+			this->menu.event(MenuItem::ok);
+			break;
+		case MenuItem::back:
+			this->menu.event(MenuItem::back);
+			break;
+		case eAutoToggle:
+			this->modeauto = false;
+			SetState(&StateMachine::ssensors);
+			break;
+		case eFastToggle:
+			this->fast = !this->fast;
+			break;
+		default:
+			break;
+		}
 		break;
 	case Event::eTick:
 		this->timer++;
-		if (this->timer >= this->timeout) check_sensors();//Quickly read sensors //SetState(&StateMachine::ssensors);
+		if (this->timer >= this->timeout) check_sensors(); //Quickly read sensors
 		break;
 	default:
 		break;
@@ -166,13 +187,35 @@ void StateMachine::smanual(const Event& e) {
 		this->screen_lock(this->mfan);
 		printf("Exited smanual.\n");
 		break;
-	case Event::eSwitchAuto:
-		this->modeauto = true;
-		SetState(&StateMachine::ssensors);
+	case Event::eKey:
+		switch (e.value)
+		{
+		case MenuItem::up:
+			this->menu.event(MenuItem::up);
+			break;
+		case MenuItem::down:
+			this->menu.event(MenuItem::down);
+			break;
+		case MenuItem::ok:
+			this->menu.event(MenuItem::ok);
+			break;
+		case MenuItem::back:
+			this->menu.event(MenuItem::back);
+			break;
+		case eAutoToggle:
+			this->modeauto = true;
+			SetState(&StateMachine::ssensors);
+			break;
+		case eFastToggle:
+			this->fast = !this->fast;
+			break;
+		default:
+			break;
+		}
 		break;
 	case Event::eTick:
 		this->timer++;
-		if (this->timer >= this->timeout) check_sensors();//Quickly read sensors //SetState(&StateMachine::ssensors);
+		if (this->timer >= this->timeout) check_sensors(); //Quickly read sensors
 		break;
 	default:
 		break;
@@ -207,8 +250,8 @@ void StateMachine::ssensors(const Event& e) {
 		this->busy = false;
 		printf("Exited ssensors.\n");
 		break;
-	//Do nothing on tick and auto/manual switch, we are too busy.
-	case Event::eSwitchAuto:
+	//Do nothing on tick and key press, we are too busy.
+	case Event::eKey:
 		break;
 	case Event::eTick:
 		break;

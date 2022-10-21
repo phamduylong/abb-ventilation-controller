@@ -31,6 +31,8 @@
 #include "DecimalEdit.h"
 #include "DecimalShow.h"
 #include "dFanMIO12V.h"
+#include "Event.h"
+#include "EventQueue.h"
 #include "StateMachine.h"
 
 #define SSID	    "SmartIotMQTT"
@@ -186,10 +188,10 @@ int main(void) {
 
 	//Buttons init
 #if LPC_PROJ
-	DigitalIoPin sw1(1, 8, true, true, true);
-	DigitalIoPin sw2(0, 5, true, true, true);
-	DigitalIoPin sw3(0, 6, true, true, true);
-	DigitalIoPin sw4(0, 7, true, true, true);
+	DigitalIoPin control(1, 8, true, true, true);
+	DigitalIoPin up_ok(0, 5, true, true, true);
+	DigitalIoPin down_back(0, 6, true, true, true);
+	DigitalIoPin auto_fast(0, 7, true, true, true);
 #else
 	DigitalIoPin sw1(0, 17 ,true ,true, true);
 	DigitalIoPin sw2(1, 11 ,true ,true, true);
@@ -203,9 +205,68 @@ int main(void) {
 	lcd->clear();
 
 #if LPC_PROJ
-	StateMachine base();
+	StateMachine base(lcd);
+	EventQueue events;
+
+//TODO: Add scrolling functionality.
+	bool control_pressed = false; //control button flag.
+	bool up_ok_pressed = false; //"up"/"ok" button flag.
+	bool down_back_pressed = false; //"down"/"back" button flag.
+	bool auto_fast_pressed = false; //"auto"/"fast" button flag.
 	while(1) {
 		Sleep(1);
+		//Tick is given every 1 ms.
+		events.publish(Event(Event::eTick, 0));
+		//Control button
+		if(control.read()) {
+			control_pressed = true;
+		}
+		else if(control_pressed){
+			control_pressed = false;
+		}
+		//Up / Ok
+		if(up_ok.read()) {
+			up_ok_pressed = true;
+		}
+		else if(up_ok_pressed && !control_pressed) { //Up
+			up_ok_pressed = false;
+			events.publish(Event(Event::eKey, MenuItem::up));
+		}
+		else if(up_ok_pressed && control_pressed) { //Ok
+			up_ok_pressed = false;
+			control_pressed = false;
+			events.publish(Event(Event::eKey, MenuItem::ok));
+		}
+		//Down / Back
+		if(down_back.read()) {
+			down_back_pressed = true;
+		}
+		else if(down_back_pressed && !control_pressed) { //Down
+			down_back_pressed = false;
+			events.publish(Event(Event::eKey, MenuItem::down));
+		}
+		else if(down_back_pressed && control_pressed) { //Back
+			down_back_pressed = false;
+			control_pressed = false;
+			events.publish(Event(Event::eKey, MenuItem::back));
+		}
+		//Auto / Fast
+		if(auto_fast.read()) {
+			auto_fast_pressed = true;
+		}
+		else if(auto_fast_pressed && !control_pressed) { //Auto
+			auto_fast_pressed = false;
+			events.publish(Event(Event::eKey, StateMachine::eAutoToggle));
+		}
+		else if(auto_fast_pressed && control_pressed) { //Fast
+			auto_fast_pressed = false;
+			control_pressed = false;
+			events.publish(Event(Event::eKey, StateMachine::eFastToggle));
+		}
+
+		while (events.pending()) {
+			base.HandleState(events.consume());
+		}
 	}
 #else	
 	SimpleMenu menu;

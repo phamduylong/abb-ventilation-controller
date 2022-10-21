@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string>
 #include "Event.h"
-#include "LpcUart.h"
 #include "retarget_uart.h"
 #include "DigitalIoPin.h"
 #include "sPressureSDP610.h"
@@ -24,9 +23,10 @@ typedef void (StateMachine::*state_ptr)(const Event &);
 
 class StateMachine {
 public:
-	StateMachine(LpcUart *uart, LiquidCrystal *lcd, bool fast = false);
+	StateMachine(LiquidCrystal *lcd, bool fast = false);
 	virtual ~StateMachine();
 	void HandleState(const Event& e);
+	enum smEvent {eAutoToggle = 4, eFastToggle = 5};
 private:
 	//States.
 	state_ptr currentState;
@@ -91,7 +91,7 @@ private:
 	//Flags.
 	bool modeauto; //Flag for auto mode.
 	bool busy; //Set true when input from screen can be unavailable for long period of time.
-	const bool fast; //Set true to skip retries on manual/auto switch.
+	bool fast; //Set true to skip retries on manual/auto switch.
 	//Sensor/Devices flags.
 	bool sfrht_up;
 	bool sfco2_up;
