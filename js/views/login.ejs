@@ -120,11 +120,41 @@
     const err_str = cookies.substring(index, index+13);
     console.log(err_str);
     const err_code = Number(err_str.slice(err_str.length-3, err_str.length));
-    console.log(err_code)
-    if(err_code === 401) {
-        const err = document.getElementById("err");
-        err.innerText = "Username or password is incorrect"
-    }
+    console.log(err_code);
+    const err = document.getElementById("err");
+        switch (err_code) {
+            //success
+            case 201:
+                err.innerText = "New User Created!";
+                err.style.color = "lime";
+                break;
+
+            //wrong password
+            case 401:
+                err.innerText = "Username or password is incorrect";
+                err.style.color = "red";
+                break;
+
+            //duplicate username
+            case 406:
+                err.innerText = "Username already taken";
+                err.style.color = "red";
+                break;
+
+            //hash password failed
+            case 503:
+                err.innerText = "Sign up failed. Please try again";
+                err.style.color = "red";
+                break;
+
+            //unknown error
+            default:
+                err.innerText = "";
+                break;
+        }
+        setTimeout(() => {
+            err.innerText = "";
+        }, 5000);
 </script>
 
 </body>

@@ -49,8 +49,19 @@ app.post('/signup', (req, res) => {
     const password = req.body.password;
     hashPassword(password).then(hashedPassword => {
         const newUser = {username, hashedPassword, logins: [],logouts: []};
-        addUser(newUser).then(msg => res.redirect('/')).catch(err_msg => res.send(err_msg));
-    }).catch(err => res.send(err));
+        addUser(newUser).
+        then(msg => {
+            res.cookie("login_err", 201);
+            res.redirect('/');
+        })
+            .catch(err_msg => {
+                res.cookie("login_err", 406);
+                res.redirect('/');
+            });
+    }).catch(err => {
+        res.cookie("login_err", 503);
+        res.redirect('/');
+    });
 });
 
 app.get('/', async (req, res) => {
@@ -180,7 +191,6 @@ app.get('/manual', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     res.render('manual');
 });
-
 
 
 app.post('/pressure', async (req, res) => {
