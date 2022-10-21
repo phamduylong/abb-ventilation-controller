@@ -2,12 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0ac0df8b-d2f6-41d9-b2d3-e8197a8b86f5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/js/views/login.ejs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/js/views/user_stats.ejs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/abb-ventilation-controller.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/abb-ventilation-controller.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/auth.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/server.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/views/auto.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/js/views/auto.ejs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/views/user_stats.ejs" beforeDir="false" afterPath="$PROJECT_DIR$/js/views/user_stats.ejs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

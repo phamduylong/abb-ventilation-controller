@@ -9,6 +9,7 @@ const mqtt = require('mqtt');
 const {SerialPort} = require('serialport');
 const {ReadlineParser} = require("@serialport/parser-readline");
 const {hashPassword, verifyPassword} = require("./pbkdf2");
+const moment = require('moment');
 
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017";
@@ -47,7 +48,7 @@ app.post('/signup', (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
     hashPassword(password).then(hashedPassword => {
-        const newUser = {username, hashedPassword, logins: [], logouts: []};
+        const newUser = {username, hashedPassword, logins: [],logouts: []};
         addUser(newUser).then(msg => res.redirect('/')).catch(err_msg => res.send(err_msg));
     }).catch(err => res.send(err));
 });
@@ -134,8 +135,8 @@ app.get('/user_data', async (req, res) => {
                 const size = user.logins.length;
                 const logins = arr[0].logins.slice(0, size - 1);
                 console.log(logins.length);
-                console.log(user.logouts.length);
-                const data1 = {x: logins, y: user.logouts.map((v, i) => v - logins[i]), t: 0, z: 0};
+                console.log(user.logouts);
+                const data1 = {x: logins, y: user.logouts.map((v, i) => v - logins[i]), logout_time: user.logouts, z: 0};
                 console.log(data1);
                 res.json(data1);
             }
