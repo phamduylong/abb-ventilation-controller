@@ -27,6 +27,7 @@ public:
 	int getValue();
 	void setValue(int value);
 	bool getStatus();
+	void setStatus(bool modify);
 	const char* getTitle();
 	void setTitle(const char *new_title);
 private:
