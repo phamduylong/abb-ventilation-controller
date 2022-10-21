@@ -1,10 +1,3 @@
-/*
- * EventQueue.cpp
- *
- *  Created on: 29 Sep 2022
- *      Author: marin
- */
-
 #include "EventQueue.h"
 
 EventQueue::EventQueue() {}

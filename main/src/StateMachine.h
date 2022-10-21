@@ -15,7 +15,6 @@
 #include "DecimalShow.h"
 #include "IntegerEdit.h"
 #include "IntegerShow.h"
-//#include "IntegerUnitEdit.h"
 #include "LiquidCrystal.h"
 
 class StateMachine;
@@ -38,13 +37,9 @@ private:
 	//Functions.
 	void SetState(state_ptr newState);
 	void check_sensors(bool retry = false);
-	/*
-	void readRelHum();
-	void readTemp();
-	void readCo2();
-	void readPres();
-	*/
-	void set_fan(int16_t speed);
+	void set_fan(int speed);
+	void adjust_fan();
+	void readPres(bool retry = false);
 	//Display functions.
 	void screen_lock(PropertyEdit *pe);
 	void screen_unlock(PropertyEdit *pe);
@@ -53,8 +48,10 @@ private:
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
 	LiquidCrystal *lcd; //lcd display
-	int timer; //Counts ticks for state.
-	int timeout; //How many ticks will state remain.
+	unsigned int timer; //Counts ticks for state.
+	unsigned int timeout; //How many ticks will state remain.
+	unsigned int fan_timer;
+	unsigned int fan_timeout;
 	//Menu.
 	SimpleMenu menu;
 	DecimalShow *mrhum;
@@ -62,11 +59,13 @@ private:
 	DecimalShow *mco2;
 	IntegerEdit *mfan;
 	DecimalEdit *mpres;
+	DecimalShow *mpresm;
 	MenuItem *mirhum;
 	MenuItem *mitemp;
 	MenuItem *mico2;
 	MenuItem *mifan;
 	MenuItem *mipres;
+	MenuItem *mipresm;
 
 	//Sensors and devices.
 	sPressureSDP610 spres;
@@ -79,9 +78,11 @@ private:
 	float temp;
 	float rh;
 	float pres;
+	float despres;
 	int16_t fan_speed;
-	unsigned int operation_time = 0; //Zeroed out only after all sensor readings.
-	const char titles[5][13] = {"Rel Humidity", "Temperature ", "CO2 Level   ", "Pressure    ", "Fan Speed   "};
+	int16_t desfan_speed;
+	unsigned int operation_time;
+	const char titles[6][13] = {"Rel Humidity", "Temperature ", "CO2 Level   ", "Fan Speed   ", "Set Pressure", "Pressure    "};
 	const char cbusy = '*';
 	const char cidle = ' ';
 	const char cup = 'U';

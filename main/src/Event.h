@@ -1,10 +1,3 @@
-/*
- * Event.h
- *
- *  Created on: 29 Sep 2022
- *      Author: marin
- */
-
 #ifndef EVENT_H_
 #define EVENT_H_
 

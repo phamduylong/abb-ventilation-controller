@@ -1,10 +1,3 @@
-/*
- * EventQueue.h
- *
- *  Created on: 29 Sep 2022
- *      Author: marin
- */
-
 #ifndef EVENTQUEUE_H_
 #define EVENTQUEUE_H_
 
