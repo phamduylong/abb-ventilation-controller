@@ -31,6 +31,7 @@
 #include "DecimalEdit.h"
 #include "DecimalShow.h"
 #include "dFanMIO12V.h"
+#include "StateMachine.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -38,7 +39,7 @@
 #define BROKER_PORT  1883
 
 //DEBUG DEFINES //Leave only one ON, or none.
-#define LPC_PROJ 0 //Use this to switch from home-lpc to proj-lpc
+#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
 #define MODBUS_TEST 0
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
@@ -157,7 +158,7 @@ int main(void) {
 	#endif
 
 	/////////////////////////////////////////////////////////
-	//Menu test. Works only in case if other tests are off.//
+	//Main test. Works only in case if other tests are off.//
 	/////////////////////////////////////////////////////////
 
 	//LCD pins init.
@@ -188,23 +189,25 @@ int main(void) {
 	DigitalIoPin sw1(1, 8, true, true, true);
 	DigitalIoPin sw2(0, 5, true, true, true);
 	DigitalIoPin sw3(0, 6, true, true, true);
+	DigitalIoPin sw4(0, 7, true, true, true);
 #else
 	DigitalIoPin sw1(0, 17 ,true ,true, true);
 	DigitalIoPin sw2(1, 11 ,true ,true, true);
 	DigitalIoPin sw3(1, 9 ,true ,true, true);
 #endif
 
-
-
 	//LCD
-//	LiquidCrystal *lcd2 = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
 	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
-	// configure display geometry
 	lcd->begin(16, 2);
-	// set the cursor to column 0, line 1
-	// (note: line 1 is the second row, since counting begins with 0):
 	lcd->setCursor(0, 0);
 	lcd->clear();
+
+#if LPC_PROJ
+	StateMachine base();
+	while(1) {
+		Sleep(1);
+	}
+#else	
 	SimpleMenu menu;
 	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"),true);
 	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),true);
@@ -224,14 +227,11 @@ int main(void) {
 	bool sw1_pressed = false; //"ok" button flag.
 	bool sw2_pressed = false; //"down" button flag.
 	bool sw3_pressed = false; //"up" button flag.
-	bool control_action = false;
 	bool deleted = false;
 
 	menu.event(MenuItem::show); // display first menu item
 	while(1){
-
 		timer = millis();
-
 
 		if(timer == 10000 || timer == delay){
 			if(timer != 0 ){
@@ -239,14 +239,18 @@ int main(void) {
 				delay = timer + 10000;
 			}
 		}
+
 		if(sw1.read()){
 			sw1_pressed = true;
-		}else if(sw1_pressed){
+		}
+		else if(sw1_pressed){
 			sw1_pressed = false;
 		}
+
 		if(sw2.read()){
 			sw2_pressed = true;
-		}else if(sw1_pressed && sw2_pressed) {
+		}
+		else if(sw1_pressed && sw2_pressed) {
 			delay = timer + 10000;
 			sw1_pressed = false;
 			sw2_pressed = false;
@@ -261,7 +265,8 @@ int main(void) {
 
 		if(sw3.read()){
 			sw3_pressed = true;
-		} else if (sw1_pressed && sw3_pressed) {
+		}
+		else if (sw1_pressed && sw3_pressed) {
 			delay = timer + 10000;
 			sw3_pressed = false;
 			sw1_pressed = false;
@@ -278,15 +283,11 @@ int main(void) {
 			menu.deleteItem(new MenuItem(test));
 			deleted = true;
 		}
-
-
 //		const char* testing = pressure->getTitle();
 //		lcd->print(testing);
-
-
-
 	}
-	return 0 ;
+#endif
+	return 0;
 }
 
 

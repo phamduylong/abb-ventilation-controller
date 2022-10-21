@@ -2,8 +2,10 @@
 #define STATEMACHINE_H_
 
 #include <stdio.h>
+#include <string>
 #include "Event.h"
 #include "LpcUart.h"
+#include "retarget_uart.h"
 #include "DigitalIoPin.h"
 #include "sPressureSDP610.h"
 #include "srhtHMP60.h"
@@ -14,7 +16,7 @@
 #include "DecimalShow.h"
 #include "IntegerEdit.h"
 #include "IntegerShow.h"
-#include "IntegerUnitEdit.h"
+//#include "IntegerUnitEdit.h"
 #include "LiquidCrystal.h"
 
 class StateMachine;
@@ -33,17 +35,20 @@ private:
 	void smanual(const Event& e);
 	void ssensors(const Event& e);
 
-	//Sensor errors.
-	enum sErr {sErno, sErrht, sErco2, sErpres, sErfan};
-	
 	//Functions.
 	void SetState(state_ptr newState);
-	void check_sensors();
+	void check_sensors(bool retry = false);
+	/*
 	void readRelHum();
 	void readTemp();
 	void readCo2();
 	void readPres();
+	*/
 	void set_fan(int16_t speed);
+	//Display functions.
+	void screen_lock(PropertyEdit *pe);
+	void screen_unlock(PropertyEdit *pe);
+	void screens_update();
 
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
@@ -55,17 +60,13 @@ private:
 	DecimalShow *mrhum;
 	DecimalShow *mtemp;
 	DecimalShow *mco2;
-	IntegerEdit *mfanm;
-	DecimalShow *mpresm; //Should be redundant.
-	IntegerShow *mfana; //Should be redundant.
-	DecimalEdit *mpresa;
+	IntegerEdit *mfan;
+	DecimalEdit *mpres;
 	MenuItem *mirhum;
 	MenuItem *mitemp;
 	MenuItem *mico2;
-	MenuItem *mifanm;
-	MenuItem *mipresm; //Should be redundant.
-	MenuItem *mifana; //Should be redundant.
-	MenuItem *mipresa;
+	MenuItem *mifan;
+	MenuItem *mipres;
 
 	//Sensors and devices.
 	sPressureSDP610 spres;
@@ -78,9 +79,19 @@ private:
 	float temp;
 	float rh;
 	float pres;
-	//int16_t fan_speed;
+	int16_t fan_speed;
 	unsigned int operation_time = 0; //Zeroed out only after all sensor readings.
-	bool fast; //Set true to skip retries.
+	const char titles[5][13] = {"Rel Humidity", "Temperature ", "CO2 Level   ", "Pressure    ", "Fan Speed   "};
+	const char cbusy = '*';
+	const char cidle = ' ';
+	const char cup = 'U';
+	const char cdown = 'D';
+	const char cauto = 'A';
+	const char cman = 'M';
+	//Flags.
+	bool modeauto; //Flag for auto mode.
+	bool busy; //Set true when input from screen can be unavailable for long period of time.
+	const bool fast; //Set true to skip retries on manual/auto switch.
 	//Sensor/Devices flags.
 	bool sfrht_up;
 	bool sfco2_up;
