@@ -22,8 +22,10 @@ void IntegerShow::increment() {}
 void IntegerShow::decrement() {}
 
 bool IntegerShow::getStatus(){
-	return 0;
+	return false;
 }
+
+void IntegerShow::setStatus(bool modify) {}
 
 void IntegerShow::accept() {
 	save();

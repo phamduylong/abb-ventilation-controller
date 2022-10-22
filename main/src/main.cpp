@@ -30,7 +30,10 @@
 #include "IntegerUnitEdit.h"
 #include "DecimalEdit.h"
 #include "DecimalShow.h"
-#include "dFanMIO12V.h"
+#include "aFanMIO12V.h"
+#include "Event.h"
+#include "EventQueue.h"
+#include "StateMachine.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
@@ -38,7 +41,7 @@
 #define BROKER_PORT  1883
 
 //DEBUG DEFINES //Leave only one ON, or none.
-#define LPC_PROJ 0 //Use this to switch from home-lpc to proj-lpc
+#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
 #define MODBUS_TEST 0
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
@@ -157,7 +160,7 @@ int main(void) {
 	#endif
 
 	/////////////////////////////////////////////////////////
-	//Menu test. Works only in case if other tests are off.//
+	//Main test. Works only in case if other tests are off.//
 	/////////////////////////////////////////////////////////
 
 	//LCD pins init.
@@ -185,26 +188,91 @@ int main(void) {
 
 	//Buttons init
 #if LPC_PROJ
-	DigitalIoPin sw1(1, 8, true, true, true);
-	DigitalIoPin sw2(0, 5, true, true, true);
-	DigitalIoPin sw3(0, 6, true, true, true);
+	DigitalIoPin control(1, 8, true, true, true);
+	DigitalIoPin up_ok(0, 5, true, true, true);
+	DigitalIoPin down_back(0, 6, true, true, true);
+	DigitalIoPin auto_fast(0, 7, true, true, true);
 #else
 	DigitalIoPin sw1(0, 17 ,true ,true, true);
 	DigitalIoPin sw2(1, 11 ,true ,true, true);
 	DigitalIoPin sw3(1, 9 ,true ,true, true);
 #endif
 
-
-
 	//LCD
-//	LiquidCrystal *lcd2 = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
 	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
-	// configure display geometry
 	lcd->begin(16, 2);
-	// set the cursor to column 0, line 1
-	// (note: line 1 is the second row, since counting begins with 0):
 	lcd->setCursor(0, 0);
 	lcd->clear();
+
+#if LPC_PROJ
+	StateMachine base(lcd);
+	EventQueue events;
+
+	unsigned int up_ok_held = 0;
+	unsigned int down_back_held = 0;
+	bool control_pressed = false; //control button flag.
+	bool up_ok_pressed = false; //"up"/"ok" button flag.
+	bool down_back_pressed = false; //"down"/"back" button flag.
+	bool auto_fast_pressed = false; //"auto"/"fast" button flag.
+	while(1) {
+		Sleep(1);
+		//Control button
+		if(control.read()) {
+			control_pressed = true;
+		}
+		else if(control_pressed){
+			control_pressed = false;
+		}
+		//Up / Ok
+		if(up_ok.read()) {
+			up_ok_pressed = true;
+			++up_ok_held;
+			//Button held more than 1.5s, send rapid commands "up" if control is released.
+			if(!control_pressed && up_ok_held >= 1500) {
+				events.publish(Event(Event::eKey, MenuItem::up)); //Up
+				--up_ok_held; //Avoid overflow.
+			}
+		}
+		else if(up_ok_pressed) {
+			if(control_pressed) events.publish(Event(Event::eKey, MenuItem::ok)); //Ok
+			else events.publish(Event(Event::eKey, MenuItem::up)); //Up
+			up_ok_pressed = false;
+			up_ok_held = 0;
+		}
+		//Down / Back
+		if(down_back.read()) {
+			down_back_pressed = true;
+			++down_back_held;
+			//Button held more than 1.5s, send rapid commands "down" if control is released.
+			if(!control_pressed && down_back_held >= 1500) {
+				events.publish(Event(Event::eKey, MenuItem::down)); //Down
+				--down_back_held; //Avoid overflow.
+			}
+		}
+		else if(down_back_pressed) { 
+			if(control_pressed) events.publish(Event(Event::eKey, MenuItem::back)); //Back
+			else events.publish(Event(Event::eKey, MenuItem::down)); //Down
+			down_back_pressed = false;
+			down_back_held = 0;
+		}
+		//Auto / Fast (No rapid commands for you!)
+		if(auto_fast.read()) {
+			auto_fast_pressed = true;
+		}
+		else if(auto_fast_pressed) {
+			if(control_pressed) events.publish(Event(Event::eKey, StateMachine::eFastToggle)); //Fast
+			else events.publish(Event(Event::eKey, StateMachine::eAutoToggle)); //Auto
+			auto_fast_pressed = false;
+		}
+
+		//Tick is given every 1 ms.
+		events.publish(Event(Event::eTick, 0));
+
+		while (events.pending()) {
+			base.HandleState(events.consume());
+		}
+	}
+#else	
 	SimpleMenu menu;
 	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"),true);
 	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),true);
@@ -224,14 +292,11 @@ int main(void) {
 	bool sw1_pressed = false; //"ok" button flag.
 	bool sw2_pressed = false; //"down" button flag.
 	bool sw3_pressed = false; //"up" button flag.
-	bool control_action = false;
 	bool deleted = false;
 
 	menu.event(MenuItem::show); // display first menu item
 	while(1){
-
 		timer = millis();
-
 
 		if(timer == 10000 || timer == delay){
 			if(timer != 0 ){
@@ -239,14 +304,18 @@ int main(void) {
 				delay = timer + 10000;
 			}
 		}
+
 		if(sw1.read()){
 			sw1_pressed = true;
-		}else if(sw1_pressed){
+		}
+		else if(sw1_pressed){
 			sw1_pressed = false;
 		}
+
 		if(sw2.read()){
 			sw2_pressed = true;
-		}else if(sw1_pressed && sw2_pressed) {
+		}
+		else if(sw1_pressed && sw2_pressed) {
 			delay = timer + 10000;
 			sw1_pressed = false;
 			sw2_pressed = false;
@@ -261,7 +330,8 @@ int main(void) {
 
 		if(sw3.read()){
 			sw3_pressed = true;
-		} else if (sw1_pressed && sw3_pressed) {
+		}
+		else if (sw1_pressed && sw3_pressed) {
 			delay = timer + 10000;
 			sw3_pressed = false;
 			sw1_pressed = false;
@@ -278,15 +348,11 @@ int main(void) {
 			menu.deleteItem(new MenuItem(test));
 			deleted = true;
 		}
-
-
 //		const char* testing = pressure->getTitle();
 //		lcd->print(testing);
-
-
-
 	}
-	return 0 ;
+#endif
+	return 0;
 }
 
 
@@ -381,7 +447,7 @@ void pressure_test() {
 #if FAN_PRES_TEST
 void fan_pressure_test() {
 	sPressureSDP610 spres;
-	dFanMIO12V fan;
+	aFanMIO12V fan;
 	float pres = 0;
 
 	DigitalIoPin sw1(1, 8, true, true, true); //speed up fan

@@ -24,6 +24,8 @@ bool DecimalShow::getStatus(){
 	return false;
 }
 
+void DecimalShow::setStatus(bool modify) {}
+
 void DecimalShow::accept() {
 	save();
 }
