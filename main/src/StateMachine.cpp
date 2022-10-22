@@ -98,7 +98,7 @@ void StateMachine::sinit(const Event& e) {
 		printf("RHum/Temp sensor state: %s\n", this->sfrht_up ? "UP" : "DOWN");
 		printf("Pressure  sensor state: %s\n", this->sfpres_up ? "UP" : "DOWN");
 		printf("CO2       sensor state: %s\n", this->sfco2_up ? "UP" : "DOWN");
-		printf("Fan     actuator state: %s\n", this->dffan_up ? "UP" : "DOWN");
+		printf("Fan     actuator state: %s\n", this->affan_up ? "UP" : "DOWN");
 		// /DEBUG prints.
 		this->modeauto ? SetState(&StateMachine::sauto) : SetState(&StateMachine::smanual);
 		break;
@@ -274,13 +274,13 @@ void StateMachine::ssensors(const Event& e) {
 		this->timer = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
-		this->check_sensors(!fast);
-		//TODO: Should also check on the fan.
+		this->check_everything(!fast);
 		// DEBUG prints.
 		printf("State switch handled. Time elapsed: %d\n", this->operation_time);
 		printf("RHum/Temp sensor state: %s\n", this->sfrht_up ? "UP" : "DOWN");
 		printf("Pressure  sensor state: %s\n", this->sfpres_up ? "UP" : "DOWN");
 		printf("CO2       sensor state: %s\n", this->sfco2_up ? "UP" : "DOWN");
+		printf("Fan     actuator state: %s\n", this->affan_up ? "UP" : "DOWN");
 		// /DEBUG prints.
 		this->modeauto ? SetState(&StateMachine::sauto) : SetState(&StateMachine::smanual);
 		break;
@@ -301,6 +301,14 @@ void StateMachine::ssensors(const Event& e) {
 //////////////////////////////////////////////////////////////////////////////
 // Helpers ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
+
+void StateMachine::check_everything(bool retry) {
+	unsigned int time;
+	this->check_sensors(retry);
+	time = this->operation_time;
+	this->check_fan(retry);
+	this->operation_time += time;
+}
 
 void StateMachine::check_sensors(bool retry) {
 	this->operation_time = 0;
@@ -323,9 +331,16 @@ void StateMachine::readPres(bool retry) {
 //TODO: Redo this function. There should be a separate function for checking the fan and setting it. (Set should alway be fast.)
 void StateMachine::set_fan(int speed) {
 	this->operation_time = 0;
-	this->dffan_up = this->fan.set_speed(speed, !fast);
+	this->affan_up = this->fan.set_speed(speed, false);
 	this->operation_time += this->fan.get_elapsed_time();
-	if (this->dffan_up) this->fan_speed = speed;
+	if (this->affan_up) this->fan_speed = speed;
+}
+
+//TODO: Make it check actual current speed register value.
+void StateMachine::check_fan(bool retry) {
+	this->operation_time = 0;
+	this->affan_up = this->fan.get_aspeed(retry); //this->fan.get_speed(this->fan_speed, retry);
+	this->operation_time += this->fan.get_elapsed_time();
 }
 
 //TODO: Implement it!
@@ -389,7 +404,7 @@ void StateMachine::screens_update() {
 	//Fan screen.
 	snprintf(buf, 17, "%s%c%c%c", this->titles[3],
 	this->busy ? this->cbusy : this->cidle,
-	this->dffan_up ? this->cup : this->cdown,
+	this->affan_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mfan->setTitle(buf);
 	//Pressure screen. (Setting desired pressure)

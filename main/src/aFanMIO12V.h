@@ -1,13 +1,13 @@
-#ifndef DFANMIO12V_H_
-#define DFANMIO12V_H_
+#ifndef AFANMIO12V_H_
+#define AFANMIO12V_H_
 
 #include "modbus/ModbusMaster.h"
 #include "modbus/ModbusRegister.h"
 
-class dFanMIO12V {
+class aFanMIO12V {
 public:
-	dFanMIO12V(unsigned int retries = 3);
-	virtual ~dFanMIO12V();
+	aFanMIO12V(unsigned int retries = 3);
+	virtual ~aFanMIO12V();
 	bool set_speed(int16_t v, bool retry = true);
 	int16_t get_speed();
 	int get_aspeed(bool retry = true);
@@ -23,4 +23,4 @@ private:
 	unsigned int elapsed_time;
 };
 
-#endif /* DFANMIO12V_H_ */
+#endif /* AFANMIO12V_H_ */

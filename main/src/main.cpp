@@ -30,7 +30,7 @@
 #include "IntegerUnitEdit.h"
 #include "DecimalEdit.h"
 #include "DecimalShow.h"
-#include "dFanMIO12V.h"
+#include "aFanMIO12V.h"
 #include "Event.h"
 #include "EventQueue.h"
 #include "StateMachine.h"
@@ -447,7 +447,7 @@ void pressure_test() {
 #if FAN_PRES_TEST
 void fan_pressure_test() {
 	sPressureSDP610 spres;
-	dFanMIO12V fan;
+	aFanMIO12V fan;
 	float pres = 0;
 
 	DigitalIoPin sw1(1, 8, true, true, true); //speed up fan

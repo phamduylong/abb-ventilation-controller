@@ -9,7 +9,7 @@
 #include "sPressureSDP610.h"
 #include "srhtHMP60.h"
 #include "sco2GMP252.h"
-#include "dFanMIO12V.h"
+#include "aFanMIO12V.h"
 #include "SimpleMenu.h"
 #include "DecimalEdit.h"
 #include "DecimalShow.h"
@@ -36,8 +36,10 @@ private:
 
 	//Functions.
 	void SetState(state_ptr newState);
+	void check_everything(bool retry = false);
 	void check_sensors(bool retry = false);
 	void set_fan(int speed);
+	void check_fan(bool retry = false);
 	void adjust_fan();
 	void readPres(bool retry = false);
 	//Display functions.
@@ -71,7 +73,7 @@ private:
 	sPressureSDP610 spres;
 	srhtHMP60 srht;
 	sco2GMP252 sco2;
-	dFanMIO12V fan;
+	aFanMIO12V fan;
 
 	//Variables.
 	float co2;
@@ -97,7 +99,7 @@ private:
 	bool sfrht_up;
 	bool sfco2_up;
 	bool sfpres_up;
-	bool dffan_up;
+	bool affan_up;
 };
 
 #endif /* STATEMACHINE_H_ */
