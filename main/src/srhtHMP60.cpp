@@ -6,6 +6,7 @@
  */
 
 #include "srhtHMP60.h"
+#include "systick.h"
 
 srhtHMP60::srhtHMP60(unsigned int retries) : node{241}, rh0{&node, 0x0000}, rh1{&node, 0x0001}, t0{&node, 0x0002}, t1{&node, 0x0003}, retries(retries) {
 	//TODO: add 0x0200 reg -> error status. 0 - yes, 1 - no error.
@@ -17,44 +18,168 @@ srhtHMP60::srhtHMP60(unsigned int retries) : node{241}, rh0{&node, 0x0000}, rh1{
 
 srhtHMP60::~srhtHMP60() {}
 
+//Note: data is not modified if reading failed. (TODO: Add status regs check.)
 bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
-	//TODO: Add check for valid data.
-	unsigned int htemp = 0;
-	htemp |= this->t1.read();
-	htemp <<= 16;
-	htemp |= this->t0.read();
-	temp = binary32_to_float(htemp);
-
-	unsigned int hrhum = 0;
-	hrhum |= this->rh1.read();
-	hrhum <<= 16;
-	hrhum |= this->rh0.read();
-	rhum = binary32_to_float(hrhum);
-
+	unsigned int htemp;
+	unsigned int hrhum;
+	int tpr;
+	this->status = false;
 	this->elapsed_time = 0;
-	this->status = true;
+
+	//In case of success or !retry code is executed only once.
+	for (unsigned int i = (retry ? 0 : this->retries); !this->status && i <= this->retries; ++i) {
+		htemp = 0;
+		hrhum = 0;
+		tpr = 0;
+		///////////////
+		//TEMPERATURE//
+		///////////////
+		//Read second register value.
+		tpr = this->t1.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		htemp |= tpr;
+		htemp <<= 16;
+		//Read first register value.
+		tpr = this->t0.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		htemp |= tpr; //htemp is valid here, but it won't be passed if humidity reading will fail.
+		
+		////////////
+		//HUMIDITY//
+		////////////
+		//Read second register value.
+		tpr = this->rh1.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		hrhum |= tpr;
+		hrhum <<= 16;
+		//Read first register value.
+		tpr = this->rh0.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		hrhum |= tpr; //At this point both htemp and hrhum are valid.
+		temp = binary32_to_float(htemp);
+		rhum = binary32_to_float(hrhum);
+		this->status = true;
+	}
+
 	return this->status;
 }
 
+//Note: data is not modified if reading failed. (TODO: Add status regs check.)
 bool srhtHMP60::read_temp(float &data, bool retry) {
-	unsigned int htemp = 0;
-	htemp |= this->t1.read();
-	htemp <<= 16;
-	htemp |= this->t0.read();
-	data = binary32_to_float(htemp);
+	unsigned int htemp;
+	int tpr;
+	this->status = false;
 	this->elapsed_time = 0;
-	this->status = true;
+	//In case of success or !retry code is executed only once.
+	for (unsigned int i = (retry ? 0 : this->retries); !this->status && i <= this->retries; ++i) {
+		htemp = 0;
+		tpr = 0;
+		//Read second register value.
+		tpr = this->t1.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		htemp |= tpr;
+		htemp <<= 16;
+		//Read first register value.
+		tpr = this->t0.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		//Reading succeeded if we are here.
+		htemp |= tpr;
+		data = binary32_to_float(htemp);
+		this->status = true;
+	}
+
 	return this->status;
 }
 
+//Note: data is not modified if reading failed. (TODO: Add status regs check.)
 bool srhtHMP60::read_rhum(float &data, bool retry) {
-	unsigned int hrhum = 0;
-	hrhum |= this->rh1.read();
-	hrhum <<= 16;
-	hrhum |= this->rh0.read();
-	data = binary32_to_float(hrhum);
+	unsigned int hrhum;
+	int tpr;
+	this->status = false;
 	this->elapsed_time = 0;
-	this->status = true;
+	
+	//In case of success or !retry code is executed only once.
+	for (unsigned int i = (retry ? 0 : this->retries); !this->status && i <= this->retries; ++i) {
+		hrhum = 0;
+		tpr = 0;
+		//Read second register value.
+		tpr = this->rh1.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		hrhum |= tpr;
+		hrhum <<= 16;
+		//Read first register value.
+		tpr = this->rh0.read();
+		//Start over upon failure.
+		if (tpr == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		//Reading succeeded if we are here.
+		hrhum |= tpr;
+		data = binary32_to_float(hrhum);
+		this->status = true;
+	}
+
 	return this->status;
 }
 

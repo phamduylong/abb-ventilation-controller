@@ -1,11 +1,5 @@
-/*
- * sco2GMP252.cpp
- *
- *  Created on: 17 Oct 2022
- *      Author: Danii
- */
-
 #include "sco2GMP252.h"
+#include "systick.h"
 
 sco2GMP252::sco2GMP252(unsigned int retries) : node{240}, co2_reg{&node, 0x0000}, co2_reg2{&node, 0x0001}, retries(retries) {
 	//TODO: add 0x0100 and 0x0101 regs handling.
@@ -18,17 +12,52 @@ sco2GMP252::sco2GMP252(unsigned int retries) : node{240}, co2_reg{&node, 0x0000}
 
 sco2GMP252::~sco2GMP252() {}
 
+//Note: data is not modified if reading failed. (TODO: Add status regs check.)
 bool sco2GMP252::read(float &data, bool retry) {
-	//TODO: Add check for valid data.
-	unsigned int co2_hex = 0;
-	co2_hex |= co2_reg2.read();
-	co2_hex <<= 16;
-	co2_hex |= co2_reg.read();
-	data = binary32_to_float(co2_hex);
-
+	unsigned int co2_hex;
+	int temp;
+	this->status = false;
 	this->elapsed_time = 0;
-	this->status = true;
+	//In case of success or !retry code is executed only once.
+	for (unsigned int i = (retry ? 0 : this->retries); !this->status && i <= this->retries; ++i) {
+		co2_hex = 0;
+		temp = 0;
+		//Read second register value.
+		temp = co2_reg2.read();
+		//Start over upon failure.
+		if (temp == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		co2_hex |= temp;
+
+		co2_hex <<= 16;
+		//Read first register value.
+		temp = co2_reg.read();
+		//Start over upon failure.
+		if (temp == -1) {
+			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(100);
+				this->elapsed_time += 100;
+			}
+			continue;
+		}
+		//Reading succeeded if we are here.
+		co2_hex |= temp;
+		data = binary32_to_float(co2_hex);
+		this->status = true;
+	}
+	
 	return this->status;
+}
+
+bool read(float &data, float temp, float rh, float pres, bool retry) {
+
 }
 
 bool sco2GMP252::get_status() {
@@ -37,6 +66,10 @@ bool sco2GMP252::get_status() {
 
 unsigned int sco2GMP252::get_elapsed_time() {
 	return this->elapsed_time;
+}
+
+bool set_precise(bool mode, srhtHMP60 *srht, sPressureSDP610 *spres) {
+
 }
 
 //Convertion of 32 binary representation of decimal to float via pointer.
@@ -68,3 +101,7 @@ float binary32_to_float(const unsigned int bin32) {
 	return res;
 }
 */
+
+void sco2GMP252::read_sensors() {
+
+}

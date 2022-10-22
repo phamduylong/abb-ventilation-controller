@@ -32,27 +32,33 @@ sPressureSDP610::~sPressureSDP610() {}
  */
 bool sPressureSDP610::read(float &data, bool retry) {
 	int i = (retry ? this->retries : 0) + 1;
-	bool success = false;
+	this->status = false;
 	uint8_t pres_raw[3] = {0};
 	uint16_t pres_value = 0;
-	unsigned int time = 0;
-	while (i && !success) {
-		Sleep(200);
-		time += 200;
-		success = this->sdp610.read(0xF1, pres_raw, 3);
-		if (success) {
-			success = (pres_raw[2] == crc8(pres_raw, 2));
-			pres_value = 0;
-			pres_value = pres_raw[0];
-			pres_value <<= 8;
-			pres_value |= pres_raw[1];
-			int16_t diff_pres = *((int16_t *)&pres_value);
-			data = (float)diff_pres / 240;
+	this->elapsed_time = 0;
+	while (i && !this->status) {
+		Sleep(10); //Wait 10ms before every sensor reading. (Needed by I2C, can be lowered to 1ms, but it can be unsafe)
+		this->elapsed_time += 10;
+		this->status = this->sdp610.read(0xF1, pres_raw, 3);
+		//Is not able to communicate with the sensor.
+		if (!this->status) {
+			--i;
+			continue;
 		}
+		this->status = (pres_raw[2] == crc8(pres_raw, 2));
+		//CRC error.
+		if (!this->status) {
+			--i;
+			continue;
+		}
+		pres_value = 0;
+		pres_value = pres_raw[0];
+		pres_value <<= 8;
+		pres_value |= pres_raw[1];
+		int16_t diff_pres = *((int16_t *)&pres_value);
+		data = (float)diff_pres / 240;
 		--i;
 	}
-	this->status = success;
-	this->elapsed_time = time;
 	return this->status;
 }
 
