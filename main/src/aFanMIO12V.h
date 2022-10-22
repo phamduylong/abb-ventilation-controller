@@ -9,8 +9,8 @@ public:
 	aFanMIO12V(unsigned int retries = 3);
 	virtual ~aFanMIO12V();
 	bool set_speed(int16_t v, bool retry = true);
-	int16_t get_speed();
-	int get_aspeed(bool retry = true);
+	bool get_speed(int16_t &v, bool retry = true);
+	int16_t get_qspeed();
 	bool get_status();
 	unsigned int get_elapsed_time();
 private:

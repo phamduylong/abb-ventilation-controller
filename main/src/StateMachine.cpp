@@ -248,7 +248,7 @@ void StateMachine::smanual(const Event& e) {
 		if (this->fan_timer >= this->fan_timeout)
 		{
 			this->fan_timer = 0;
-			this->desfan_speed = this->mfan->getValue();
+			this->desfan_speed = this->mfan->getValue() * 10;
 			if (this->fan_speed != this->desfan_speed) //Set the fan speed only if it mismatches the current.
 				this->set_fan(this->desfan_speed);
 		}
@@ -328,7 +328,6 @@ void StateMachine::readPres(bool retry) {
 	this->operation_time += this->spres.get_elapsed_time();
 }
 
-//TODO: Redo this function. There should be a separate function for checking the fan and setting it. (Set should alway be fast.)
 void StateMachine::set_fan(int speed) {
 	this->operation_time = 0;
 	this->affan_up = this->fan.set_speed(speed, false);
@@ -336,10 +335,9 @@ void StateMachine::set_fan(int speed) {
 	if (this->affan_up) this->fan_speed = speed;
 }
 
-//TODO: Make it check actual current speed register value.
 void StateMachine::check_fan(bool retry) {
 	this->operation_time = 0;
-	this->affan_up = this->fan.get_aspeed(retry); //this->fan.get_speed(this->fan_speed, retry);
+	this->affan_up = this->fan.get_speed(this->fan_speed, retry);
 	this->operation_time += this->fan.get_elapsed_time();
 }
 
@@ -378,7 +376,7 @@ void StateMachine::screens_update() {
 	this->mrhum->setValue(this->rh);
 	this->mtemp->setValue(this->temp);
 	this->mco2->setValue(this->co2);
-	this->mfan->setValue(this->fan_speed);
+	this->mfan->setValue(this->fan_speed / 10);
 	this->mpresm->setValue(this->pres);
 
 	//Setting titles according to flags.
