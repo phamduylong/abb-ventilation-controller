@@ -23,5 +23,5 @@ uint8_t ModbusRegister::write(int value)
 {
 	// write only if not
 	if(hr) return m->writeSingleRegister(addr, value); // not checking if write succeeds
-
+	return 0xE2;
 }
