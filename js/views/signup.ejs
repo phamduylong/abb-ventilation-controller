@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <style>
+        body {
+            text-align: center;
+            background-size: 300% 300%;
+            background-image: linear-gradient(
+                    -45deg,
+                    rgba(59,173,227,1) 0%,
+                    rgba(87,111,230,1) 25%,
+                    rgba(152,68,183,1) 51%,
+                    rgba(255,53,127,1) 100%
+            );
+            animation: AnimateBG 20s ease infinite;
+        }
+
+        input {
+            border-top: none;
+            border-right: none;
+            border-left: none;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 0 5px;
+            height: 40px;
+            width: 100%;
+            font-size: 16px;
+            background: none;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            height: 50px;
+            border: 1px solid;
+            border-radius: 25px;
+            font-size: 20px;
+            background-color: #2691d9;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        #center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 10px;
+            padding: 0 60px;
+            box-sizing: border-box;
+        }
+
+        header {
+            margin-top: 20px;
+        }
+
+        label {
+            position: relative;
+            left: -37.5%;
+        }
+
+        hr {
+            margin-bottom: 40px;
+        }
+
+        #login {
+            margin: 15px;
+        }
+    </style>
+
+    <script type="text/javascript">
+
+    </script>
+
+</head>
+<body>
+    <div id="center">
+        <header><b>SIGN UP</b></header>
+        <hr/>
+        <form method="post" action="/signup">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username"
+                   pattern="[a-zA-Z0-9]+" minlength="4" maxlength="20"
+                   title="Username can only contains letters and numbers and must be from range 4-20 characters" required>
+
+            <br/>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"
+                   pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                   minlength="8" maxlength="30"
+                   title="Password must includes at least 1 lowercase letter,
+                   1 uppercase letter and 1 number,
+                   and contain 8 characters at least and 30 at max"
+                   required>
+
+            <br/>
+
+            <button type="submit">Sign Up</button>
+
+            <br/>
+            <div id="login">Already have an account? Log in <a href="/">here</a></div>
+        </form>
+    </div>
+
+
+</body>
+</html>
