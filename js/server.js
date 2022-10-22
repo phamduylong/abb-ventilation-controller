@@ -31,6 +31,8 @@ const broker_url = 'mqtt://127.0.0.1:1883';
 const client = mqtt.connect(broker_url, { clientId: 'node', clean: true });
 const serial_port_nr = "COM23";
 const serial_baud_rate = 115200;
+const pub_topic = "controller/settings";
+const subs_topic = "controller/status";
 
 
 
@@ -38,7 +40,25 @@ const serial_baud_rate = 115200;
 const serial_parser = new ReadlineParser({delimiter: '\r\n'});
 serial_port.pipe(serial_parser);*/
 
+client.subscribe(subs_topic, () => {
 
+});
+
+client.publish(pub_topic, "Test string 3", { qos: 1, retain: true }, (error) => {
+    if (error) {
+        console.error(error);
+    }
+});
+
+client.publish(subs_topic, "I hope it works", {qos: 1, retain: true}, (err) => {
+    if (err) {
+        console.error(err)
+    }
+});
+
+client.on('message', (topic, msg) => {
+    console.log("RECEIVED: " + msg);
+})
 
 app.get('/signup', (req, res) => {
     res.render('signup');
@@ -68,6 +88,8 @@ app.get('/', async (req, res) => {
     //default view
     res.render("login");
 });
+
+
 app.post('/login', (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
