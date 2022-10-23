@@ -1,16 +1,8 @@
-/*
- * srhtHMP60.cpp
- *
- *  Created on: 17 Oct 2022
- *      Author: Danii
- */
-
 #include "srhtHMP60.h"
 #include "systick.h"
 
-srhtHMP60::srhtHMP60(unsigned int retries) : node{241}, rh0{&node, 0x0000}, rh1{&node, 0x0001}, t0{&node, 0x0002}, t1{&node, 0x0003}, retries(retries) {
-	//TODO: add 0x0200 reg -> error status. 0 - yes, 1 - no error.
-	// add error code regs and error code handling.
+srhtHMP60::srhtHMP60(unsigned int retries, unsigned int wait) : node{241}, rh0{&node, 0x0000}, rh1{&node, 0x0001}, t0{&node, 0x0002}, t1{&node, 0x0003},
+err_reg{&node, 0x0200}, retries(retries), wait(wait) {
 	this->node.begin(9600);
 	this->status = false;
 	this->elapsed_time = 0;
@@ -18,7 +10,15 @@ srhtHMP60::srhtHMP60(unsigned int retries) : node{241}, rh0{&node, 0x0000}, rh1{
 
 srhtHMP60::~srhtHMP60() {}
 
-//Note: data is not modified if reading failed. (TODO: Add status regs check.)
+/**
+ * @brief Reads humidity and temperature values from relative humidity sensor.
+ * 
+ * @param temp value is set to the sensor reading on success. Not modified otherwise.
+ * @param rhum value is set to the sensor reading on success. Not modified otherwise.
+ * @param retry flag to retry reading the sensor value while waiting 'this->wait' ms between 'this->retries' readings.
+ * @return true On success.
+ * @return false On failure.
+ */
 bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 	unsigned int htemp;
 	unsigned int hrhum;
@@ -31,6 +31,15 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		htemp = 0;
 		hrhum = 0;
 		tpr = 0;
+		//Check status before reading.
+		if(!this->check_status()) {
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
+			}
+			continue;
+		}
 		///////////////
 		//TEMPERATURE//
 		///////////////
@@ -38,10 +47,10 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		tpr = this->t1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
@@ -51,10 +60,10 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		tpr = this->t0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
@@ -67,10 +76,10 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		tpr = this->rh1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
@@ -80,13 +89,14 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		tpr = this->rh0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
+		//Reading succeeded if we are here.
 		hrhum |= tpr; //At this point both htemp and hrhum are valid.
 		temp = binary32_to_float(htemp);
 		rhum = binary32_to_float(hrhum);
@@ -96,7 +106,14 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 	return this->status;
 }
 
-//Note: data is not modified if reading failed. (TODO: Add status regs check.)
+/**
+ * @brief Reads temperature value from the sensor.
+ * 
+ * @param data value is set to the sensor reading on success. Not modified otherwise.
+ * @param retry flag to retry reading the sensor value while waiting 'this->wait' ms between 'this->retries' readings.
+ * @return true On success. 
+ * @return false On failure. 
+ */
 bool srhtHMP60::read_temp(float &data, bool retry) {
 	unsigned int htemp;
 	int tpr;
@@ -106,14 +123,25 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 	for (unsigned int i = (retry ? 0 : this->retries); !this->status && i <= this->retries; ++i) {
 		htemp = 0;
 		tpr = 0;
+
+		//Check status before reading.
+		if(!this->check_status()) {
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
+			}
+			continue;
+		}
+
 		//Read second register value.
 		tpr = this->t1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
@@ -123,10 +151,10 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 		tpr = this->t0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
@@ -139,7 +167,14 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 	return this->status;
 }
 
-//Note: data is not modified if reading failed. (TODO: Add status regs check.)
+/**
+ * @brief Reads humidity value from the sensor.
+ * 
+ * @param data value is set to the sensor reading on success. Not modified otherwise.
+ * @param retry flag to retry reading the sensor value while waiting 'this->wait' ms between 'this->retries' readings.
+ * @return true On success. 
+ * @return false On failure. 
+ */
 bool srhtHMP60::read_rhum(float &data, bool retry) {
 	unsigned int hrhum;
 	int tpr;
@@ -150,14 +185,25 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 	for (unsigned int i = (retry ? 0 : this->retries); !this->status && i <= this->retries; ++i) {
 		hrhum = 0;
 		tpr = 0;
+
+		//Check status before reading.
+		if(!this->check_status()) {
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
+			if(i != this->retries) {
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
+			}
+			continue;
+		}
+
 		//Read second register value.
 		tpr = this->rh1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
@@ -167,10 +213,10 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 		tpr = this->rh0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
-			//If it is not the last attempt - wait for 100ms in case it was a minor failure.
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
 			if(i != this->retries) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}
@@ -183,40 +229,41 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 	return this->status;
 }
 
+/**
+ * @brief Gets latest sensor status.
+ * 
+ * @return true Sensor was UP.
+ * @return false Sensor was DOWN.
+ */
 bool srhtHMP60::get_status() {
 	return this->status;
 }
 
+/**
+ * @brief Gets latest read() execution time
+ * 
+ * @return unsigned int Time in ms.
+ */
 unsigned int srhtHMP60::get_elapsed_time() {
 	return this->elapsed_time;
 }
 
-//Convertion of 32 binary representation of decimal to float via pointer.
+/**
+ * @brief Checks if sensor status register reports any errors.
+ * 
+ * @return true No errors
+ * @return false One of the registers returned error.
+ */
+bool srhtHMP60::check_status() {
+	return this->err_reg.read();
+}
+
+/**
+ * @brief Convertion of 32-bit binary representation of decimal to float via pointer.
+ * 
+ * @param bin32 32-bit binary representation of float.
+ * @return float Floating point value of its binary representation.
+ */
 float srhtHMP60::binary32_to_float(const unsigned int bin32) {
 	return *((float *)&bin32);
 }
-//Redundant complex convertion of 32 binary representation of decimal to float.
-/*
-float binary32_to_float(const unsigned int bin32) {
-	float res = 0;
-	//Get and decode exponent part.
-	int8_t exponent = ((bin32 & 0x7f800000) >> 23) - 127;
-	//Get fraction part.
-	unsigned int fraction = bin32 & 0x007fffff;
-	//Add implicit 24 bit to fraction.
-	fraction |= 0x00800000;
-	//Sum fraction.
-	float to_add = 1;
-	unsigned int i = 0x00800000;
-	do {
-		if(fraction & i) res += to_add;
-		to_add /= 2;
-		i >>= 1;
-	} while(i > 0x00000000);
-	//Multiply the sum by the base 2 to the power of the exponent.
-	res *= pow(2, exponent);
-	//Get sign.
-	if(bin32 >> 31) res *= -1;
-	return res;
-}
-*/

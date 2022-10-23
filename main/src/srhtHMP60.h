@@ -1,10 +1,3 @@
-/*
- * srhtHMP60.h
- *
- *  Created on: 17 Oct 2022
- *      Author: Danii
- */
-
 #ifndef SRHTHMP60_H_
 #define SRHTHMP60_H_
 
@@ -13,7 +6,7 @@
 
 class srhtHMP60 {
 public:
-	srhtHMP60(unsigned int retries = 3);
+	srhtHMP60(unsigned int retries = 3, unsigned int wait = 100);
 	virtual ~srhtHMP60();
 	bool read(float &temp, float &rhum, bool retry = true);
 	bool read_temp(float &data, bool retry = true);
@@ -26,9 +19,12 @@ private:
 	ModbusRegister rh1;
 	ModbusRegister t0;
 	ModbusRegister t1;
-	unsigned int retries;
+	ModbusRegister err_reg;
+	const unsigned int retries;
+	const unsigned int wait;
 	bool status;
 	unsigned int elapsed_time;
+	bool check_status();
 	float binary32_to_float(const unsigned int bin32);
 };
 
