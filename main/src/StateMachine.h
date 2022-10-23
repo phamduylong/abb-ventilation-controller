@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <cmath>
 #include "Event.h"
 #include "retarget_uart.h"
 #include "DigitalIoPin.h"
