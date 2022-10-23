@@ -8,10 +8,11 @@
 
 class sco2GMP252 {
 public:
-	sco2GMP252(unsigned int retries = 3);
+	sco2GMP252(unsigned int retries = 3, unsigned int wait = 100);
 	virtual ~sco2GMP252();
 	bool read(float &data, bool retry = true);
 	bool read(float &data, float pres, float rh, bool retry = true);
+	bool read_precise(float &data, float pres, float rh, bool retry = true);
 	bool get_status();
 	unsigned int get_elapsed_time();
 private:
@@ -25,7 +26,10 @@ private:
 	ModbusRegister mode_prescom_reg;
 	ModbusRegister mode_tempcom_reg;
 	ModbusRegister mode_humcom_reg;
-	unsigned int retries;
+	ModbusRegister status_device_reg;
+	ModbusRegister status_co2_reg;
+	const unsigned int retries;
+	const unsigned int wait;
 	//Flags
 	bool status;
 	//Variables
@@ -35,6 +39,9 @@ private:
 	float hum_value;
 	//Functions
 	bool init_precise();
+	int16_t check_device_status();
+	int16_t check_co2_status();
+	bool check_status();
 	bool check_init_precise();
 	bool set_precise(float pres, float rh = 0);
 	float binary32_to_float(const unsigned int bin32);
