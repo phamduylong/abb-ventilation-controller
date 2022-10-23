@@ -40,7 +40,7 @@ private:
 	void check_sensors(bool retry = false);
 	void set_fan(int speed);
 	void check_fan(bool retry = false);
-	void adjust_fan();
+	void adjust_fan(float cur_pres, float des_pres);
 	void readPres(bool retry = false);
 	//Display functions.
 	void screen_lock(PropertyEdit *pe);
