@@ -40,7 +40,7 @@ private:
 	void check_sensors(bool retry = false);
 	void set_fan(int speed);
 	void check_fan(bool retry = false);
-	void adjust_fan();
+	void adjust_fan(float cur_pres, float des_pres);
 	void readPres(bool retry = false);
 	//Display functions.
 	void screen_lock(PropertyEdit *pe);
@@ -50,10 +50,10 @@ private:
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
 	LiquidCrystal *lcd; //lcd display
-	unsigned int timer; //Counts ticks for state.
-	unsigned int timeout; //How many ticks will state remain.
-	unsigned int fan_timer;
-	unsigned int fan_timeout;
+	unsigned int sensors_timer; //Counts ticks for sensor reading.
+	const unsigned int sensors_timeout; //How many ticks to wait before sensor reading.
+	unsigned int fan_timer; //Counts ticks for fan adjustment.
+	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
 	//Menu.
 	SimpleMenu menu;
 	DecimalShow *mrhum;

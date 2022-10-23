@@ -1,8 +1,10 @@
 #include "StateMachine.h"
 
-StateMachine::StateMachine(LiquidCrystal *lcd, bool fast) : lcd(lcd), fast(fast) {
-	this->timeout = 500; //Buttons are read every millisecond. Sensors should be checked every 0.5s.
-	this->fan_timeout = 100; //Update fan speed every 100ms.
+StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
+lcd(lcd), 
+sensors_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
+fan_timeout(10), //Update fan speed every 10ms.
+spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
 	this->co2 = 0;
@@ -14,7 +16,7 @@ StateMachine::StateMachine(LiquidCrystal *lcd, bool fast) : lcd(lcd), fast(fast)
 	this->modeauto = true;
 	this->busy = true;
 	
-	//Initialise all possible menu items.
+	//Initialise all menu items.
 	this->mrhum = new DecimalShow(this->lcd, std::string("Rel Humidity*DA"), std::string("%"));
 	this->mirhum = new MenuItem(this->mrhum);
 	this->mtemp = new DecimalShow(this->lcd, std::string("Temperature *DA"), std::string("C"));
@@ -88,8 +90,8 @@ void StateMachine::sinit(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sinit.\n");
-		this->timer = 0;
-		this->fan_timeout = 0;
+		this->sensors_timer = 0;
+		this->fan_timer = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
 		this->check_sensors(true);
 		this->set_fan(0); //Setting the fan, not checking it, since we always initialise with 0.
@@ -122,7 +124,6 @@ void StateMachine::sinit(const Event& e) {
  * @brief Handles automatic state.
  * @paragraph State Auto. Every tick reads sensors and handles the menu.
  * Allows to modify Set Pressure value in order to set fan speed according to the desired pressure difference.
- * TODO: Add fan adjustment.
  * @param e Event to handle.
  */
 void StateMachine::sauto(const Event& e) {
@@ -130,8 +131,8 @@ void StateMachine::sauto(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sauto.\n");
-		this->timer = 0;
-		this->fan_timeout = 0;
+		this->sensors_timer = 0;
+		this->fan_timer = 0;
 		//Set all titles to A.
 		this->screens_update();
 		break;
@@ -165,20 +166,21 @@ void StateMachine::sauto(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->timer++;
+		this->sensors_timer++;
 		this->fan_timer++;
-		//Every 0.5s.
-		if (this->timer >= this->timeout){
+		//Every 0.5s by default.
+		if (this->sensors_timer >= this->sensors_timeout){
 			check_sensors(); //Quickly read sensors
-			this->timer = 0;
+			this->sensors_timer = 0;
+			this->screens_update();
 		}
-		//Every 100ms.
+		//Every 10ms by default.
 		if (this->fan_timer >= this->fan_timeout)
 		{
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 5ms.
-			this->adjust_fan();
+			this->adjust_fan(this->pres, this->despres);
 		}
 		
 		break;
@@ -199,7 +201,7 @@ void StateMachine::smanual(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered smanual.\n");
-		this->timer = 0;
+		this->sensors_timer = 0;
 		this->fan_timer = 0;
 		//Unlock Fan menu.
 		this->screen_unlock(this->mfan);
@@ -238,13 +240,15 @@ void StateMachine::smanual(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->timer++;
-		//Every 0.5s.
-		if (this->timer >= this->timeout) {
+		this->sensors_timer++;
+		this->fan_timer++;
+		//Every 0.5s by default.
+		if (this->sensors_timer >= this->sensors_timeout) {
 			this->check_sensors(); //Quickly read sensors
-			this->timer = 0;
+			this->sensors_timer = 0;
+			this->screens_update();
 		}
-		//Every 100ms.
+		//Every 10ms by default.
 		if (this->fan_timer >= this->fan_timeout)
 		{
 			this->fan_timer = 0;
@@ -271,7 +275,8 @@ void StateMachine::ssensors(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered ssensors.\n");
-		this->timer = 0;
+		this->sensors_timer = 0;
+		this->fan_timer = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
 		this->check_everything(!fast);
@@ -302,6 +307,10 @@ void StateMachine::ssensors(const Event& e) {
 // Helpers ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Checks all sensors and actuators and changes according flags and variables.
+ * @param retry Whether to retry communication.
+ */
 void StateMachine::check_everything(bool retry) {
 	unsigned int time;
 	this->check_sensors(retry);
@@ -310,6 +319,10 @@ void StateMachine::check_everything(bool retry) {
 	this->operation_time += time;
 }
 
+/**
+ * @brief Checks every sensor and changes according flags and variables.
+ * @param retry Whether to retry communication.
+ */
 void StateMachine::check_sensors(bool retry) {
 	this->operation_time = 0;
 	//We should be able to communicate with all sensors.
@@ -317,17 +330,30 @@ void StateMachine::check_sensors(bool retry) {
 	this->operation_time += this->srht.get_elapsed_time();
 	sfpres_up = this->spres.read(this->pres, retry);
 	this->operation_time += this->spres.get_elapsed_time();
-	//CO2 sensor requires other sensors readings. (TODO: implement that functionality)
-	sfco2_up = this->sco2.read(this->co2, retry);
+	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
+	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
 	this->operation_time += this->sco2.get_elapsed_time();
 }
 
+/**
+ * @brief Reads pressure value from pressure sensor.
+ * Sets sfrpes_up flag to true/false as communication result.
+ * Changes pres variable to current if communication succeeded.
+ * @param retry Whether to retry communication.
+ */
 void StateMachine::readPres(bool retry) {
 	this->operation_time = 0;
 	this->sfpres_up = this->spres.read(this->pres, retry);
 	this->operation_time += this->spres.get_elapsed_time();
 }
 
+/**
+ * @brief Sets fan speed to provided.
+ * Sets affan_up flag to true/false as communication result.
+ * Changes fan_speed variable to provided if communication succeeded.
+ * Always quick.
+ * @param speed to set up on the fan.
+ */
 void StateMachine::set_fan(int speed) {
 	this->operation_time = 0;
 	this->affan_up = this->fan.set_speed(speed, false);
@@ -335,19 +361,39 @@ void StateMachine::set_fan(int speed) {
 	if (this->affan_up) this->fan_speed = speed;
 }
 
+/**
+ * @brief Checks if fan is up and gets current speed if it is.
+ * Sets affan_up flag to true/false as communication result.
+ * Changes fan_speed variable to current one if communication succeeded.
+ * 
+ * @param retry Whether to retry communication.
+ */
 void StateMachine::check_fan(bool retry) {
 	this->operation_time = 0;
 	this->affan_up = this->fan.get_speed(this->fan_speed, retry);
 	this->operation_time += this->fan.get_elapsed_time();
 }
 
-//TODO: Implement it!
-void StateMachine::adjust_fan() {
-	/*
-	 * Here should be some kind of complex calculation for fan adjustment.
-	 * It relies on pressure sensor readings, so it must be up. Obviously, fan must be up as well.
-	 * despres was already set by the StateMachine earlier.
-	 */
+/**
+ * @brief 
+ * TODO: Make the fan adjustment better and faster.
+ * @param cur_pres 
+ * @param des_pres 
+ */
+void StateMachine::adjust_fan(float cur_pres, float des_pres) {
+	//Check fan right away.
+	this->check_fan();
+	if(!this->affan_up) return; //return if it's unavailable.
+
+	//Here should be some kind of complex calculation for fan adjustment, but it will do for now.
+	//(It's ok with fast fan update rate.)
+	if(cur_pres > des_pres) {
+		this->set_fan(--(this->fan_speed));
+	}
+	else if(cur_pres < des_pres) {
+		this->set_fan(++(this->fan_speed));
+	}
+
 }
 
 /**
