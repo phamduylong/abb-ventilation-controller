@@ -1,8 +1,10 @@
 #include "StateMachine.h"
 
-StateMachine::StateMachine(LiquidCrystal *lcd, bool fast) : lcd(lcd), fast(fast) {
-	this->timeout = 500; //Buttons are read every millisecond. Sensors should be checked every 0.5s.
-	this->fan_timeout = 100; //Update fan speed every 100ms.
+StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
+lcd(lcd), 
+sensors_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
+fan_timeout(100), //Update fan speed every 100ms.
+spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
 	this->co2 = 0;
@@ -14,7 +16,7 @@ StateMachine::StateMachine(LiquidCrystal *lcd, bool fast) : lcd(lcd), fast(fast)
 	this->modeauto = true;
 	this->busy = true;
 	
-	//Initialise all possible menu items.
+	//Initialise all menu items.
 	this->mrhum = new DecimalShow(this->lcd, std::string("Rel Humidity*DA"), std::string("%"));
 	this->mirhum = new MenuItem(this->mrhum);
 	this->mtemp = new DecimalShow(this->lcd, std::string("Temperature *DA"), std::string("C"));
@@ -88,8 +90,8 @@ void StateMachine::sinit(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sinit.\n");
-		this->timer = 0;
-		this->fan_timeout = 0;
+		this->sensors_timer = 0;
+		this->fan_timer = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
 		this->check_sensors(true);
 		this->set_fan(0); //Setting the fan, not checking it, since we always initialise with 0.
@@ -130,8 +132,8 @@ void StateMachine::sauto(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sauto.\n");
-		this->timer = 0;
-		this->fan_timeout = 0;
+		this->sensors_timer = 0;
+		this->fan_timer = 0;
 		//Set all titles to A.
 		this->screens_update();
 		break;
@@ -165,14 +167,15 @@ void StateMachine::sauto(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->timer++;
+		this->sensors_timer++;
 		this->fan_timer++;
-		//Every 0.5s.
-		if (this->timer >= this->timeout){
+		//Every 0.5s by default.
+		if (this->sensors_timer >= this->sensors_timeout){
 			check_sensors(); //Quickly read sensors
-			this->timer = 0;
+			this->sensors_timer = 0;
+			this->screens_update();
 		}
-		//Every 100ms.
+		//Every 100ms by default.
 		if (this->fan_timer >= this->fan_timeout)
 		{
 			this->fan_timer = 0;
@@ -199,7 +202,7 @@ void StateMachine::smanual(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered smanual.\n");
-		this->timer = 0;
+		this->sensors_timer = 0;
 		this->fan_timer = 0;
 		//Unlock Fan menu.
 		this->screen_unlock(this->mfan);
@@ -238,13 +241,15 @@ void StateMachine::smanual(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->timer++;
-		//Every 0.5s.
-		if (this->timer >= this->timeout) {
+		this->sensors_timer++;
+		this->fan_timer++;
+		//Every 0.5s by default.
+		if (this->sensors_timer >= this->sensors_timeout) {
 			this->check_sensors(); //Quickly read sensors
-			this->timer = 0;
+			this->sensors_timer = 0;
+			this->screens_update();
 		}
-		//Every 100ms.
+		//Every 100ms by default.
 		if (this->fan_timer >= this->fan_timeout)
 		{
 			this->fan_timer = 0;
@@ -271,7 +276,8 @@ void StateMachine::ssensors(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered ssensors.\n");
-		this->timer = 0;
+		this->sensors_timer = 0;
+		this->fan_timer = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
 		this->check_everything(!fast);
@@ -317,8 +323,8 @@ void StateMachine::check_sensors(bool retry) {
 	this->operation_time += this->srht.get_elapsed_time();
 	sfpres_up = this->spres.read(this->pres, retry);
 	this->operation_time += this->spres.get_elapsed_time();
-	//CO2 sensor requires other sensors readings. (TODO: implement that functionality)
-	sfco2_up = this->sco2.read(this->co2, retry);
+	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
+	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
 	this->operation_time += this->sco2.get_elapsed_time();
 }
 

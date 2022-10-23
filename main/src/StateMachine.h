@@ -50,10 +50,10 @@ private:
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
 	LiquidCrystal *lcd; //lcd display
-	unsigned int timer; //Counts ticks for state.
-	unsigned int timeout; //How many ticks will state remain.
-	unsigned int fan_timer;
-	unsigned int fan_timeout;
+	unsigned int sensors_timer; //Counts ticks for sensor reading.
+	const unsigned int sensors_timeout; //How many ticks to wait before sensor reading.
+	unsigned int fan_timer; //Counts ticks for fan adjustment.
+	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
 	//Menu.
 	SimpleMenu menu;
 	DecimalShow *mrhum;
