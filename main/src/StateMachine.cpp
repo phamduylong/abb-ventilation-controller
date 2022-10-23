@@ -253,8 +253,7 @@ void StateMachine::smanual(const Event& e) {
 		{
 			this->fan_timer = 0;
 			this->desfan_speed = this->mfan->getValue() * 10;
-			if (this->fan_speed != this->desfan_speed) //Set the fan speed only if it mismatches the current.
-				this->set_fan(this->desfan_speed);
+			this->set_fan(this->desfan_speed);
 		}
 		
 		break;
@@ -313,7 +312,7 @@ void StateMachine::ssensors(const Event& e) {
  */
 void StateMachine::check_everything(bool retry) {
 	unsigned int time;
-	this->check_sensors(retry);
+	this->check_sensors(retry); //operation_time is zeroed out in here.
 	time = this->operation_time;
 	this->check_fan(retry);
 	this->operation_time += time;
@@ -355,10 +354,12 @@ void StateMachine::readPres(bool retry) {
  * @param speed to set up on the fan.
  */
 void StateMachine::set_fan(int speed) {
-	this->operation_time = 0;
-	this->affan_up = this->fan.set_speed(speed, false);
-	this->operation_time += this->fan.get_elapsed_time();
-	if (this->affan_up) this->fan_speed = speed;
+	this->check_fan(false); //operation_time zeroed out here. 
+	if(speed != this->fan_speed) {
+		this->affan_up = this->fan.set_speed(speed, false);
+		this->operation_time += this->fan.get_elapsed_time();
+		if (this->affan_up) this->fan_speed = speed;
+	}
 }
 
 /**
@@ -387,13 +388,12 @@ void StateMachine::adjust_fan(float cur_pres, float des_pres) {
 
 	//Here should be some kind of complex calculation for fan adjustment, but it will do for now.
 	//(It's ok with fast fan update rate.)
-	if(cur_pres > des_pres) {
-		this->set_fan(--(this->fan_speed));
+	if((round(cur_pres) > round(des_pres)) && this->fan_speed > 0) {
+		this->set_fan(this->fan_speed - 1);
 	}
-	else if(cur_pres < des_pres) {
-		this->set_fan(++(this->fan_speed));
+	else if((round(cur_pres) < round(des_pres)) && this->fan_speed < 1000) {
+		this->set_fan(this->fan_speed + 1);
 	}
-
 }
 
 /**
