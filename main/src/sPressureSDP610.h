@@ -9,7 +9,7 @@ uint8_t crc8(uint8_t *data, size_t size);
 
 class sPressureSDP610 {
 public:
-	sPressureSDP610(unsigned int retries = 3);
+	sPressureSDP610(unsigned int retries = 3, unsigned int wait = 100);
 	virtual ~sPressureSDP610();
 	bool read(float &data, bool retry = true);
 	bool get_status();
@@ -17,7 +17,8 @@ public:
 private:
 	I2C i2c;
 	I2CDevice sdp610;
-	unsigned int retries;
+	const unsigned int retries;
+	const unsigned int wait;
 	bool status;
 	unsigned int elapsed_time;
 };
