@@ -1,6 +1,13 @@
 #include "sPressureSDP610.h"
 #include "systick.h"
 
+/**
+ * @brief Calculates 8-bit crc for given array of bytes.
+ * 
+ * @param data array of bytes.
+ * @param size size of an array.
+ * @return uint8_t 8-bit CRC.
+ */
 uint8_t crc8(uint8_t *data, size_t size) {
 	uint8_t crc = 0x00;
 	uint8_t byteCtr;
@@ -15,7 +22,7 @@ uint8_t crc8(uint8_t *data, size_t size) {
 	return crc;
 }
 
-sPressureSDP610::sPressureSDP610(unsigned int retries) : i2c{}, sdp610{&i2c, 0x40}, retries(retries) {
+sPressureSDP610::sPressureSDP610(unsigned int retries, unsigned int wait) : i2c{}, sdp610{&i2c, 0x40}, retries(retries), wait(wait) {
 	this->status = false;
 	this->elapsed_time = 0;
 }
@@ -37,20 +44,29 @@ bool sPressureSDP610::read(float &data, bool retry) {
 	uint16_t pres_value = 0;
 	this->elapsed_time = 0;
 	while (i && !this->status) {
-		Sleep(10); //Wait 10ms before every sensor reading. (Needed by I2C, can be lowered to 1ms, but it can be unsafe)
-		this->elapsed_time += 10;
+		Sleep(3); //Wait 3ms before every sensor reading. (Needed by I2C, can be lowered to 1ms, but it can be unsafe)
+		this->elapsed_time += 3;
 		this->status = this->sdp610.read(0xF1, pres_raw, 3);
 		//Is not able to communicate with the sensor.
 		if (!this->status) {
-			--i;
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
+			if(--i) {
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
+			}
 			continue;
 		}
 		this->status = (pres_raw[2] == crc8(pres_raw, 2));
 		//CRC error.
 		if (!this->status) {
-			--i;
+			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
+			if(--i) {
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
+			}
 			continue;
 		}
+		//No error occured if we are here.
 		pres_value = 0;
 		pres_value = pres_raw[0];
 		pres_value <<= 8;
@@ -62,10 +78,21 @@ bool sPressureSDP610::read(float &data, bool retry) {
 	return this->status;
 }
 
+/**
+ * @brief Gets latest sensor status.
+ * 
+ * @return true Sensor was UP.
+ * @return false Sensor was DOWN.
+ */
 bool sPressureSDP610::get_status() {
 	return this->status;
 }
 
+/**
+ * @brief Gets latest read() execution time
+ * 
+ * @return unsigned int Time in ms.
+ */
 unsigned int sPressureSDP610::get_elapsed_time() {
 	return this->elapsed_time;
 }
