@@ -2,7 +2,7 @@
 
 #include "systick.h"
 
-aFanMIO12V::aFanMIO12V(unsigned int retries) : node{1}, ao1{&node, 0x0000}, di1{&node, 0x0004}, speed(-1), retries(retries) {
+aFanMIO12V::aFanMIO12V(unsigned int retries, unsigned int wait) : node{1}, ao1{&node, 0x0000}, di1{&node, 0x0004}, speed(-1), retries(retries), wait(wait) {
 	this->node.begin(9600);
 	this->status = false;
 	this->elapsed_time = 0;
@@ -20,10 +20,10 @@ bool aFanMIO12V::set_speed(int16_t v, bool retry) {
 	do {
 		this->status = !(this->ao1.write(v));
 		--i;
-		//On failure wait 100ms before next loop.
+		//On failure wait this->wait (100ms by default) before next loop.
 		if(i && !this->status) {
-			Sleep(100);
-			this->elapsed_time += 100;
+			Sleep(this->wait);
+			this->elapsed_time += this->wait;
 		}
 	}while(!this->status && i);
 	//Set speed to the desired one only if it was set up.
@@ -42,10 +42,10 @@ bool aFanMIO12V::get_speed(int16_t &v, bool retry) {
 		cur_sp = this->ao1.read();
 		
 		if(cur_sp == -1) {
-			//Sleep 100ms only if we have to loop another time.
+			//Sleep this->wait (100ms by default) only if we have to loop another time.
 			if(--i) {
-				Sleep(100);
-				this->elapsed_time += 100;
+				Sleep(this->wait);
+				this->elapsed_time += this->wait;
 			}
 			continue;
 		}

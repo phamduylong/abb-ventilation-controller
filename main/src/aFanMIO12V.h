@@ -6,7 +6,7 @@
 
 class aFanMIO12V {
 public:
-	aFanMIO12V(unsigned int retries = 3);
+	aFanMIO12V(unsigned int retries = 3, unsigned int wait = 100);
 	virtual ~aFanMIO12V();
 	bool set_speed(int16_t v, bool retry = true);
 	bool get_speed(int16_t &v, bool retry = true);
@@ -18,7 +18,8 @@ private:
 	ModbusRegister ao1;
 	ModbusRegister di1;
 	int16_t speed;
-	unsigned int retries;
+	const unsigned int retries;
+	const unsigned int wait;
 	bool status;
 	unsigned int elapsed_time;
 };
