@@ -255,7 +255,10 @@ unsigned int srhtHMP60::get_elapsed_time() {
  * @return false One of the registers returned error.
  */
 bool srhtHMP60::check_status() {
-	return this->err_reg.read();
+	int res = this->err_reg.read();
+	if( res == -1 ) return false;
+	if( res == 0 ) return false;
+	return true;
 }
 
 /**
