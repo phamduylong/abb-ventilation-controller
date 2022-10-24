@@ -76,7 +76,7 @@
 
         #input-container {
             position: absolute;
-            top: 75%;
+            top: 80%;
             left: 50%;
             transform: translate(-50%, -50%);
             display: inline-block;
@@ -102,6 +102,17 @@
         #logout-btn {
             width: 60%;
         }
+
+        #stats {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #stats-btn {
+            width: 80%;
+        }
+
         #chart-container {
             margin: 20px;
             border-radius: 5px;
@@ -172,6 +183,12 @@
     </form>
 </div>
 
+<div>
+    <form action="/statistics" id="stats">
+        <input id="stats-btn" type="submit" value="See Full Statistics">
+    </form>
+</div>
+
 <script type="text/javascript">
     function fetchPressure() {
         fetch('/pressure_data').then(tmp => tmp.json()).then(arr => {
@@ -202,11 +219,6 @@
 
     }
     setInterval(fetchPressure,1000);
-
-
-
-
-
 
 </script>
 </body>
