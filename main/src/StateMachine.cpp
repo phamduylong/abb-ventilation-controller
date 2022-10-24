@@ -15,6 +15,7 @@ spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->operation_time = 0;
 	this->modeauto = true;
 	this->busy = true;
+	this->mod = false;
 	
 	//Initialise all menu items.
 	this->mrhum = new DecimalShow(this->lcd, std::string("Rel Humidity*DA"), std::string("%"));
@@ -133,6 +134,11 @@ void StateMachine::sauto(const Event& e) {
 		printf("Entered sauto.\n");
 		this->sensors_timer = 0;
 		this->fan_timer = 0;
+		//If user is in modification - discard it.
+		if(this->mod) {
+			this->mod = false;
+			this->menu.event(MenuItem::back);
+		}
 		//Set all titles to A.
 		this->screens_update();
 		break;
@@ -149,6 +155,7 @@ void StateMachine::sauto(const Event& e) {
 			this->menu.event(MenuItem::down);
 			break;
 		case MenuItem::ok:
+			this->mod = !this->mod;
 			this->menu.event(MenuItem::ok);
 			break;
 		case MenuItem::back:
@@ -172,7 +179,7 @@ void StateMachine::sauto(const Event& e) {
 		if (this->sensors_timer >= this->sensors_timeout){
 			check_sensors(); //Quickly read sensors
 			this->sensors_timer = 0;
-			this->screens_update();
+			if(!this->mod) this->screens_update();
 		}
 		//Every 10ms by default.
 		if (this->fan_timer >= this->fan_timeout)
@@ -205,6 +212,11 @@ void StateMachine::smanual(const Event& e) {
 		this->fan_timer = 0;
 		//Unlock Fan menu.
 		this->screen_unlock(this->mfan);
+		//If user is in modification - discard it.
+		if(this->mod) {
+			this->mod = false;
+			this->menu.event(MenuItem::back);
+		}
 		//Set all titles to M.
 		this->screens_update();
 		break;
@@ -223,6 +235,7 @@ void StateMachine::smanual(const Event& e) {
 			this->menu.event(MenuItem::down);
 			break;
 		case MenuItem::ok:
+			this->mod = !this->mod;
 			this->menu.event(MenuItem::ok);
 			break;
 		case MenuItem::back:
@@ -246,7 +259,7 @@ void StateMachine::smanual(const Event& e) {
 		if (this->sensors_timer >= this->sensors_timeout) {
 			this->check_sensors(); //Quickly read sensors
 			this->sensors_timer = 0;
-			this->screens_update();
+			if(!this->mod) this->screens_update();
 		}
 		//Every 10ms by default.
 		if (this->fan_timer >= this->fan_timeout)

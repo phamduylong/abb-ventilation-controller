@@ -96,6 +96,7 @@ private:
 	bool modeauto; //Flag for auto mode.
 	bool busy; //Set true when input from screen can be unavailable for long period of time.
 	bool fast; //Set true to skip retries on manual/auto switch.
+	bool mod;
 	//Sensor/Devices flags.
 	bool sfrht_up;
 	bool sfco2_up;
