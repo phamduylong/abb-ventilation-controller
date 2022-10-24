@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Auto Mode</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <style>
         .switch {
             position: relative;
@@ -75,7 +76,7 @@
 
         #input-container {
             position: absolute;
-            top: 50%;
+            top: 75%;
             left: 50%;
             transform: translate(-50%, -50%);
             display: inline-block;
@@ -102,10 +103,31 @@
             width: 60%;
         }
 
+        #chart-container {
+            margin: 20px;
+            border-radius: 5px;
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #chart {
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
 
     </style>
 
     <script type="text/javascript">
+
         function toggleSwitch() {
             const auto_switch = document.getElementById('auto-switch');
             const switch_status = document.getElementById('switch-status');
@@ -133,6 +155,12 @@
 </div>
 <br/>
 
+
+<div id="chart-container">
+    <canvas id="chart"></canvas>
+</div>
+<br/>
+
 <div id="input-container">
     <h3>PRESSURE LEVEL IS <%=pressure%>Pa</h3>
     <form action="/pressure" method="post">
@@ -149,5 +177,44 @@
     <input id="logout-btn" type="submit" value="Log Out">
 </form>
 </div>
+<script type="text/javascript">
+    function fetchFan() {
+        fetch('/fan_data').then(tmp => tmp.json()).then(arr => {
+            const x = arr.x;
+            const y = arr.y;
+
+            new Chart("chart", {
+                type: "line",
+                data: {
+                    labels: x,
+                    datasets: [{
+                        data: y,
+                        borderColor: "black",
+                        fill: false
+                    }]
+                },
+                options: {
+                    legend: {display: false},
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: "Temperature per each sample"
+                    }
+                }
+            });
+
+        })
+
+    }
+    setInterval(fetchFan,1000);
+
+
+
+
+    function epoch_to_hh_mm_ss(epoch) {
+        return new Date(epoch).toISOString().substr(11, 8)
+    }
+</script>
+
 </body>
 </html>

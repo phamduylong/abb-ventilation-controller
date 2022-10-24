@@ -155,6 +155,24 @@ app.get('/temp_data', async (req, res) => {
     res.json(data);
 });
 
+app.get('/fan_data', async (req, res) => {
+    //random data for testing purposes
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    const x = [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60];
+    const y = [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4];
+    const data = {x:x,y:y};
+    return res.json(data);
+
+});
+
+app.get('/pressure_data', async (req, res) => {
+    //random data for testing purposes
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    const data = {x: [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
+        y: [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4]};
+    res.json(data);
+});
+
 app.get('/user_data', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const username = req.cookies.curr_user;

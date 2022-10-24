@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Manual Mode</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <style>
         .switch {
             position: relative;
@@ -75,7 +76,7 @@
 
         #input-container {
             position: absolute;
-            top: 50%;
+            top: 75%;
             left: 50%;
             transform: translate(-50%, -50%);
             display: inline-block;
@@ -100,6 +101,25 @@
 
         #logout-btn {
             width: 60%;
+        }
+        #chart-container {
+            margin: 20px;
+            border-radius: 5px;
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #chart {
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
     </style>
@@ -141,10 +161,53 @@
     </form>
 
 </div>
+
+<div id="chart-container">
+    <canvas id="chart"></canvas>
+</div>
+
 <div>
     <form action="/logout" id="logout">
         <input id="logout-btn" type="submit" value="Log Out">
     </form>
 </div>
+
+<script type="text/javascript">
+    function fetchPressure() {
+        fetch('/pressure_data').then(tmp => tmp.json()).then(arr => {
+            const x = arr.x;
+            const y = arr.y;
+
+            new Chart("chart", {
+                type: "line",
+                data: {
+                    labels: x,
+                    datasets: [{
+                        data: y,
+                        borderColor: "black",
+                        fill: false
+                    }]
+                },
+                options: {
+                    legend: {display: false},
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: "Temperature per each sample"
+                    }
+                }
+            });
+
+        })
+
+    }
+    setInterval(fetchPressure,1000);
+
+
+
+
+
+
+</script>
 </body>
 </html>
