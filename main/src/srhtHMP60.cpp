@@ -2,7 +2,7 @@
 #include "systick.h"
 
 srhtHMP60::srhtHMP60(unsigned int retries, unsigned int wait) : node{241}, rh0{&node, 0x0000}, rh1{&node, 0x0001}, t0{&node, 0x0002}, t1{&node, 0x0003},
-err_reg{&node, 0x0200}, retries(retries), wait(wait) {
+err_reg{&node, 0x0200}, err_code{&node, 0x203}, err_code2{&node, 0x204}, retries(retries), wait(wait) {
 	this->node.begin(9600);
 	this->status = false;
 	this->elapsed_time = 0;
@@ -257,8 +257,19 @@ unsigned int srhtHMP60::get_elapsed_time() {
 bool srhtHMP60::check_status() {
 	int res = this->err_reg.read();
 	if( res == -1 ) return false;
-	if( res == 0 ) return false;
+	if( res == 0 ) {
+		volatile int err = this->get_error();
+		return false;
+	}
 	return true;
+}
+
+int srhtHMP60::get_error() {
+	int vhex = 0;
+	vhex = this->err_code2.read();
+	vhex <<= 16;
+	vhex |= this->err_code.read();
+	return vhex;
 }
 
 /**

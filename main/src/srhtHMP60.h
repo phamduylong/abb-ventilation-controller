@@ -20,11 +20,14 @@ private:
 	ModbusRegister t0;
 	ModbusRegister t1;
 	ModbusRegister err_reg;
+	ModbusRegister err_code;
+	ModbusRegister err_code2;
 	const unsigned int retries;
 	const unsigned int wait;
 	bool status;
 	unsigned int elapsed_time;
 	bool check_status();
+	int get_error();
 	float binary32_to_float(const unsigned int bin32);
 };
 
