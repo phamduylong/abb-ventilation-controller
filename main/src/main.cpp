@@ -205,7 +205,7 @@ int main(void) {
 	lcd->clear();
 
 #if LPC_PROJ
-	StateMachine base(lcd);
+	StateMachine base(lcd, true);
 	EventQueue events;
 
 	unsigned int up_ok_held = 0;

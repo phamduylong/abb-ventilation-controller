@@ -477,4 +477,6 @@ void StateMachine::screens_update() {
 	this->sfpres_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mpresm->setTitle(buf);
+	//Show everything on LCD
+	this->menu.event(MenuItem::show);
 }
