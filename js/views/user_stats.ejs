@@ -62,7 +62,11 @@
 
 
 
-
+            for(let i = 0; i < y.length; ++i){
+                if(y[i] > 86400000){
+                    y[i] = 86399999;
+                }
+            }
 
 
 
@@ -106,17 +110,20 @@
                                 unit: 'day',
                                 tooltipFormat: 'MMM DD'
                             }, gridLines: {
-                                show: false
+                                display: false
                             }
                         },
 
                         yAxes: [{
                             ticks: {
                                 userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
-                                stepSize: 30 * 60,
-                                beginAtZero: true
+                                stepSize: 86400000/24,
+                                beginAtZero: true,
+                                steps: 24,
+                                stepValue: (86399999/24),
+                                max: 86399999
                             }, gridLines: {
-                                show: false
+                                display: false
                             }
                         }]
                     }
