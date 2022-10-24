@@ -158,8 +158,8 @@ app.get('/temp_data', async (req, res) => {
 app.get('/fan_data', async (req, res) => {
     //random data for testing purposes
     if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const x = [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60];
-    const y = [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4];
+    const x = [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,12,23,24,43,34,34,34,34,45];
+    const y = [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4,1,2,3,4,5,6,7,8,9,10];
     const data = {x:x,y:y};
     return res.json(data);
 
@@ -206,13 +206,21 @@ app.get('/logout', (req, res) => {
             if (err) throw err;
             if(arr[0] !== undefined) {
                 const user = arr[0];
-                const update_obj = {$set: {logouts: [...user.logouts, Date.now()]}};
-                console.log(`User ${user.username} logged out at ${Date.now().toString()}`);
-                dbo.collection("users").updateOne({username: user.username}, update_obj,
-                    (err, res) =>{
-                    if(err) throw err;
-                    console.log(res);
-                });
+                const logout_time = Date.now();
+                const update_obj = {$set: {logouts: [...user.logouts, logout_time]}};
+                if(!isSameDay(new Date(user.logins[user.logins.length - 1]), new Date(logout_time))) {
+                    const logout_date = logout_time.getDate();
+                    const logout_month = logout_time.getMonth();
+                    const logout_year = logout_time.getFullYear();
+                    const new_day = new Date(logout_year, logout_month, logout_date);
+                    user.logins.push(new_day);
+                    const time_in_new_day = Math.abs(logout_time - new_day);
+                    const time_in_old_day = Math.abs(new_day - user.logins[user.logins.length - 1]);
+                    const prev_day_logout = new Date(user.logins[user.logins.length - 1] + time_in_old_day);
+                    const next_day_logout = new Date(new_day + time_in_new_day);
+                    user.logouts.push(prev_day_logout);
+                    user.logouts.push(next_day_logout);
+                }
             }
         });
 
@@ -230,6 +238,11 @@ app.get('/auto', async (req, res) => {
 app.get('/manual', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     res.render('manual');
+});
+
+app.get('/statistics', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.render('statistics');
 });
 
 
@@ -271,3 +284,4 @@ const isSameDay = (d1, d2) => {
         d1.getMonth() === d2.getMonth() &&
         d1.getDate() === d2.getDate();
 }
+

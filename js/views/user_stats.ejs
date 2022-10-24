@@ -11,11 +11,14 @@
 </head>
 
 <body onload="fetching()">
-<div style="width: 50%; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);"><canvas id="chart"></canvas></div>
-<h2 id = "averageTime"></h2>
+<div
+        style="width: 60%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+    <canvas id="chart"></canvas>
+</div>
+
 <script>
 
-
+    const sec_per_day = 86400000;
     function fetching() {
         fetch('/user_data').then(tmp => tmp.json()).then(arr => {
             const x = arr.x;
@@ -64,7 +67,8 @@
 
             for(let i = 0; i < y.length; ++i){
                 if(y[i] > 86400000){
-                    y[i] = 86399999;
+                    y[i+1] += y[i] - sec_per_day;
+                    y[i] = sec_per_day;
                 }
             }
 
@@ -88,7 +92,7 @@
                         {
                             label: x,
                             data: y,
-                            backgroundColor: [
+                             backgroundColor: [
                                 'rgb(255, 99, 132)',
                                 'rgb(255, 159, 64)',
                                 'rgb(255, 205, 86)',
@@ -103,6 +107,10 @@
 
                 },
                 options: {
+                    title: {
+                        display: true,
+                        text: "User Data"
+                    },
                     scales: {
                         xAxes: {
                             type: 'time',
@@ -120,8 +128,7 @@
                                 stepSize: 86400000/24,
                                 beginAtZero: true,
                                 steps: 24,
-                                stepValue: (86399999/24),
-                                max: 86399999
+                                max: 86400000
                             }, gridLines: {
                                 display: false
                             }

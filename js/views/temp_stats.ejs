@@ -9,13 +9,13 @@
     </head>
 
     <body>
-        <div><canvas id="myChart"></canvas></div>
+        <div><canvas id="tempChart"></canvas></div>
         <script>
                 fetch('/temp_data').then(tmp => tmp.json()).then(arr => {
                     console.log(arr);
                     const x = arr.x;
 
-                    new Chart("myChart", {
+                    new Chart("tempChart", {
                         type: "line",
                         data: {
                             labels: x,

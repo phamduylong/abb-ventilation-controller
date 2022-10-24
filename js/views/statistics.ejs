@@ -1,0 +1,183 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Temperature Statistics</title>
+    <!--Load the AJAX API-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+
+
+</head>
+<body onload="fetching()">
+<!--<div id = "tempChart"-->
+<!--        style="width: 60%; position: absolute; top: 50%; left: 30%; transform: translate(-50%, -50%);">-->
+<div id = "temp" style="width: 30%; position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);">
+    <canvas id="tempChart" onclick = "window.location.href = '/statistics/temperature'"></canvas>
+</div>
+
+
+<div id = "user"
+        style="width: 30%; position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%);">
+    <canvas id="userChart" onclick = "window.location.href = '/statistics/user'"></canvas>
+</div>
+<script>
+    const sec_per_day = 86400000;
+    function fetching() {
+
+        fetch('/temp_data').then(tmp => tmp.json()).then(arr => {
+            console.log(arr);
+            const x = arr.x;
+
+            new Chart("tempChart", {
+                type: "line",
+                data: {
+                    labels: x,
+                    datasets: [{
+                        data: arr.y,
+                        borderColor: "black",
+                        fill: false
+                    }]
+                },
+                options: {
+                    legend: {display: false},
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: "Temperature per each sample"
+                    }
+                }
+            });
+        })
+
+        fetch('/user_data').then(tmp => tmp.json()).then(arr => {
+            const x = arr.x;
+            const logout_time = arr.logout_time;
+            const y = arr.y;
+            const diff = arr.y;
+            const time_converted = [];
+            diff.forEach(ms => {
+                const days = Math.floor(ms / (24 * 60 * 60 * 1000));
+                const daysms = ms % (24 * 60 * 60 * 1000);
+                const hours = Math.floor(daysms / (60 * 60 * 1000));
+                const hoursms = ms % (60 * 60 * 1000);
+                const minutes = Math.floor(hoursms / (60 * 1000));
+                const minutesms = ms % (60 * 1000);
+                const sec = Math.floor(minutesms / 1000);
+                time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
+            });
+            console.log(arr.y);
+
+
+            //TEST DATA
+            // let x2 =  [ 1666343483631,1666347483631, 1666349483631,1666553494355,1667553494355 ] //login time
+            // let x3 =  [ 1666350870717,1666357483631,1666350483631, 1666560945605,1668553494355 ] //logout time
+            // let y2 =  [ 10048,323232 ,443100,123323,1223332 ]
+
+
+            for (let i = 0; i < logout_time.length; ++i) {
+                const d1 = new Date(x[i]);
+                const d3 = new Date(y[i]);
+                const d2 = new Date(x[i + 1]);
+                if (d1.getFullYear() === d2.getFullYear()
+                    && d1.getMonth() === d2.getMonth()
+                    && d1.getDate() === d2.getDate()) {
+
+                    y[i] = y[i] + y[i + 1];
+                    y.splice(i + 1, 1);
+                    x.splice(i + 1, 1);
+                    console.log(x)
+                    i--;
+                }
+
+
+                for (let i = 0; i < y.length; ++i) {
+                    if (y[i] > 86400000) {
+                        y[i + 1] += y[i] - sec_per_day;
+                        y[i] = sec_per_day;
+                    }
+                }
+
+
+            }
+            for (let i = 0; i < x.length; i++) {
+                x[i] = new Date(x[i]).toString().substring(4, 16);
+            }
+
+
+            // console.log(datas);
+
+
+                    new Chart("userChart", {
+                        type: "bar",
+                        data: {
+                            labels: x,
+                            datasets: [
+                                {
+                                    label: x,
+                                    data: y,
+                                    backgroundColor: [
+                                        'rgb(255, 99, 132)',
+                                        'rgb(255, 159, 64)',
+                                        'rgb(255, 205, 86)',
+                                        'rgb(75, 192, 192)',
+                                        'rgb(54, 162, 235)',
+                                        'rgb(153, 102, 255)',
+                                        'rgb(201, 203, 207)'
+                                    ]
+
+                                }
+                            ]
+
+                        },
+                        options: {
+                            title: {
+                                display: true,
+                                text: "User Data"
+                            },
+                            scales: {
+                                xAxes: {
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day',
+                                        tooltipFormat: 'MMM DD'
+                                    }, gridLines: {
+                                        display: false
+                                    }
+                                },
+
+                                yAxes: [{
+                                    ticks: {
+                                        userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
+                                        stepSize: 86400000/24,
+                                        beginAtZero: true,
+                                        steps: 24,
+                                        max: 86400000
+                                    }, gridLines: {
+                                        display: false
+                                    }
+                                }]
+                            }
+                        },
+                        tooltips: {
+                            callbacks: {
+                                label: function(tooltipItem, data) {
+                                    return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.yLabel)
+                                }
+                            }
+                        }
+                    });
+
+                })
+                function epoch_to_hh_mm_ss(epoch) {
+                    return new Date(epoch).toISOString().substr(11, 8)
+                }
+
+
+
+    }
+
+</script>
+
+</body>
+</html>
