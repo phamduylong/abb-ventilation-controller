@@ -3,7 +3,7 @@
 StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
 lcd(lcd), 
 sensors_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
-fan_timeout(10), //Update fan speed every 10ms.
+fan_timeout(13), //Update fan speed every 10ms.
 spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
