@@ -401,12 +401,13 @@ void StateMachine::adjust_fan(float cur_pres, float des_pres) {
 
 	//Here should be some kind of complex calculation for fan adjustment, but it will do for now.
 	//(It's ok with fast fan update rate.)
-	if((round(cur_pres) > round(des_pres)) && this->fan_speed > 0) {
+	if((round(cur_pres) > round(des_pres)) && this->fan_speed > 89) {
 		this->set_fan(this->fan_speed - 1);
 	}
 	else if((round(cur_pres) < round(des_pres)) && this->fan_speed < 1000) {
 		this->set_fan(this->fan_speed + 1);
 	}
+	else if(fan_speed < 90) this->set_fan(0);
 }
 
 /**
