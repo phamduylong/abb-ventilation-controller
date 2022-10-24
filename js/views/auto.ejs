@@ -103,6 +103,16 @@
             width: 60%;
         }
 
+        #stats {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #stats-btn {
+            width: 80%;
+        }
+
         #chart-container {
             margin: 20px;
             border-radius: 5px;
@@ -160,6 +170,12 @@
     <canvas id="chart"></canvas>
 </div>
 <br/>
+
+<div>
+    <form action="/statistics" id="stats">
+        <input id="stats-btn" type="submit" value="See Full Statistics">
+    </form>
+</div>
 
 <div id="input-container">
     <h3>PRESSURE LEVEL IS <%=pressure%>Pa</h3>

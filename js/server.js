@@ -192,10 +192,9 @@ app.get('/user_data', async (req, res) => {
                 res.json(data1);
             }
         });
-
-
-    })
+    });
 });
+
 app.get('/logout', (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const username = req.cookies.curr_user;
