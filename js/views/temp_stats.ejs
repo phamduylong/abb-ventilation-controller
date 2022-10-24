@@ -9,7 +9,7 @@
     </head>
 
     <body>
-        <div><canvas id="tempChart"></canvas></div>
+        <div style="width: 60%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="tempChart"></canvas></div>
         <script>
                 fetch('/temp_data').then(tmp => tmp.json()).then(arr => {
                     console.log(arr);
