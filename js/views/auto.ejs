@@ -166,7 +166,7 @@
     <form action="/pressure" method="post">
         <label for="pressure">Change pressure level (0-125) Pa</label><br/>
         <input type="number" min="0" max="125" id="pressure" name="pressure" required><br/>
-        <input type="submit">
+        <input type="submit" name="submit" submit>
     </form>
 
 </div>
@@ -198,7 +198,7 @@
                     responsive: true,
                     title: {
                         display: true,
-                        text: "Temperature per each sample"
+                        text: "Fan speed"
                     }
                 }
             });
