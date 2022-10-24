@@ -13,7 +13,7 @@
 DecimalShow::DecimalShow(LiquidCrystal *lcd_, std::string editTitle, std::string unit): lcd(lcd_), title(editTitle), unitValue(unit) {
 	value = 0;
 	edit = 0;
-
+	focus = 0;
 }
 
 DecimalShow::~DecimalShow() {}
@@ -35,7 +35,7 @@ void DecimalShow::cancel() {
 }
 
 void DecimalShow::setFocus(bool focus) {
-	this->focus = focus;
+	//this->focus = focus;
 }
 
 bool DecimalShow::getFocus() {
