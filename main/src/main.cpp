@@ -9,6 +9,7 @@
 #include <cr_section_macros.h>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include "DigitalIoPin.h"
 #include "LpcUart.h"
 #include "systick.h"
@@ -20,11 +21,39 @@
 #include "LiquidCrystal.h"
 #include "I2C.h"
 #include "I2CDevice.h"
+#include "sPressureSDP610.h"
+#include "sco2GMP252.h"
+#include "srhtHMP60.h"
+#include "SimpleMenu.h"
+#include "IntegerEdit.h"
+#include "IntegerShow.h"
+#include "IntegerUnitEdit.h"
+#include "DecimalEdit.h"
+#include "DecimalShow.h"
+#include "aFanMIO12V.h"
+#include "Event.h"
+#include "EventQueue.h"
+#include "StateMachine.h"
 
 #define SSID	    "SmartIotMQTT"
 #define PASSWORD    "SmartIot"
 #define BROKER_IP   "192.168.1.254"
 #define BROKER_PORT  1883
+
+//DEBUG DEFINES //Leave only one ON, or none.
+#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
+#define MODBUS_TEST 0
+#define FAN_TEST 0
+#define HUM_TEMP_TEST 0
+#define CO2_TEST 0
+#define PRES_TEST 0
+#define FAN_PRES_TEST 0
+#define MQTT_TEST 0
+//sw1 - A2 - 1 8
+//sw2 - A3 - 0 5
+//sw3 - A4 - 0 6
+//sw4 - A5 - 0 7
+// /DEBUG DEFINES
 
 static volatile int counter = 0;
 static volatile unsigned int systicks = 0;
@@ -63,10 +92,28 @@ void Sleep(int ms)
 	}
 }
 
+#if MODBUS_TEST
 void abbModbusTest();
+#endif
+#if MQTT_TEST
 void socketTest();
 void mqttTest();
+#endif
+#if FAN_TEST
 void produalModbusTest();
+#endif
+#if HUM_TEMP_TEST
+void humidity_test();
+#endif
+#if CO2_TEST
+void co2_test();
+#endif
+#if PRES_TEST
+void pressure_test();
+#endif
+#if FAN_PRES_TEST
+void fan_pressure_test();
+#endif
 
 int main(void) {
 
@@ -92,13 +139,46 @@ int main(void) {
 	sysTickRate = Chip_Clock_GetSysTickClockRate();
 	SysTick_Config(sysTickRate / 1000);
 
+	/////////////////////////////////////////////////////////////////
+	//Here go all initialisations, needed for still existing tests.//
+	/////////////////////////////////////////////////////////////////
+
+	#if FAN_TEST
+	produalModbusTest();
+	#endif
+	#if HUM_TEMP_TEST
+	humidity_test();
+	#endif
+	#if CO2_TEST
+	co2_test();
+	#endif
+	#if PRES_TEST
+	pressure_test();
+	#endif
+	#if FAN_PRES_TEST
+	fan_pressure_test();
+	#endif
+
+	/////////////////////////////////////////////////////////
+	//Main test. Works only in case if other tests are off.//
+	/////////////////////////////////////////////////////////
+
 	//LCD pins init.
+#if LPC_PROJ
 	DigitalIoPin rs(0, 29, false, true, false);
 	DigitalIoPin en(0, 9, false, true, false);
 	DigitalIoPin d4(0, 10, false, true, false);
 	DigitalIoPin d5(0, 16, false, true, false);
 	DigitalIoPin d6(1, 3, false, true, false);
 	DigitalIoPin d7(0, 0, false, true, false);
+#else
+	DigitalIoPin rs(0, 8, false, false, false);
+	DigitalIoPin en(1, 6, false, false, false);
+	DigitalIoPin d4(1, 8, false, false, false);
+	DigitalIoPin d5(0, 5, false, false, false);
+	DigitalIoPin d6(0, 6, false, false, false);
+	DigitalIoPin d7(0, 7, false, false, false);
+#endif
 	rs.write(false);
 	en.write(false);
 	d4.write(false);
@@ -106,25 +186,180 @@ int main(void) {
 	d6.write(false);
 	d7.write(false);
 
+	//Buttons init
+#if LPC_PROJ
+	DigitalIoPin control(1, 8, true, true, true);
+	DigitalIoPin up_ok(0, 5, true, true, true);
+	DigitalIoPin down_back(0, 6, true, true, true);
+	DigitalIoPin auto_fast(0, 7, true, true, true);
+#else
+	DigitalIoPin sw1(0, 17 ,true ,true, true);
+	DigitalIoPin sw2(1, 11 ,true ,true, true);
+	DigitalIoPin sw3(1, 9 ,true ,true, true);
+#endif
+
 	//LCD
-	LiquidCrystal lcd(&rs, &en, &d4, &d5, &d6, &d7, false);
-	lcd.begin(16,2);
-	lcd.setCursor(0,0);
-	lcd.print("Septentrinoalis");
+	LiquidCrystal *lcd = new LiquidCrystal(&rs, &en, &d4, &d5, &d6, &d7);
+	lcd->begin(16, 2);
+	lcd->setCursor(0, 0);
+	lcd->clear();
 
-	//I2C device. (Sensirion SDP610_125kPa pressure sensor)
-	I2C i2c;
-	I2CDevice i2c_sSDP610_pressure(&i2c, (uint8_t)0x40);
+#if LPC_PROJ
+	StateMachine base(lcd);
+	EventQueue events;
 
-	//produalModbusTest();
-
+	unsigned int up_ok_held = 0;
+	unsigned int down_back_held = 0;
+	bool control_pressed = false; //control button flag.
+	bool up_ok_pressed = false; //"up"/"ok" button flag.
+	bool down_back_pressed = false; //"down"/"back" button flag.
+	bool auto_fast_pressed = false; //"auto"/"fast" button flag.
 	while(1) {
-		Sleep(100);
+		Sleep(1);
+		//Control button
+		if(control.read()) {
+			control_pressed = true;
+		}
+		else if(control_pressed){
+			control_pressed = false;
+		}
+		//Up / Ok
+		if(up_ok.read()) {
+			up_ok_pressed = true;
+			++up_ok_held;
+			//Button held more than 1.5s, send rapid commands "up" if control is released.
+			if(!control_pressed && up_ok_held >= 1500) {
+				events.publish(Event(Event::eKey, MenuItem::up)); //Up
+				--up_ok_held; //Avoid overflow.
+			}
+		}
+		else if(up_ok_pressed) {
+			if(control_pressed) events.publish(Event(Event::eKey, MenuItem::ok)); //Ok
+			else events.publish(Event(Event::eKey, MenuItem::up)); //Up
+			up_ok_pressed = false;
+			up_ok_held = 0;
+		}
+		//Down / Back
+		if(down_back.read()) {
+			down_back_pressed = true;
+			++down_back_held;
+			//Button held more than 1.5s, send rapid commands "down" if control is released.
+			if(!control_pressed && down_back_held >= 1500) {
+				events.publish(Event(Event::eKey, MenuItem::down)); //Down
+				--down_back_held; //Avoid overflow.
+			}
+		}
+		else if(down_back_pressed) { 
+			if(control_pressed) events.publish(Event(Event::eKey, MenuItem::back)); //Back
+			else events.publish(Event(Event::eKey, MenuItem::down)); //Down
+			down_back_pressed = false;
+			down_back_held = 0;
+		}
+		//Auto / Fast (No rapid commands for you!)
+		if(auto_fast.read()) {
+			auto_fast_pressed = true;
+		}
+		else if(auto_fast_pressed) {
+			if(control_pressed) events.publish(Event(Event::eKey, StateMachine::eFastToggle)); //Fast
+			else events.publish(Event(Event::eKey, StateMachine::eAutoToggle)); //Auto
+			auto_fast_pressed = false;
+		}
+
+		//Tick is given every 1 ms.
+		events.publish(Event(Event::eTick, 0));
+
+		while (events.pending()) {
+			base.HandleState(events.consume());
+		}
 	}
-	return 0 ;
+#else	
+	SimpleMenu menu;
+	DecimalEdit *pressure = new DecimalEdit(lcd, std::string("Pressure"),125,0,0.5,std::string("Pa"),true);
+	IntegerEdit *fan = new IntegerEdit(lcd, std::string("Fan Speed"),100,0,10,std::string("%"),true);
+	DecimalShow *test = new DecimalShow(lcd, std::string("Light Intensity"),std::string("%"));
+	DecimalShow *test2 = new DecimalShow(lcd, std::string("Light Intensity"),std::string("%"));
+
+	menu.addItem(new MenuItem(pressure));
+	menu.addItem(new MenuItem(fan));
+	menu.addItem(new MenuItem(fan));
+	menu.addItem(new MenuItem(test));
+	menu.addItem(new MenuItem(test2));
+	pressure->setValue(0);
+	fan->setValue(5);
+	test->setValue(95.5);
+	int timer = 0;
+	int delay = 0;
+	bool sw1_pressed = false; //"ok" button flag.
+	bool sw2_pressed = false; //"down" button flag.
+	bool sw3_pressed = false; //"up" button flag.
+	bool deleted = false;
+
+	menu.event(MenuItem::show); // display first menu item
+	while(1){
+		timer = millis();
+
+		if(timer == 10000 || timer == delay){
+			if(timer != 0 ){
+				menu.event(MenuItem::back);
+				delay = timer + 10000;
+			}
+		}
+
+		if(sw1.read()){
+			sw1_pressed = true;
+		}
+		else if(sw1_pressed){
+			sw1_pressed = false;
+		}
+
+		if(sw2.read()){
+			sw2_pressed = true;
+		}
+		else if(sw1_pressed && sw2_pressed) {
+			delay = timer + 10000;
+			sw1_pressed = false;
+			sw2_pressed = false;
+			menu.event(MenuItem::ok);
+		}
+		else if(sw2_pressed){
+
+			delay = timer + 10000;
+			sw2_pressed = false;
+			menu.event(MenuItem::up);
+		}
+
+		if(sw3.read()){
+			sw3_pressed = true;
+		}
+		else if (sw1_pressed && sw3_pressed) {
+			delay = timer + 10000;
+			sw3_pressed = false;
+			sw1_pressed = false;
+			pressure->setStatus(!(pressure->getStatus()));
+
+		}
+		else if(sw3_pressed){
+			delay = timer + 10000;
+			sw3_pressed = false;
+			menu.event(MenuItem::down);
+		}
+
+		if(deleted == false){
+			menu.deleteItem(new MenuItem(test));
+			deleted = true;
+		}
+//		const char* testing = pressure->getTitle();
+//		lcd->print(testing);
+	}
+#endif
+	return 0;
 }
 
-#if 1
+
+
+
+// Produal MIO 12-V (Fan)
+#if FAN_TEST
 void produalModbusTest()
 {
 	ModbusMaster node(1); // Create modbus object that connects to slave id 1
@@ -151,7 +386,124 @@ void produalModbusTest()
 }
 #endif
 
-#if 0   // example that uses modbus library directly
+// Vaisala HMP60 relative humidity and temperature sensor
+#if HUM_TEMP_TEST
+void humidity_test() {
+	srhtHMP60 sensor;
+	float t = 0;
+	float rhum = 0;
+	printf("Temperature\n");
+	while(1) {
+		Sleep(5000);
+		//Temperature
+		sensor.read_temp(t);
+		printf("Decoded temp: %f C\n", t);
+		//Humidity
+		sensor.read_rhum(rhum);
+		printf("Decoded hum: %f %%\n", rhum);
+	}
+}
+#endif
+
+// Vaisala GMP252 CO2 probe
+#if CO2_TEST
+void co2_test() {
+	sco2GMP252 co2;
+	float data = 0;
+	printf("CO2\n");
+	while(1) {
+		Sleep(5000);
+		printf("-------------------\n");
+		co2.read(data);
+		printf("Decoded co2: %f ppm\n", data);
+		printf("-------------------\n");
+	}
+}
+#endif
+
+// Sensirion SDP610 – 125Pa pressure sensor
+#if PRES_TEST
+void pressure_test() {
+	sPressureSDP610 spres;
+	float pres = 0;
+	//Attempt with I2CDevice.
+	printf("Pressure\n");
+	while(1) {
+		Sleep(5000);
+		printf("-------------------\n");
+		if (spres.read(pres)) {
+			printf("Pres: %f Pa\n", pres);
+			printf("Time: %d\n", spres.get_elapsed_time());
+		}
+		else {
+			printf("Invalid pressure read.\n");
+			printf("Time: %d\n", spres.get_elapsed_time());
+		}
+		printf("-------------------\n");
+	}
+}
+#endif
+
+#if FAN_PRES_TEST
+void fan_pressure_test() {
+	sPressureSDP610 spres;
+	aFanMIO12V fan;
+	float pres = 0;
+
+	DigitalIoPin sw1(1, 8, true, true, true); //speed up fan
+	DigitalIoPin sw2(0, 5, true, true, true); //slow down fan
+	DigitalIoPin sw3(0, 6, true, true, true); //read sensor
+
+	uint16_t fa = 0;
+	uint16_t prev_fa = 0;
+	bool sw1_pressed = false;
+    bool sw2_pressed = false;
+    bool sw3_pressed = false;
+	while(1) {
+		Sleep(1);
+        if(sw1.read()) {
+            sw1_pressed = true;
+        }
+        else if(sw1_pressed){
+            sw1_pressed = false;
+			if(fa < 200) fa++;
+        }
+        if(sw2.read()) {
+            sw2_pressed = true;
+        }
+        else if(sw2_pressed){
+            sw2_pressed = false;
+			if(fa > 0) fa--;
+        }
+		if(sw3.read()) {
+            sw3_pressed = true;
+        }
+        else if(sw3_pressed){
+            sw3_pressed = false;
+			printf("-------------------\n");
+			if (spres.read(pres)) {
+				printf("Pres: %f Pa\n", pres);
+				printf("Time: %d\n", spres.get_elapsed_time());
+			}
+			else {
+				printf("Invalid pressure read.\n");
+				printf("Time: %d\n", spres.get_elapsed_time());
+			}
+			printf("*******\n");
+			printf("DI1=%4d\n", fan.get_aspeed());
+			printf("AO1=%4d\n", fan.get_speed());
+			printf("-------------------\n");
+        }
+
+		if(prev_fa != fa) {
+			prev_fa = fa;
+			fan.set_speed(fa * 10);
+		}
+	}
+}
+#endif
+
+#if MODBUS_TEST   // example that uses modbus library directly
 void printRegister(ModbusMaster& node, uint16_t reg)
 {
 	uint8_t result;
@@ -264,7 +616,7 @@ void abbModbusTest()
 // WEB STUFF ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0  // example of opening a plain socket
+#if MQTT_TEST  // example of opening a plain socket
 void socketTest()
 {
 
@@ -296,7 +648,7 @@ void socketTest()
 }
 #endif
 
-#if 0
+#if MQTT_TEST
 
 void messageArrived(MessageData* data)
 {

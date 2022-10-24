@@ -64,3 +64,4 @@
 # MCUXpresso additional folders
 *.settings/
 .mcuexpressoide_package_support/
+.vscode
