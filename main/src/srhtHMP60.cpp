@@ -259,9 +259,17 @@ bool srhtHMP60::check_status() {
 	if( res == -1 ) return false;
 	if( res == 0 ) {
 		volatile int err = this->get_error();
+		#if ARDUINO_SIM
+		return true;
+		#else
 		return false;
+		#endif
 	}
+	#if ARDUINO_SIM
+	return false;
+	#else
 	return true;
+	#endif
 }
 
 int srhtHMP60::get_error() {
