@@ -41,21 +41,11 @@ client.subscribe(subs_topic, () => {
 
 });
 
-client.publish(pub_topic, "Test string 3", { qos: 1, retain: true }, (error) => {
-    if (error) {
-        console.error(error);
-    }
-});
-
-client.publish(subs_topic, "I hope it works", {qos: 1, retain: true}, (err) => {
-    if (err) {
-        console.error(err);
-    }
-});
-
-client.on('message', (topic, msg) => {
-    console.log("RECEIVED: " + msg);
-})
+setInterval(() => {
+    client.on('message', (topic, msg) => {
+        console.log("RECEIVED: " + msg);
+    })
+}, 1500);
 
 /*-------------------------------------------------------------------GET REQUESTS----------------------------------------------------------------*/
 
@@ -188,6 +178,13 @@ app.get('/logout', (req, res) => {
     res.cookie("loggedIn", false);
     res.redirect('/');
 });
+
+app.get('/mutable_data', async (req, res) => {
+    client.on('message', (topic, msg) => {
+        console.log("RECEIVED: " + msg);
+        return res.json(msg);
+    });
+})
 
 //auto mode operation page
 app.get('/auto', async (req, res) => {

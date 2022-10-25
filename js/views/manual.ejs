@@ -236,7 +236,7 @@
 
         addRand = () => {
         myChart.data.labels.push("Post ");
-        myChart.data.datasets[0].data.push(getRandomIntInclusive(1, 25));
+        myChart.data.datasets[0].data.push(getRandomIntInclusive(-30, 30));
         // re-render the chart
         myChart.update();
     }
