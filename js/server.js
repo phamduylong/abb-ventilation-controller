@@ -249,7 +249,7 @@ app.get('/auto', async (req, res) => {
 
 app.get('/manual', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('manual');
+    res.render('manual',{fspeed: 0});
 });
 
 app.get('/statistics', async (req, res) => {
@@ -264,6 +264,14 @@ app.post('/pressure', async (req, res) => {
     console.log(`PRESSURE LEVEL: ${pressure} Pa`);
     res.render('auto', {pressure: pressure});
 });
+
+app.post('/fspeed', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    const fspeed = req.body.fspeed || 0;
+    console.log(`PRESSURE LEVEL: ${fspeed} Pa`);
+    res.render('manual', {fspeed:fspeed});
+});
+
 
 
 app.listen(port, () => {
