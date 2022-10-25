@@ -3,39 +3,66 @@
         <meta charset="UTF-8">
         <title>Temperature Statistics</title>
         <!--Load the AJAX API-->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
-        </script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     </head>
 
     <body>
         <div style="width: 60%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="tempChart"></canvas></div>
         <script>
+            const ctx = document.getElementById('tempChart').getContext("2d");
+            x = [0, 1, 2, 3];
+            y = [19, 15, 23, 27];
+            var myChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: x,
+                    datasets: [{
+                        data: y,
+                        borderColor: "green",
+                        fill: false,
+                        label: "Temp val"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: "Temperature value"
+                    }
+                }
+            });
+
+            const getData = () => {
                 fetch('/temp_data').then(tmp => tmp.json()).then(arr => {
                     console.log(arr);
                     const x = arr.x;
+                    const y = arr.y;
 
-                    new Chart("tempChart", {
-                        type: "line",
-                        data: {
-                            labels: x,
-                            datasets: [{
-                                data: arr.y,
-                                borderColor: "black",
-                                fill: false
-                            }]
-                        },
-                        options: {
-                            legend: {display: false},
-                            responsive: true,
-                            title: {
-                                display: true,
-                                text: "Temperature per each sample"
-                            }
-                        }
-                    });
+                    for (let i = 0; i < x.length; ++i) {
+                        myChart.data.labels.push(x[i]);
+                        myChart.data.datasets[0].data.push(y[i]);
+                    }
+                    console.log(y);
+                    // re-render the chart
+                    myChart.update();
+
+
                 })
+            }
+            function getRandomIntInclusive(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
 
+            addRand = () => {
+                myChart.data.labels.push(myChart.data.labels.length);
+                myChart.data.datasets[0].data.push(getRandomIntInclusive(1, 25));
+                // re-render the chart
+                myChart.update();
+            }
+            setInterval(addRand, 1000);
 
     </script>
     </body>
