@@ -2,9 +2,8 @@
 
 StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
 lcd(lcd),
-rhum_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
-co2_timeout(500),
-fan_timeout(13), //Update fan speed every 10ms.
+rhum_timeout(500), temp_timeout(500), co2_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
+fan_timeout(13), //Update fan speed every 13ms.
 spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
@@ -19,17 +18,17 @@ spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->mod = false;
 	
 	//Initialise all menu items.
-	this->mrhum = new DecimalShow(this->lcd, std::string("Rel Humidity*DA"), std::string("%"));
+	this->mrhum = new DecimalShow(this->lcd, std::string("Rel Humidity *DA"), std::string("%"));
 	this->mirhum = new MenuItem(this->mrhum);
-	this->mtemp = new DecimalShow(this->lcd, std::string("Temperature *DA"), std::string("C"));
+	this->mtemp = new DecimalShow(this->lcd, std::string("Temperature  *DA"), std::string("C"));
 	this->mitemp = new MenuItem(this->mtemp);
-	this->mco2 = new DecimalShow(this->lcd, std::string("CO2 Level   *DA"), std::string("ppm"));
+	this->mco2 = new DecimalShow(this->lcd, std::string("CO2 Level    *DA"), std::string("ppm"));
 	this->mico2 = new MenuItem(this->mco2);
-	this->mfan = new IntegerEdit(this->lcd, std::string("Fan Speed   *DA"), 100, 0, 1, std::string("%"), false);
+	this->mfan = new IntegerEdit(this->lcd, std::string("Fan Speed    *DA"), 100, 0, 1, std::string("%"), false);
 	this->mifan = new MenuItem(this->mfan);
-	this->mpresm = new DecimalShow(this->lcd, std::string("Pressure    *DA"), std::string("Pa"));
+	this->mpresm = new DecimalShow(this->lcd, std::string("Pressure     *DA"), std::string("Pa"));
 	this->mipresm = new MenuItem(this->mpresm);
-	this->mpres = new DecimalEdit(this->lcd, std::string("Set Pressure*DA"), 135.0, 0.0, 1.0, std::string("Pa"), true);
+	this->mpres = new DecimalEdit(this->lcd, std::string("Set Pressure *DA"), 135.0, 0.0, 1.0, std::string("Pa"), true);
 	this->mipres = new MenuItem(this->mpres);
 
 	//Add all menu items to the menu, don't care for the mode just yet.
@@ -93,13 +92,15 @@ void StateMachine::sinit(const Event& e) {
 	case Event::eEnter:
 		printf("Entered sinit.\n");
 		this->rhum_timer = 0;
+		this->temp_timer = 0;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
 		this->check_sensors(true);
+		printf("Sensors init. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		this->set_fan(0); //Setting the fan, not checking it, since we always initialise with 0.
+		printf("Fan init. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		// DEBUG prints.
-		printf("Initialised sensors. Time elapsed: %d\n", this->operation_time);
 		printf("RHum/Temp sensor state: %s\n", this->sfrht_up ? "UP" : "DOWN");
 		printf("Pressure  sensor state: %s\n", this->sfpres_up ? "UP" : "DOWN");
 		printf("CO2       sensor state: %s\n", this->sfco2_up ? "UP" : "DOWN");
@@ -135,6 +136,7 @@ void StateMachine::sauto(const Event& e) {
 	case Event::eEnter:
 		printf("Entered sauto.\n");
 		this->rhum_timer = 200;
+		this->temp_timer = 100;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//If user is in modification - discard it.
@@ -177,16 +179,25 @@ void StateMachine::sauto(const Event& e) {
 		break;
 	case Event::eTick:
 		this->rhum_timer++;
+		this->temp_timer++;
 		this->co2_timer++;
 		this->fan_timer++;
 		//Every 0.5s by default. Starts after 300ms timeout.
 		if (this->rhum_timer >= this->rhum_timeout){
 			this->readRhum(); //Quickly read relative humidity and temperature
+			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->rhum_timer = 0;
+		}
+		//Every 0.5s by default. Starts after 400ms timeout.
+		if (this->temp_timer >= this->temp_timeout){
+			this->readTemp(); //Quickly read temperature
+			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->temp_timer = 0;
 		}
 		//Every 0.5s by default.
 		if (this->co2_timer >= this->co2_timeout){
 			this->readCo2(); //Quickly read co2
+			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
@@ -195,8 +206,10 @@ void StateMachine::sauto(const Event& e) {
 		{
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
-			this->readPres(); //Takes 5ms.
+			this->readPres(); //Takes 3ms.
+			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->adjust_fan(this->pres, this->despres);
+			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		}
 		
 		break;
@@ -205,7 +218,6 @@ void StateMachine::sauto(const Event& e) {
 	}
 }
 
-//DEBUG: This one should work already.
 /**
  * @brief Handles manual state.
  * @paragraph State Manual. Every tick reads sensors and handles the menu.
@@ -218,6 +230,7 @@ void StateMachine::smanual(const Event& e) {
 	case Event::eEnter:
 		printf("Entered smanual.\n");
 		this->rhum_timer = 200;
+		this->temp_timer = 100;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//Unlock Fan menu.
@@ -264,16 +277,25 @@ void StateMachine::smanual(const Event& e) {
 		break;
 	case Event::eTick:
 		this->rhum_timer++;
+		this->temp_timer++;
 		this->co2_timer++;
 		this->fan_timer++;
 		//Every 0.5s by default. Starts after 300ms timeout.
 		if (this->rhum_timer >= this->rhum_timeout){
-			this->readRhum(); //Quickly read relative humidity and temperature
+			this->readRhum(); //Quickly read relative humidity
+			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->rhum_timer = 0;
+		}
+		//Every 0.5s by default. Starts after 400ms timeout.
+		if (this->temp_timer >= this->temp_timeout){
+			this->readTemp(); //Quickly read temperature
+			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->temp_timer = 0;
 		}
 		//Every 0.5s by default.
 		if (this->co2_timer >= this->co2_timeout){
 			this->readCo2(); //Quickly read co2
+			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
@@ -281,8 +303,11 @@ void StateMachine::smanual(const Event& e) {
 		if (this->fan_timer >= this->fan_timeout)
 		{
 			this->fan_timer = 0;
+			this->readPres(); //Takes 3ms.
+			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->desfan_speed = this->mfan->getValue() * 10;
 			this->set_fan(this->desfan_speed);
+			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		}
 		
 		break;
@@ -304,13 +329,14 @@ void StateMachine::ssensors(const Event& e) {
 	case Event::eEnter:
 		printf("Entered ssensors.\n");
 		this->rhum_timer = 0;
+		this->temp_timer = 0;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
 		this->check_everything(!fast);
 		// DEBUG prints.
-		printf("State switch handled. Time elapsed: %d\n", this->operation_time);
+		printf("State switch handled. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		printf("RHum/Temp sensor state: %s\n", this->sfrht_up ? "UP" : "DOWN");
 		printf("Pressure  sensor state: %s\n", this->sfpres_up ? "UP" : "DOWN");
 		printf("CO2       sensor state: %s\n", this->sfco2_up ? "UP" : "DOWN");
@@ -377,14 +403,26 @@ void StateMachine::readPres(bool retry) {
 }
 
 /**
- * @brief Reads relative humidity and temperature values from relative humidity sensor.
+ * @brief Reads relative humidity value from relative humidity sensor.
  * Sets sfrht_up flag to true/false as communication result.
- * Changes relative humidity and temperature variables to current if communication succeeded.
+ * Changes relative humidity variable to current if communication succeeded.
  * @param retry Whether to retry communication.
  */
 void StateMachine::readRhum(bool retry) {
 	this->operation_time = 0;
-	sfrht_up = this->srht.read(this->temp, this->rh, retry);
+	sfrht_up = this->srht.read_rhum(this->rh, retry);
+	this->operation_time += this->srht.get_elapsed_time();
+}
+
+/**
+ * @brief Reads temperature value from relative humidity sensor.
+ * Sets sfrht_up flag to true/false as communication result.
+ * Changes temperature variable to current if communication succeeded.
+ * @param retry Whether to retry communication.
+ */
+void StateMachine::readTemp(bool retry) {
+	this->operation_time = 0;
+	sfrht_up = this->srht.read_temp(this->temp, retry);
 	this->operation_time += this->srht.get_elapsed_time();
 }
 
@@ -397,7 +435,8 @@ void StateMachine::readRhum(bool retry) {
 void StateMachine::readCo2(bool retry) {
 	this->operation_time = 0;
 	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
-	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
+	//sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
+	sfco2_up = this->sco2.read_rapid(this->co2, retry);
 	this->operation_time += this->sco2.get_elapsed_time();
 }
 
@@ -474,6 +513,7 @@ void StateMachine::screen_unlock(PropertyEdit *pe) {
  * @brief Updates every screen title and value.
  */
 void StateMachine::screens_update() {
+	unsigned int start_time = DWT->CYCCNT;
 	//Feed current sensor readings.
 	this->mrhum->setValue(this->rh);
 	this->mtemp->setValue(this->temp);
@@ -484,41 +524,46 @@ void StateMachine::screens_update() {
 	//Setting titles according to flags.
 	char buf[17];
 	//Relative Humidity screen.
-	snprintf(buf, 17, "%s%c%c%c", this->titles[0],
+	snprintf(buf, 18, "%s %c%c%c", this->titles[0],
 	this->busy ? this->cbusy : this->cidle,
 	this->sfrht_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mrhum->setTitle(buf);
 	//Temperature screen.
-	snprintf(buf, 17, "%s%c%c%c", this->titles[1],
+	snprintf(buf, 18, "%s %c%c%c", this->titles[1],
 	this->busy ? this->cbusy : this->cidle,
 	this->sfrht_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mtemp->setTitle(buf);
 	//CO2 screen.
-	snprintf(buf, 17, "%s%c%c%c", this->titles[2],
+	snprintf(buf, 18, "%s %c%c%c", this->titles[2],
 	this->busy ? this->cbusy : this->cidle,
 	this->sfco2_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mco2->setTitle(buf);
 	//Fan screen.
-	snprintf(buf, 17, "%s%c%c%c", this->titles[3],
+	snprintf(buf, 18, "%s %c%c%c", this->titles[3],
 	this->busy ? this->cbusy : this->cidle,
 	this->affan_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mfan->setTitle(buf);
 	//Pressure screen. (Setting desired pressure)
-	snprintf(buf, 17, "%s%c%c%c", this->titles[4],
+	snprintf(buf, 18, "%s %c%c%c", this->titles[4],
 	this->busy ? this->cbusy : this->cidle,
 	this->sfpres_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mpres->setTitle(buf);
 	//Pressure Manual screen (With the sensor reading)
-	snprintf(buf, 17, "%s%c%c%c", this->titles[5],
+	snprintf(buf, 18, "%s %c%c%c", this->titles[5],
 	this->busy ? this->cbusy : this->cidle,
 	this->sfpres_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mpresm->setTitle(buf);
 	//Show everything on LCD
 	this->menu.event(MenuItem::show);
+
+	this->operation_time = DWT->CYCCNT;
+	if (this->operation_time > start_time) this->operation_time -= start_time;
+	else this->operation_time = 0xffffffff - start_time + 1 + this->operation_time;
+	printf("Screen update. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 }

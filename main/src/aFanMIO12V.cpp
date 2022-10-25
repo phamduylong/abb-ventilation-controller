@@ -11,6 +11,7 @@ aFanMIO12V::aFanMIO12V(unsigned int retries, unsigned int wait) : node{1}, ao1{&
 aFanMIO12V::~aFanMIO12V() {}
 
 bool aFanMIO12V::set_speed(int16_t v, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	if (v < 0) v = 0;
 	else if (v > 1000) v = 1000;
 
@@ -21,18 +22,19 @@ bool aFanMIO12V::set_speed(int16_t v, bool retry) {
 		this->status = !(this->ao1.write(v));
 		--i;
 		//On failure wait this->wait (100ms by default) before next loop.
-		if(i && !this->status) {
-			Sleep(this->wait);
-			this->elapsed_time += this->wait;
-		}
+		if(i && !this->status) Sleep(this->wait);
 	}while(!this->status && i);
 	//Set speed to the desired one only if it was set up.
 	if (this->status) this->speed = v;
 	
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 
 bool aFanMIO12V::get_speed(int16_t &v, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	int cur_sp = -1;
 	this->elapsed_time = 0;
 	this->status = false;
@@ -43,10 +45,7 @@ bool aFanMIO12V::get_speed(int16_t &v, bool retry) {
 		
 		if(cur_sp == -1) {
 			//Sleep this->wait (100ms by default) only if we have to loop another time.
-			if(--i) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(--i) Sleep(this->wait);
 			continue;
 		}
 
@@ -56,6 +55,9 @@ bool aFanMIO12V::get_speed(int16_t &v, bool retry) {
 		v = this->speed;
 	}
 
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 

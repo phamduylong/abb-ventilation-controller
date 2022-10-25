@@ -44,6 +44,7 @@ private:
 	void adjust_fan(float cur_pres, float des_pres);
 	void readPres(bool retry = false);
 	void readRhum(bool retry = false);
+	void readTemp(bool retry = false);
 	void readCo2(bool retry = false);
 	//Display functions.
 	void screen_lock(PropertyEdit *pe);
@@ -55,6 +56,8 @@ private:
 	LiquidCrystal *lcd; //lcd display
 	unsigned int rhum_timer; //Counts ticks for relative humidity reading.
 	const unsigned int rhum_timeout; //How many ticks to wait before relative humidity reading.
+	unsigned int temp_timer; //Counts ticks for relative humidity reading.
+	const unsigned int temp_timeout; //How many ticks to wait before relative humidity reading.
 	unsigned int co2_timer; //Counts ticks for co2 reading.
 	const unsigned int co2_timeout; //How many ticks to wait before co2 reading.
 	unsigned int fan_timer; //Counts ticks for fan adjustment.

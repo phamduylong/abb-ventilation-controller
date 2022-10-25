@@ -1,6 +1,7 @@
 #ifndef SPRESSURESDP610_H_
 #define SPRESSURESDP610_H_
 
+#include "chip.h"
 #include "I2C.h"
 #include "I2CDevice.h"
 #include <stdio.h>

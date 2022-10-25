@@ -38,6 +38,7 @@ sPressureSDP610::~sPressureSDP610() {}
  * @return true on success, false on fail.
  */
 bool sPressureSDP610::read(float &data, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	int i = (retry ? this->retries : 0) + 1;
 	this->status = false;
 	uint8_t pres_raw[3] = {0};
@@ -45,25 +46,18 @@ bool sPressureSDP610::read(float &data, bool retry) {
 	this->elapsed_time = 0;
 	while (i && !this->status) {
 		Sleep(3); //Wait 3ms before every sensor reading. (Needed by I2C, can be lowered to 1ms, but it can be unsafe)
-		this->elapsed_time += 3;
 		this->status = this->sdp610.read(0xF1, pres_raw, 3);
 		//Is not able to communicate with the sensor.
 		if (!this->status) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(--i) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(--i) Sleep(this->wait);
 			continue;
 		}
 		this->status = (pres_raw[2] == crc8(pres_raw, 2));
 		//CRC error.
 		if (!this->status) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(--i) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(--i) Sleep(this->wait);
 			continue;
 		}
 		//No error occured if we are here.
@@ -75,6 +69,9 @@ bool sPressureSDP610::read(float &data, bool retry) {
 		data = (float)diff_pres / 240;
 		--i;
 	}
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 

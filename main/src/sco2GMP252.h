@@ -1,6 +1,7 @@
 #ifndef SCO2GMP252_H_
 #define SCO2GMP252_H_
 
+#include "chip.h"
 #include "modbus/ModbusMaster.h"
 #include "modbus/ModbusRegister.h"
 #include "srhtHMP60.h"
@@ -10,7 +11,7 @@ class sco2GMP252 {
 public:
 	sco2GMP252(unsigned int retries = 3, unsigned int wait = 100);
 	virtual ~sco2GMP252();
-	bool read(float &data, bool retry = true);
+	bool read_rapid(float &data, bool retry = true);
 	bool read(float &data, float pres, float rh, bool retry = true);
 	bool read_precise(float &data, float pres, float rh, bool retry = true);
 	bool get_status();

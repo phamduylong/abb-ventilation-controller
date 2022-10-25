@@ -19,17 +19,16 @@ retries(retries), wait(wait), abspres_value(1015.0) {
 sco2GMP252::~sco2GMP252() {}
 
 /**
- * @brief Reads sensor. Data might be imprecise.
- * This read() doesn't modify humidity and pressure values in volatile registers.
+ * @brief Rapidly reads sensor. Data might be imprecise.
+ * This function doesn't modify humidity and pressure values in volatile registers.
  * 
  * @param data value is set to the sensor reading on success. Not modified otherwise.
  * @param retry flag to retry reading the sensor value while waiting 'this->wait' ms between 'this->retries' readings.
  * @return true On success.
  * @return false On failure.
  */
-bool sco2GMP252::read(float &data, bool retry) {
-	//Try to be as precise as possible. (Don't care if we are not able to).
-	if(!check_init_precise()) this->init_precise();
+bool sco2GMP252::read_rapid(float &data, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	unsigned int co2_hex;
 	int temp;
 	this->status = false;
@@ -41,10 +40,7 @@ bool sco2GMP252::read(float &data, bool retry) {
 		//Fail the attempt on wrong status.
 		if(!check_status()) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Read second register value.
@@ -52,10 +48,7 @@ bool sco2GMP252::read(float &data, bool retry) {
 		//Start over upon failure.
 		if (temp == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		co2_hex |= temp;
@@ -66,10 +59,7 @@ bool sco2GMP252::read(float &data, bool retry) {
 		//Start over upon failure.
 		if (temp == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Reading succeeded if we are here.
@@ -77,7 +67,9 @@ bool sco2GMP252::read(float &data, bool retry) {
 		data = binary32_to_float(co2_hex);
 		this->status = true;
 	}
-	
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 
@@ -93,6 +85,7 @@ bool sco2GMP252::read(float &data, bool retry) {
  * @return false On failure.
  */
 bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	unsigned int co2_hex;
 	int temp;
 	this->elapsed_time = 0;
@@ -106,10 +99,7 @@ bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
 		//Fail the attempt on wrong status.
 		if(!check_status()) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Try to be as precise as possible. (Don't care if we are not able to).
@@ -121,10 +111,7 @@ bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
 		//Start over upon failure.
 		if (temp == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		co2_hex |= temp;
@@ -135,10 +122,7 @@ bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
 		//Start over upon failure.
 		if (temp == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Reading succeeded if we are here.
@@ -146,9 +130,11 @@ bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
 		data = binary32_to_float(co2_hex);
 		this->status = true;
 	}
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
-
 
 /**
  * @brief Reads sensor. Only precise data will pass.
@@ -162,6 +148,7 @@ bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
  * @return false On failure.
  */
 bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	unsigned int co2_hex;
 	int temp;
 	this->elapsed_time = 0;
@@ -174,10 +161,7 @@ bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
 		//Fail the attempt on wrong status.
 		if(!check_status()) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Must be precise.
@@ -186,20 +170,14 @@ bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
 			//Fail the attempt on failed initialisation.
 			if(!check_init_precise()) {
 				//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-				if(i != this->retries) {
-					Sleep(this->wait);
-					this->elapsed_time += this->wait;
-				}
+				if(i != this->retries) Sleep(this->wait);
 				continue;
 			}
 		}
 		//Fail the attempt on unset new sensor data.
 		if(!set_precise(pres, rh)) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 
@@ -208,10 +186,7 @@ bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
 		//Start over upon failure.
 		if (temp == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		co2_hex |= temp;
@@ -222,10 +197,7 @@ bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
 		//Start over upon failure.
 		if (temp == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Reading succeeded if we are here.
@@ -233,6 +205,9 @@ bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
 		data = binary32_to_float(co2_hex);
 		this->status = true;
 	}
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 
@@ -304,7 +279,7 @@ bool sco2GMP252::check_status() {
 	int16_t device_st = this->check_device_status();
 	int16_t co2_st = this->check_co2_status();
 	if(co2_st == 2) {
-		printf("Co2 reading unreliable.\n");
+		//printf("Co2 reading unreliable.\n");
 		co2_st = 0;
 	}
 	return !(device_st | co2_st);

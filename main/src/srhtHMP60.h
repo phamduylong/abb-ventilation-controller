@@ -1,6 +1,7 @@
 #ifndef SRHTHMP60_H_
 #define SRHTHMP60_H_
 
+#include "chip.h"
 #include "modbus/ModbusMaster.h"
 #include "modbus/ModbusRegister.h"
 
