@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Auto Mode</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .switch {
             position: relative;
@@ -194,35 +194,57 @@
 </form>
 </div>
 <script type="text/javascript">
-    function fetchFan() {
+    const ctx = document.getElementById('chart').getContext("2d");
+    x = [0, 1, 2, 3];
+    y = [19, 15, 23, 27];
+    var myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: x,
+            datasets: [{
+                data: y,
+                borderColor: "blue",
+                fill: false,
+                label: "fan val"
+            }]
+        },
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: "Fan value"
+            }
+        }
+    });
+    const getData = () => {
         fetch('/fan_data').then(tmp => tmp.json()).then(arr => {
             const x = arr.x;
             const y = arr.y;
 
-            new Chart("chart", {
-                type: "line",
-                data: {
-                    labels: x,
-                    datasets: [{
-                        data: y,
-                        borderColor: "black",
-                        fill: false
-                    }]
-                },
-                options: {
-                    legend: {display: false},
-                    responsive: true,
-                    title: {
-                        display: true,
-                        text: "Fan speed"
-                    }
-                }
-            });
+            for (let i = 0; i < x.length; ++i) {
+                myChart.data.labels.push(x[i]);
+                myChart.data.datasets[0].data.push(y[i]);
+            }
+            console.log(y);
+            // re-render the chart
+            myChart.update();
 
         })
 
     }
-    setInterval(fetchFan,1000);
+    function getRandomIntInclusive(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    addRand = () => {
+        myChart.data.labels.push( myChart.data.labels.length);
+        myChart.data.datasets[0].data.push(getRandomIntInclusive(1, 25));
+        // re-render the chart
+        myChart.update();
+    }
+    setInterval(addRand, 1000);
 
 
 
