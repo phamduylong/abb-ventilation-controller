@@ -198,6 +198,8 @@ app.get('/user_data', async (req, res) => {
 app.get('/logout', (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const username = req.cookies.curr_user;
+
+
     MongoClient.connect(url, function (err, db) {
         if (err) console.error("FAILED TO CONNECT TO DATABASE");
         const dbo = db.db("users");
@@ -209,6 +211,7 @@ app.get('/logout', (req, res) => {
                 if(!isSameDay(new Date(user.logins[user.logins.length - 1]), new Date(logout_time))) {
                     console.log("NOT SAME DAY");
                     logout_time = new Date(logout_time);
+
                     const logout_date = logout_time.getDate();
                     const logout_month = logout_time.getMonth();
                     const logout_year = logout_time.getFullYear();
@@ -216,9 +219,9 @@ app.get('/logout', (req, res) => {
                     const time_in_new_day = Math.abs(logout_time - new_day);
                     const time_in_old_day = Math.abs(new_day - user.logins[user.logins.length - 1]);
                     const prev_day_logout = new Date(user.logins[user.logins.length - 1] + time_in_old_day);
-                    const next_day_logout = new Date(new_day + time_in_new_day);
+                    const next_day_logout = new Date(new_day.getTime() + time_in_new_day);
                     const update_logins = { $set: {logins: [...user.logins, new_day] } };
-                    const update_logouts = { $set: {logouts: [...user.logouts, prev_day_logout, next_day_logout] } };
+                    const update_logouts = { $set: {logouts: [...user.logouts, prev_day_logout.getTime(), next_day_logout.getTime()] } };
                     dbo.collection("users").updateMany({username: username}, update_logins).then((res) => {
                         console.log(res);
                     });
@@ -228,7 +231,7 @@ app.get('/logout', (req, res) => {
                     });
                 } else {
                     console.log("SAME DAY")
-                    const update_obj_logouts = { $set : {logouts : [...user.logouts, logout_time] } };
+                    const update_obj_logouts = { $set : {logouts : [...user.logouts, +new Date()] } };
                     dbo.collection("users").updateOne({username: username}, update_obj_logouts).then((res) => {
                         console.log(res);
                     })
