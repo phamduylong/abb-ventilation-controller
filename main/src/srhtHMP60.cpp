@@ -1,5 +1,7 @@
+#include <stdio.h>
 #include "srhtHMP60.h"
 #include "systick.h"
+#include "retarget_uart.h"
 
 srhtHMP60::srhtHMP60(unsigned int retries, unsigned int wait) : node{241}, rh0{&node, 0x0000}, rh1{&node, 0x0001}, t0{&node, 0x0002}, t1{&node, 0x0003},
 err_reg{&node, 0x0200}, err_code{&node, 0x203}, err_code2{&node, 0x204}, retries(retries), wait(wait) {
@@ -259,6 +261,7 @@ bool srhtHMP60::check_status() {
 	if( res == -1 ) return false;
 	if( res == 0 ) {
 		volatile int err = this->get_error();
+		if(err != 0) printf("Rel humidity sensor error: %d\n", err);
 		#if ARDUINO_SIM
 		return true;
 		#else

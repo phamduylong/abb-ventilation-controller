@@ -1,8 +1,9 @@
 #include "StateMachine.h"
 
 StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
-lcd(lcd), 
-sensors_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
+lcd(lcd),
+rhum_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
+co2_timeout(500),
 fan_timeout(13), //Update fan speed every 10ms.
 spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->rh = 0;
@@ -91,7 +92,8 @@ void StateMachine::sinit(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sinit.\n");
-		this->sensors_timer = 0;
+		this->rhum_timer = 0;
+		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
 		this->check_sensors(true);
@@ -132,7 +134,8 @@ void StateMachine::sauto(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sauto.\n");
-		this->sensors_timer = 0;
+		this->rhum_timer = 200;
+		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//If user is in modification - discard it.
 		if(this->mod) {
@@ -173,12 +176,18 @@ void StateMachine::sauto(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->sensors_timer++;
+		this->rhum_timer++;
+		this->co2_timer++;
 		this->fan_timer++;
+		//Every 0.5s by default. Starts after 300ms timeout.
+		if (this->rhum_timer >= this->rhum_timeout){
+			this->readRhum(); //Quickly read relative humidity and temperature
+			this->rhum_timer = 0;
+		}
 		//Every 0.5s by default.
-		if (this->sensors_timer >= this->sensors_timeout){
-			check_sensors(); //Quickly read sensors
-			this->sensors_timer = 0;
+		if (this->co2_timer >= this->co2_timeout){
+			this->readCo2(); //Quickly read co2
+			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
 		//Every 10ms by default.
@@ -208,7 +217,8 @@ void StateMachine::smanual(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered smanual.\n");
-		this->sensors_timer = 0;
+		this->rhum_timer = 200;
+		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//Unlock Fan menu.
 		this->screen_unlock(this->mfan);
@@ -253,12 +263,18 @@ void StateMachine::smanual(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->sensors_timer++;
+		this->rhum_timer++;
+		this->co2_timer++;
 		this->fan_timer++;
+		//Every 0.5s by default. Starts after 300ms timeout.
+		if (this->rhum_timer >= this->rhum_timeout){
+			this->readRhum(); //Quickly read relative humidity and temperature
+			this->rhum_timer = 0;
+		}
 		//Every 0.5s by default.
-		if (this->sensors_timer >= this->sensors_timeout) {
-			this->check_sensors(); //Quickly read sensors
-			this->sensors_timer = 0;
+		if (this->co2_timer >= this->co2_timeout){
+			this->readCo2(); //Quickly read co2
+			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
 		//Every 10ms by default.
@@ -287,7 +303,8 @@ void StateMachine::ssensors(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered ssensors.\n");
-		this->sensors_timer = 0;
+		this->rhum_timer = 0;
+		this->co2_timer = 0;
 		this->fan_timer = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
@@ -357,6 +374,31 @@ void StateMachine::readPres(bool retry) {
 	this->operation_time = 0;
 	this->sfpres_up = this->spres.read(this->pres, retry);
 	this->operation_time += this->spres.get_elapsed_time();
+}
+
+/**
+ * @brief Reads relative humidity and temperature values from relative humidity sensor.
+ * Sets sfrht_up flag to true/false as communication result.
+ * Changes relative humidity and temperature variables to current if communication succeeded.
+ * @param retry Whether to retry communication.
+ */
+void StateMachine::readRhum(bool retry) {
+	this->operation_time = 0;
+	sfrht_up = this->srht.read(this->temp, this->rh, retry);
+	this->operation_time += this->srht.get_elapsed_time();
+}
+
+/**
+ * @brief Reads co2 value from co2 sensor.
+ * Sets sfco2_up flag to true/false as communication result.
+ * Changes co2 variable to current if communication succeeded.
+ * @param retry Whether to retry communication.
+ */
+void StateMachine::readCo2(bool retry) {
+	this->operation_time = 0;
+	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
+	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
+	this->operation_time += this->sco2.get_elapsed_time();
 }
 
 /**
