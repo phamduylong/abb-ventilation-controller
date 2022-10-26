@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string>
 #include <cmath>
+#include <thread>
 #include "Event.h"
 #include "retarget_uart.h"
 #include "DigitalIoPin.h"
@@ -45,6 +46,7 @@ private:
 	void readPres(bool retry = false);
 	void readRhum(bool retry = false);
 	void readTemp(bool retry = false);
+	void readRhumTemp(bool retry = false);
 	void readCo2(bool retry = false);
 	//Display functions.
 	void screen_lock(PropertyEdit *pe);
@@ -54,10 +56,8 @@ private:
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
 	LiquidCrystal *lcd; //lcd display
-	unsigned int rhum_timer; //Counts ticks for relative humidity reading.
-	const unsigned int rhum_timeout; //How many ticks to wait before relative humidity reading.
-	unsigned int temp_timer; //Counts ticks for relative humidity reading.
-	const unsigned int temp_timeout; //How many ticks to wait before relative humidity reading.
+	unsigned int rht_timer; //Counts ticks for relative humidity sensor reading.
+	const unsigned int rht_timeout; //How many ticks to wait before relative humidity sensor reading.
 	unsigned int co2_timer; //Counts ticks for co2 reading.
 	const unsigned int co2_timeout; //How many ticks to wait before co2 reading.
 	unsigned int fan_timer; //Counts ticks for fan adjustment.
@@ -82,6 +82,16 @@ private:
 	srhtHMP60 srht;
 	sco2GMP252 sco2;
 	aFanMIO12V fan;
+
+	//Threads
+	void treadHumTemp();
+	void treadCo2();
+	void treadPres();
+	void treadPresSetFan();
+	std::thread trht;
+	std::thread tco2;
+	std::thread tpres;
+	std::thread tpresfan;
 
 	//Variables.
 	float co2;

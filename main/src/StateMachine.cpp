@@ -2,9 +2,12 @@
 
 StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
 lcd(lcd),
-rhum_timeout(500), temp_timeout(500), co2_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
-fan_timeout(13), //Update fan speed every 13ms.
-spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
+rht_timeout(500), co2_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
+fan_timeout(40), //Update fan speed every 40ms.
+spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50},
+trht{&StateMachine::treadHumTemp, this}, tco2{&StateMachine::treadCo2, this},
+tpres{&StateMachine::treadPres, this}, tpresfan{&StateMachine::treadPresSetFan, this},
+fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
 	this->co2 = 0;
@@ -91,8 +94,7 @@ void StateMachine::sinit(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sinit.\n");
-		this->rhum_timer = 0;
-		this->temp_timer = 0;
+		this->rht_timer = 250;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
@@ -135,8 +137,7 @@ void StateMachine::sauto(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered sauto.\n");
-		this->rhum_timer = 200;
-		this->temp_timer = 100;
+		this->rht_timer = 250;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//If user is in modification - discard it.
@@ -178,38 +179,33 @@ void StateMachine::sauto(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->rhum_timer++;
-		this->temp_timer++;
+		this->rht_timer++;
 		this->co2_timer++;
 		this->fan_timer++;
-		//Every 0.5s by default. Starts after 300ms timeout.
-		if (this->rhum_timer >= this->rhum_timeout){
-			this->readRhum(); //Quickly read relative humidity and temperature
-			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			this->rhum_timer = 0;
-		}
-		//Every 0.5s by default. Starts after 400ms timeout.
-		if (this->temp_timer >= this->temp_timeout){
-			this->readTemp(); //Quickly read temperature
-			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			this->temp_timer = 0;
+		//Every 0.5s by default. Starts after 250ms timeout.
+		if (this->rht_timer >= this->rht_timeout){
+			this->tco2.join();
+			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->treadHumTemp(); //Quickly read relative humidity
+			this->rht_timer = 0;
 		}
 		//Every 0.5s by default.
 		if (this->co2_timer >= this->co2_timeout){
-			this->readCo2(); //Quickly read co2
-			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->trht.join();
+			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->treadCo2(); //Quickly read co2
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
-		//Every 10ms by default.
+		//Every 40ms by default.
 		if (this->fan_timer >= this->fan_timeout)
 		{
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
-			this->readPres(); //Takes 3ms.
-			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			this->adjust_fan(this->pres, this->despres);
-			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(this->tpresfan.joinable()) {
+				tpresfan.join();
+				this->treadPresSetFan(); //Quickly reads pressure and sets fan.
+			}
 		}
 		
 		break;
@@ -229,8 +225,7 @@ void StateMachine::smanual(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered smanual.\n");
-		this->rhum_timer = 200;
-		this->temp_timer = 100;
+		this->rht_timer = 250;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		//Unlock Fan menu.
@@ -276,40 +271,31 @@ void StateMachine::smanual(const Event& e) {
 		}
 		break;
 	case Event::eTick:
-		this->rhum_timer++;
-		this->temp_timer++;
+		this->rht_timer++;
 		this->co2_timer++;
-		this->fan_timer++;
-		//Every 0.5s by default. Starts after 300ms timeout.
-		if (this->rhum_timer >= this->rhum_timeout){
-			this->readRhum(); //Quickly read relative humidity
-			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			this->rhum_timer = 0;
-		}
-		//Every 0.5s by default. Starts after 400ms timeout.
-		if (this->temp_timer >= this->temp_timeout){
-			this->readTemp(); //Quickly read temperature
-			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			this->temp_timer = 0;
+		//Every 0.5s by default. Starts after 250ms timeout.
+		if (this->rht_timer >= this->rht_timeout){
+			this->tco2.join();
+			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->treadHumTemp(); //Quickly read relative humidity.
+			this->rht_timer = 0;
 		}
 		//Every 0.5s by default.
 		if (this->co2_timer >= this->co2_timeout){
-			this->readCo2(); //Quickly read co2
-			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->trht.join();
+			this->tpres.join(); //operation_time is not modified by the pressure reading.
+			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			this->treadCo2(); //Quickly read co2.
+			this->treadPres(); //Quickly read pressure.
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
-		//Every 10ms by default.
-		if (this->fan_timer >= this->fan_timeout)
-		{
-			this->fan_timer = 0;
-			this->readPres(); //Takes 3ms.
-			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			this->desfan_speed = this->mfan->getValue() * 10;
-			this->set_fan(this->desfan_speed);
-			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-		}
 		
+		//Setting fan to the desired value if it differs from the current one.
+		this->desfan_speed = this->mfan->getValue() * 10;
+		if(this->desfan_speed != this->fan_speed) {
+			this->set_fan(this->desfan_speed);
+		}
 		break;
 	default:
 		break;
@@ -328,12 +314,18 @@ void StateMachine::ssensors(const Event& e) {
 	{
 	case Event::eEnter:
 		printf("Entered ssensors.\n");
-		this->rhum_timer = 0;
-		this->temp_timer = 0;
+		this->rht_timer = 250;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
+
+		//Join all unfinished threads while we have time.
+		this->trht.join();
+		this->tco2.join();
+		this->tpres.join();
+		this->tpresfan.join();
+
 		this->check_everything(!fast);
 		// DEBUG prints.
 		printf("State switch handled. Time elapsed: %fms\n", (float) this->operation_time / 72000);
@@ -397,9 +389,9 @@ void StateMachine::check_sensors(bool retry) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::readPres(bool retry) {
-	this->operation_time = 0;
+	//this->operation_time = 0;
 	this->sfpres_up = this->spres.read(this->pres, retry);
-	this->operation_time += this->spres.get_elapsed_time();
+	//this->operation_time += this->spres.get_elapsed_time();
 }
 
 /**
@@ -427,6 +419,20 @@ void StateMachine::readTemp(bool retry) {
 }
 
 /**
+ * @brief Reads relative humidity and temperature values from relative humidity sensor.
+ * Sets sfrht_up flag to true/false as communication result.
+ * Changes relative humidity and temperature variables to current if communication succeeded.
+ * @param retry Whether to retry communication.
+ */
+void StateMachine::readRhumTemp(bool retry) {
+	this->operation_time = 0;
+	sfrht_up = this->srht.read_rhum(this->rh, retry);
+	this->operation_time += this->srht.get_elapsed_time();
+	sfrht_up = this->srht.read_temp(this->temp, retry);
+	this->operation_time += this->srht.get_elapsed_time();
+}
+
+/**
  * @brief Reads co2 value from co2 sensor.
  * Sets sfco2_up flag to true/false as communication result.
  * Changes co2 variable to current if communication succeeded.
@@ -435,8 +441,8 @@ void StateMachine::readTemp(bool retry) {
 void StateMachine::readCo2(bool retry) {
 	this->operation_time = 0;
 	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
-	//sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
-	sfco2_up = this->sco2.read_rapid(this->co2, retry);
+	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
+	//sfco2_up = this->sco2.read_rapid(this->co2, retry);
 	this->operation_time += this->sco2.get_elapsed_time();
 }
 
@@ -451,7 +457,7 @@ void StateMachine::set_fan(int speed) {
 	this->check_fan(false); //operation_time zeroed out here. 
 	if(speed != this->fan_speed) {
 		this->affan_up = this->fan.set_speed(speed, false);
-		this->operation_time += this->fan.get_elapsed_time();
+		//this->operation_time += this->fan.get_elapsed_time();
 		if (this->affan_up) this->fan_speed = speed;
 	}
 }
@@ -464,9 +470,9 @@ void StateMachine::set_fan(int speed) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::check_fan(bool retry) {
-	this->operation_time = 0;
+	//this->operation_time = 0;
 	this->affan_up = this->fan.get_speed(this->fan_speed, retry);
-	this->operation_time += this->fan.get_elapsed_time();
+	//this->operation_time += this->fan.get_elapsed_time();
 }
 
 /**
@@ -566,4 +572,21 @@ void StateMachine::screens_update() {
 	if (this->operation_time > start_time) this->operation_time -= start_time;
 	else this->operation_time = 0xffffffff - start_time + 1 + this->operation_time;
 	printf("Screen update. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+}
+
+void StateMachine::treadHumTemp() {
+	this->readRhumTemp();
+}
+
+void StateMachine::treadCo2() {
+	this->treadCo2();
+}
+
+void StateMachine::treadPres() {
+	this->readPres();
+}
+
+void StateMachine::treadPresSetFan() {
+	this->readPres();
+	this->adjust_fan(this->pres, this->despres);
 }
