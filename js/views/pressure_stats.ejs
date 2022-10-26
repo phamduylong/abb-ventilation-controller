@@ -1,0 +1,65 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pressure Statistics</title>
+    <!--Load the AJAX API-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+<div style="width: 70%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="pressureChart"></canvas></div>
+<script>
+    const ctx = document.getElementById('pressureChart').getContext("2d");
+
+    const pressure_graph = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                borderColor: "blue",
+                fill: false,
+                label: "Pressure val"
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Pressure value"
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
+                }
+            }
+        }
+    });
+
+
+    const read_data = () => {
+        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
+            console.log (JSON.parse(data));
+            data = JSON.parse(data);
+
+            // if(data.auto === false) {
+            //     window.location.href = "/manual";
+            // }
+
+            pressure_graph.data.labels.push(data.nr);
+            pressure_graph.data.datasets[0].data.push(data.pressure);
+
+            // re-render the chart
+            pressure_graph.update();
+
+
+        });
+    }
+
+    setInterval(read_data,2000);
+
+</script>
+</body>
+</html>

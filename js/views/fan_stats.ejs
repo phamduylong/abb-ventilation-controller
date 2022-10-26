@@ -1,0 +1,62 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Fan Speed Statistics</title>
+    <!--Load the AJAX API-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+<div style="width: 60%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="fanChart"></canvas></div>
+<script>
+    const ctx = document.getElementById('fanChart').getContext("2d");
+
+    const fan_graph = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                borderColor: "green",
+                fill: false,
+                label: "Fan Speed Percentage"
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Fan value",
+
+
+                }
+            }
+        }
+    });
+
+    const read_data = () => {
+        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
+            console.log (JSON.parse(data));
+            data = JSON.parse(data);
+
+            // if(data.auto === false) {
+            //     window.location.href = "/manual";
+            // }
+
+            fan_graph.data.labels.push(data.nr);
+            fan_graph.data.datasets[0].data.push(data.speed);
+
+            // re-render the chart
+            fan_graph.update();
+
+
+        });
+    }
+
+    setInterval(read_data,2000);
+
+</script>
+</body>
+</html>
