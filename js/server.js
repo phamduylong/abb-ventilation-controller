@@ -205,16 +205,6 @@ app.post('/fspeed', async (req, res) => {
     });
     res.render('manual', {fspeed: fspeed});
 });
-app.post('/time_interval', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const time_interval = req.body.time_interval || 0;
-    console.log(time_interval);
-    res.render("auto",{time_interval:time_interval,pressure:0})
-    // client.publish(settings_topic, `{"auto": false, "speed": ${fspeed}}`, {qos: 0, retain: false}, (err) => {
-    //     if (err) console.error(err);
-    // });
-    // res.render('manual', {fspeed: fspeed});
-});
 
 //sign up creds
 app.post('/signup', (req, res) => {

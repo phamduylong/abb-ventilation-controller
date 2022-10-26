@@ -132,6 +132,25 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
+        #time_container{
+            margin: 10px;
+            border-radius: 5px;
+            height: 20%;
+            width: 30%;
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            text-align: center;
+            transform: translate(-50%, -50%);
+        }
+        #filterTime {
+            width: 15%;
+        }
+
+        #filterTime:invalid {
+            border: solid red 3px;
+        }
+
 
     </style>
 
@@ -175,6 +194,14 @@
 
 <div id="chart-container">
     <canvas id="chart" onload="push_data()"></canvas>
+</div>
+
+
+<div id="time_container">
+    <form onsubmit="filterData();return false;">
+    <input name="filterTime"  type = "number" id = "filterTime" value = "0"  min = "0" max = "1200">Filter data from X minutes</input>
+    <input type="submit" value="Submit">
+    </form>
 </div>
 
 <div>
@@ -237,6 +264,32 @@
             }
         }
     });
+
+    function filterData(){
+        const filterDate = [...myChart.data.labels];
+        const filter_time = document.getElementById("filterTime").value;
+        if(filter_time > 0) {
+            let filter_index = filterDate.length;
+            for (let i = 0; i < filterDate.length; ++i) {
+
+                if ((Date.now() - filterDate[i]) <= (filter_time * 1000 * 60)) {
+                    filter_index--;
+                }
+            }
+            console.log(filter_index);
+
+            const slicedDate = filterDate.slice(filter_index, filterDate.length);
+            const filterDataPoints = [...myChart.data.datasets[0].data];
+            const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
+            console.log(slicedDataPoints);
+            myChart.config.data.labels = slicedDate;
+            myChart.config.data.datasets[0].data = slicedDataPoints;
+            myChart.update();
+        }
+    }
+
+
+
 
 
     const push_data = () => {

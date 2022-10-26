@@ -132,6 +132,23 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
+        #time_container{
+            margin: 10px;
+            border-radius: 5px;
+            height: 20%;
+            width: 30%;
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            text-align: center;
+            transform: translate(-50%, -50%);
+        }
+        #filterTime {
+            width: 15%;
+        }
+        #filterTime:invalid {
+            border: solid red 3px;
+        }
 
 
     </style>
@@ -179,20 +196,19 @@
 
 <div id="input-container">
     <h3 id="pressure-text">PRESSURE LEVEL IS <%=pressure%> Pa</h3>
-    <form action="/pressure" method="post">
+    <form  action="/pressure" method="post">
         <label for="pressure">Change pressure level (0-125) Pa</label><br/>
         <input type="number" min="0" max="125" id="pressure" name="pressure" required><br/>
-        <input type="submit" name="submit" submit>
+        <input type="submit" name="submit"submit>
     </form>
 
 </div>
 
-<div id="time container">
-<form action="/time_interval" method="post">
-    <label for="time_interval">Choose time interval(In minutes)</label><br/>
-    <input type="number" min="0" max="100" id="time_interval" name="time_interval" required><br/>
-    <input type="submit" name="submit" submit>
-</form>
+<div id="time_container">
+    <form onsubmit="filterData();return false;">
+        <input name="filterTime"  type = "number" id = "filterTime" value = "0"  min = "0" max = "1200">Filter data from X minutes</input>
+        <input type="submit" value="Submit">
+    </form>
 </div>
 
 
@@ -226,15 +242,15 @@
                 x:{
                     ticks: {
                         callback: function (val, index) {
-                            console.log(this.getLabelForValue(val));
+
                             const time = new Date(this.getLabelForValue(val));
                             const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
                             const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
-                            const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                            const year = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
                             const h = (time.getHours() < 10) ? "0" + time.getHours() : time.getHours();
                             const m = (time.getMinutes() < 10) ? "0" + time.getMinutes() : time.getMinutes();
                             const s = (time.getSeconds() < 10) ? "0" + time.getSeconds() : time.getSeconds();
-                            return d + "/" + mo + "/" + y + "\n" + h + ":" + m + ":" + s;
+                            return d + "/" + mo + "/" + year + "\n" + h + ":" + m + ":" + s;
 
                         }
                     }
@@ -249,6 +265,32 @@
         }
     });
 
+    function filterData(){
+        const filterDate = [...myChart.data.labels];
+        const filter_time = document.getElementById("filterTime").value;
+        if(filter_time > 0){
+            let filter_index = filterDate.length;
+            for(let i=0;i < filterDate.length;++i){
+
+                if((Date.now() - filterDate[i]) <= (filter_time*1000*60)){
+                    filter_index--;
+                }
+            }
+            console.log(filter_index);
+
+            const slicedDate = filterDate.slice(filter_index,filterDate.length);
+            const filterDataPoints = [... myChart.data.datasets[0].data];
+            const slicedDataPoints = filterDataPoints.slice(filter_index,filterDate.length)
+            console.log(slicedDataPoints);
+            myChart.config.data.labels = slicedDate;
+            myChart.config.data.datasets[0].data = slicedDataPoints;
+            myChart.update();
+        }
+
+
+    }
+
+
 
     const push_data = () => {
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
@@ -259,6 +301,8 @@
             }
             else {
                 const text = document.getElementById('pressure-text');
+                console.log(data.timestamp);
+
                 text.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
                 myChart.data.labels.push(data.timestamp);
                 myChart.data.datasets[0].data.push(data.speed);
