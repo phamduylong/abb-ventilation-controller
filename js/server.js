@@ -78,34 +78,6 @@ app.get('/statistics/user', async (req, res) => {
     res.render('user_stats');
 })
 
-//get route to fetch temp data
-app.get('/temp_data', async (req, res) => {
-    //random data for testing purposes
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const data = {x: [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
-        y: [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4]};
-    res.json(data);
-});
-
-//get route to fetch fan speed data
-app.get('/fan_data', async (req, res) => {
-    //random data for testing purposes
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const x = [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,12,23,24,43,34,34,34,34,45];
-    const y = [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4,1,2,3,4,5,6,7,8,9,10];
-    const data = {x:x,y:y};
-    return res.json(data);
-
-});
-
-//get route to fetch pressure data
-app.get('/pressure_data', async (req, res) => {
-    //random data for testing purposes
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const data = {x: [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
-        y: [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4]};
-    res.json(data);
-});
 
 //get route to fetch user activities data
 app.get('/user_data', async (req, res) => {
@@ -193,11 +165,13 @@ app.get('/mutable-data', async (req, res) => {
     });
 })
 
+
 //auto mode operation page
 app.get('/auto', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     res.render('auto', {pressure: 0});
 });
+
 
 //manual mode operation page
 app.get('/manual', async (req, res) => {
@@ -213,6 +187,10 @@ app.get('/manual', async (req, res) => {
 app.post('/pressure', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const pressure = req.body.pressure || 0;
+    const pub_obj = {auto: true, pressure: pressure};
+    client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
+        if (err) console.error(err);
+    });
     res.render('auto', {pressure: pressure});
 });
 
@@ -221,7 +199,8 @@ app.post('/fspeed', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const fspeed = req.body.fspeed || 0;
     console.log(`FAN SPEED: ${fspeed}`);
-    client.publish(settings_topic, `{"auto": false, "speed": ${fspeed}}`, {qos: 0, retain: false}, (err) => {
+    const pub_obj = {auto: false, speed: fspeed};
+    client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
         if (err) console.error(err);
     });
     res.render('manual', {fspeed: fspeed});
