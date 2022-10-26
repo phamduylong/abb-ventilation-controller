@@ -228,9 +228,9 @@ int main(void) {
 			up_ok_pressed = true;
 			++up_ok_held;
 			//Button held more than 1s, send rapid commands "up" if control is released.
-			if(!control_pressed && up_ok_held >= 1000) {
+			if(!control_pressed && up_ok_held >= 250) {
 				events.publish(Event(Event::eKey, MenuItem::up)); //Up
-				up_ok_held -= 15; //Avoid overflow.
+				up_ok_held -= 11; //Avoid overflow.
 			}
 		}
 		else if(up_ok_pressed) {
@@ -244,9 +244,9 @@ int main(void) {
 			down_back_pressed = true;
 			++down_back_held;
 			//Button held more than 1s, send rapid commands "down" if control is released.
-			if(!control_pressed && down_back_held >= 1000) {
+			if(!control_pressed && down_back_held >= 250) {
 				events.publish(Event(Event::eKey, MenuItem::down)); //Down
-				down_back_held -= 15; //Avoid overflow.
+				down_back_held -= 11; //Avoid overflow.
 			}
 		}
 		else if(down_back_pressed) { 

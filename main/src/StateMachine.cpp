@@ -95,6 +95,7 @@ void StateMachine::sinit(const Event& e) {
 		this->temp_timer = 0;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->co2_readings = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
 		this->check_sensors(true);
 		printf("Sensors init. Time elapsed: %fms\n", (float) this->operation_time / 72000);
@@ -139,6 +140,7 @@ void StateMachine::sauto(const Event& e) {
 		this->temp_timer = 100;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->co2_readings = 0;
 		//If user is in modification - discard it.
 		if(this->mod) {
 			this->mod = false;
@@ -183,27 +185,36 @@ void StateMachine::sauto(const Event& e) {
 		this->co2_timer++;
 		this->fan_timer++;
 		//Every 0.5s by default. Starts after 300ms timeout.
-		if (this->rhum_timer >= this->rhum_timeout){
+		if (this->rhum_timer >= this->rhum_timeout) {
 			this->readRhum(); //Quickly read relative humidity and temperature
 			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->rhum_timer = 0;
 		}
 		//Every 0.5s by default. Starts after 400ms timeout.
-		if (this->temp_timer >= this->temp_timeout){
+		if (this->temp_timer >= this->temp_timeout) {
 			this->readTemp(); //Quickly read temperature
 			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->temp_timer = 0;
 		}
 		//Every 0.5s by default.
-		if (this->co2_timer >= this->co2_timeout){
-			this->readCo2(); //Quickly read co2
+		if (this->co2_timer >= this->co2_timeout) {
+			this->co2_readings++;
+			if (this->co2_readings >= 20) {
+				this->busy = true;
+				if(!this->mod) this->screens_update();
+				this->co2_readings = 0;
+				this->readCo2Long(); //Slowly read co2 after 20 reads. Should work around every 10s
+				this->busy = false;
+			}
+			else {
+				this->readCo2(); //Quickly read co2
+			}
 			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
-		//Every 10ms by default.
-		if (this->fan_timer >= this->fan_timeout)
-		{
+		//Every 13ms by default.
+		if (this->fan_timer >= this->fan_timeout) {
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
@@ -233,6 +244,7 @@ void StateMachine::smanual(const Event& e) {
 		this->temp_timer = 100;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->co2_readings = 0;
 		//Unlock Fan menu.
 		this->screen_unlock(this->mfan);
 		//If user is in modification - discard it.
@@ -281,27 +293,36 @@ void StateMachine::smanual(const Event& e) {
 		this->co2_timer++;
 		this->fan_timer++;
 		//Every 0.5s by default. Starts after 300ms timeout.
-		if (this->rhum_timer >= this->rhum_timeout){
+		if (this->rhum_timer >= this->rhum_timeout) {
 			this->readRhum(); //Quickly read relative humidity
 			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->rhum_timer = 0;
 		}
 		//Every 0.5s by default. Starts after 400ms timeout.
-		if (this->temp_timer >= this->temp_timeout){
+		if (this->temp_timer >= this->temp_timeout) {
 			this->readTemp(); //Quickly read temperature
 			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->temp_timer = 0;
 		}
 		//Every 0.5s by default.
-		if (this->co2_timer >= this->co2_timeout){
-			this->readCo2(); //Quickly read co2
+		if (this->co2_timer >= this->co2_timeout) {
+			this->co2_readings++;
+			if (this->co2_readings >= 20) {
+				this->busy = true;
+				if(!this->mod) this->screens_update();
+				this->co2_readings = 0;
+				this->readCo2Long(); //Slowly read co2 after 20 reads. Should work around every 10s
+				this->busy = false;
+			}
+			else {
+				this->readCo2(); //Quickly read co2
+			}
 			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
-		//Every 10ms by default.
-		if (this->fan_timer >= this->fan_timeout)
-		{
+		//Every 13ms by default.
+		if (this->fan_timer >= this->fan_timeout) {
 			this->fan_timer = 0;
 			this->readPres(); //Takes 3ms.
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
@@ -332,6 +353,7 @@ void StateMachine::ssensors(const Event& e) {
 		this->temp_timer = 0;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->co2_readings = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
 		this->check_everything(!fast);
@@ -434,9 +456,20 @@ void StateMachine::readTemp(bool retry) {
  */
 void StateMachine::readCo2(bool retry) {
 	this->operation_time = 0;
-	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
-	//sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
 	sfco2_up = this->sco2.read_rapid(this->co2, retry);
+	this->operation_time += this->sco2.get_elapsed_time();
+}
+
+/**
+ * @brief Reads co2 value from co2 sensor. (Takes up to 350ms)
+ * Sets sfco2_up flag to true/false as communication result.
+ * Changes co2 variable to current if communication succeeded.
+ * @param retry Whether to retry communication.
+ */
+void StateMachine::readCo2Long(bool retry) {
+	this->operation_time = 0;
+	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
+	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
 	this->operation_time += this->sco2.get_elapsed_time();
 }
 
@@ -483,10 +516,10 @@ void StateMachine::adjust_fan(float cur_pres, float des_pres) {
 	//Here should be some kind of complex calculation for fan adjustment, but it will do for now.
 	//(It's ok with fast fan update rate.)
 	if((round(cur_pres) > round(des_pres)) && this->fan_speed > 89) {
-		this->set_fan(this->fan_speed - 1);
+		this->set_fan((cur_pres - des_pres > 10.0) ? this->fan_speed - 10 : this->fan_speed - 1);
 	}
 	else if((round(cur_pres) < round(des_pres)) && this->fan_speed < 1000) {
-		this->set_fan(this->fan_speed + 1);
+		this->set_fan((des_pres - cur_pres > 10.0) ? this->fan_speed + 10 : this->fan_speed + 1);
 	}
 	else if(fan_speed < 90) this->set_fan(0);
 }

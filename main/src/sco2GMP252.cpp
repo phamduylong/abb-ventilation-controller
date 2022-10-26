@@ -279,7 +279,7 @@ bool sco2GMP252::check_status() {
 	int16_t device_st = this->check_device_status();
 	int16_t co2_st = this->check_co2_status();
 	if(co2_st == 2) {
-		//printf("Co2 reading unreliable.\n");
+		printf("Co2 reading unreliable.\n");
 		co2_st = 0;
 	}
 	return !(device_st | co2_st);

@@ -46,6 +46,7 @@ private:
 	void readRhum(bool retry = false);
 	void readTemp(bool retry = false);
 	void readCo2(bool retry = false);
+	void readCo2Long(bool retry = false);
 	//Display functions.
 	void screen_lock(PropertyEdit *pe);
 	void screen_unlock(PropertyEdit *pe);
@@ -60,6 +61,7 @@ private:
 	const unsigned int temp_timeout; //How many ticks to wait before relative humidity reading.
 	unsigned int co2_timer; //Counts ticks for co2 reading.
 	const unsigned int co2_timeout; //How many ticks to wait before co2 reading.
+	uint8_t co2_readings;
 	unsigned int fan_timer; //Counts ticks for fan adjustment.
 	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
 	//Menu.
