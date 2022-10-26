@@ -96,6 +96,7 @@ void StateMachine::sinit(const Event& e) {
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		this->co2_readings = 0;
+		this->pres_readings = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
 		this->check_sensors(true);
 		printf("Sensors init. Time elapsed: %fms\n", (float) this->operation_time / 72000);
@@ -141,6 +142,7 @@ void StateMachine::sauto(const Event& e) {
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		this->co2_readings = 0;
+		this->pres_readings = 0;
 		//If user is in modification - discard it.
 		if(this->mod) {
 			this->mod = false;
@@ -215,10 +217,15 @@ void StateMachine::sauto(const Event& e) {
 		}
 		//Every 13ms by default.
 		if (this->fan_timer >= this->fan_timeout) {
+			this->pres_readings++;
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(!this->mod && this->pres_readings > 5) {
+				this->pres_readings = 0;
+				this->screen_pres_update();
+			}
 			this->adjust_fan(this->pres, this->despres);
 			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		}
@@ -245,6 +252,7 @@ void StateMachine::smanual(const Event& e) {
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		this->co2_readings = 0;
+		this->pres_readings = 0;
 		//Unlock Fan menu.
 		this->screen_unlock(this->mfan);
 		//If user is in modification - discard it.
@@ -323,9 +331,14 @@ void StateMachine::smanual(const Event& e) {
 		}
 		//Every 13ms by default.
 		if (this->fan_timer >= this->fan_timeout) {
+			this->pres_readings++;
 			this->fan_timer = 0;
 			this->readPres(); //Takes 3ms.
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(!this->mod && this->pres_readings > 5) {
+				this->pres_readings = 0;
+				if(!this->mod) this->screen_pres_update();
+			}
 			this->desfan_speed = this->mfan->getValue() * 10;
 			this->set_fan(this->desfan_speed);
 			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
@@ -354,6 +367,7 @@ void StateMachine::ssensors(const Event& e) {
 		this->co2_timer = 0;
 		this->fan_timer = 0;
 		this->co2_readings = 0;
+		this->pres_readings = 0;
 		this->busy = true;
 		this->screens_update(); //Might cause some screen flickering if sensors are ok. (Currently fastest exec time is 5-6ms)
 		this->check_everything(!fast);
@@ -555,7 +569,7 @@ void StateMachine::screens_update() {
 	this->mpresm->setValue(this->pres);
 
 	//Setting titles according to flags.
-	char buf[17];
+	char buf[18];
 	//Relative Humidity screen.
 	snprintf(buf, 18, "%s %c%c%c", this->titles[0],
 	this->busy ? this->cbusy : this->cidle,
@@ -599,4 +613,22 @@ void StateMachine::screens_update() {
 	if (this->operation_time > start_time) this->operation_time -= start_time;
 	else this->operation_time = 0xffffffff - start_time + 1 + this->operation_time;
 	printf("Screen update. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+}
+
+/**
+ * @brief Updates pressure screen title and value.
+ */
+void StateMachine::screen_pres_update() {
+	this->mpresm->setValue(this->pres);
+
+	//Setting titles according to flags.
+	char buf[18];
+	//Pressure Manual screen (With the sensor reading)
+	snprintf(buf, 18, "%s %c%c%c", this->titles[5],
+	this->busy ? this->cbusy : this->cidle,
+	this->sfpres_up ? this->cup : this->cdown,
+	this->modeauto ? this->cauto : this->cman);
+	this->mpresm->setTitle(buf);
+	//Show everything on LCD
+	this->menu.event(MenuItem::show);
 }

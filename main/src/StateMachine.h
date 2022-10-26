@@ -51,6 +51,7 @@ private:
 	void screen_lock(PropertyEdit *pe);
 	void screen_unlock(PropertyEdit *pe);
 	void screens_update();
+	void screen_pres_update();
 
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
@@ -64,6 +65,7 @@ private:
 	uint8_t co2_readings;
 	unsigned int fan_timer; //Counts ticks for fan adjustment.
 	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
+	uint8_t pres_readings;
 	//Menu.
 	SimpleMenu menu;
 	DecimalShow *mrhum;
