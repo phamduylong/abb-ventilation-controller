@@ -62,10 +62,15 @@ app.get('/statistics', async (req, res) => {
 });
 
 //temp stats page
-app.get('/statistics/temperature', async (req, res) => {
+app.get('/statistics/pressure', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('temp_stats');
+    res.render('pressure_stats');
 });
+app.get('/statistics/fan', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.render('fan_stats');
+});
+
 
 //user analytics page
 app.get('/statistics/user', async (req, res) => {

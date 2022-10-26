@@ -28,6 +28,22 @@
                 y: {
                     suggestedMin: 0,
                     suggestedMax: 100
+                },
+                x:{
+                    ticks: {
+                        callback: function (val, index) {
+                            console.log(this.getLabelForValue(val));
+                            const time = new Date(this.getLabelForValue(val));
+                            const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                            const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                            const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                            const h = (time.getHours() < 10) ? "0" + time.getHours() : time.getHours();
+                            const m = (time.getMinutes() < 10) ? "0" + time.getMinutes() : time.getMinutes();
+                            const s = (time.getSeconds() < 10) ? "0" + time.getSeconds() : time.getSeconds();
+                            return d + "/" + mo + "/" + y + "\n" + h + ":" + m + ":" + s;
+
+                        }
+                    }
                 }
             },
             responsive: true,
@@ -46,7 +62,7 @@
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
 
 
-            fan_graph.data.labels.push(data.nr);
+            fan_graph.data.labels.push(data.timestamp);
             fan_graph.data.datasets[0].data.push(data.speed);
 
             // re-render the chart
