@@ -132,22 +132,14 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
-        #time_container{
-            margin: 10px;
-            border-radius: 5px;
-            height: 20%;
-            width: 30%;
+
+        #filter-input {
+            margin: 20px;
             position: absolute;
-            top: 70%;
-            left: 50%;
+            top: -5%;
+            left: 93%;
             text-align: center;
             transform: translate(-50%, -50%);
-        }
-        #filterTime {
-            width: 15%;
-        }
-        #filterTime:invalid {
-            border: solid red 3px;
         }
 
 
@@ -185,6 +177,18 @@
 
 <div id="chart-container">
     <canvas onload="push_data()" id="chart"></canvas>
+    <div id="filter-input">
+        <form onchange="filterData();return false;">
+            <label for="filterTime">Filter data: </label>
+            <select id="filterTime" >
+                <option value=0></option>
+                <option value=0.5>30 seconds</option>
+                <option value=1>Last minute</option>
+                <option value=60>Last hour</option>
+                <option value=1440>Last day</option>
+            </select>
+        </form>
+    </div>
 </div>
 <br/>
 
@@ -204,12 +208,6 @@
 
 </div>
 
-<div id="time_container">
-    <form onsubmit="filterData();return false;">
-        <input name="filterTime"  type = "number" id = "filterTime" value = "0"  min = "0" max = "1200">Filter data from X minutes</input>
-        <input type="submit" value="Submit">
-    </form>
-</div>
 
 
 <div>
@@ -267,7 +265,8 @@
 
     function filterData(){
         const filterDate = [...myChart.data.labels];
-        const filter_time = document.getElementById("filterTime").value;
+        let filter_time = Number(document.getElementById("filterTime").value) || 0;
+        console.log("FILTER TIME: ", filter_time);
         if(filter_time > 0){
             let filter_index = filterDate.length;
             for(let i=0;i < filterDate.length;++i){

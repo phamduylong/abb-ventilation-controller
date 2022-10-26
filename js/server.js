@@ -42,7 +42,6 @@ client.subscribe(status_topic, () => {
 });
 
 
-
 /*-------------------------------------------------------------------GET REQUESTS----------------------------------------------------------------*/
 
 //login page
@@ -61,11 +60,14 @@ app.get('/statistics', async (req, res) => {
     res.render('statistics');
 });
 
-//temp stats page
+//pressure stats page
 app.get('/statistics/pressure', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     res.render('pressure_stats');
 });
+
+
+//fan speed stats page
 app.get('/statistics/fan', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     res.render('fan_stats');
@@ -156,14 +158,21 @@ app.get('/logout', (req, res) => {
 app.get('/mutable-data', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     client.on('message', (topic, msg) => {
-        res.status(200);
         client.removeAllListeners();
         msg = msg.toString();
         msg = JSON.parse(msg);
         msg.timestamp = Date.now();
-        return res.json(msg);
+        MongoClient.connect(mongo_url, function (err, db) {
+            if (err) console.error("FAILED TO CONNECT TO DATABASE");
+            const dbo = db.db("stats");
+
+            dbo.collection("stats").insertOne(msg).then((result) => {
+                console.log(result);
+            });
+        });
+        res.json(msg);
     });
-})
+});
 
 
 //auto mode operation page
@@ -286,6 +295,7 @@ app.listen(port, () => {
  * Adding a single new user to database
  * @function
  * @param {object} newUser - New user to add to database.
+ * @return Promise
  */
 const addUser = (newUser) => {
     return new Promise((resolve, reject) => {
@@ -312,7 +322,7 @@ const addUser = (newUser) => {
  * @function
  * @param {Date} d1 - Date 1 to compare.
  * @param {Date} d2 - Date 2 to compare.
- * @returns A boolean. True if the 2 dates are on the same day, else false
+ * @returns Boolean
  */
 const isSameDay = (d1, d2) => {
     return d1.getFullYear() === d2.getFullYear() &&
