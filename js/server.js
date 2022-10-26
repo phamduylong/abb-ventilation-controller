@@ -41,10 +41,6 @@ client.subscribe(status_topic, () => {
 
 });
 
-client.subscribe(settings_topic, () => {
-
-});
-
 
 
 /*-------------------------------------------------------------------GET REQUESTS----------------------------------------------------------------*/
@@ -66,13 +62,9 @@ app.get('/statistics', async (req, res) => {
 });
 
 //temp stats page
-app.get('/statistics/fan', async (req, res) => {
+app.get('/statistics/temperature', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('fan_stats');
-});
-app.get('/statistics/pressure', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('pressure_stats');
+    res.render('temp_stats');
 });
 
 //user analytics page
@@ -189,7 +181,10 @@ app.get('/mutable-data', async (req, res) => {
     client.on('message', (topic, msg) => {
         res.status(200);
         client.removeAllListeners();
-        return res.json(msg.toString());
+        msg = msg.toString();
+        msg = JSON.parse(msg);
+        msg.timestamp = Date.now();
+        return res.json(msg);
     });
 })
 

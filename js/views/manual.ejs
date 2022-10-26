@@ -151,7 +151,7 @@
     </script>
 
 </head>
-<body onload="getData()">
+<body onload="push_data()">
 <div id="switch-container">
     <p id="switch-status">AUTO MODE IS OFF</p>
     <label class="switch">
@@ -217,9 +217,9 @@
 
     const push_data = () => {
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
-            console.log (typeof JSON.parse(data));
-            data = JSON.parse(data);
-            console.log(data.nr);
+            /*console.log (typeof JSON.parse(data));
+            data = JSON.parse(data);*/
+            console.log(data);
             if(data.auto === true) {
                 window.location.href = "/auto";
             }
@@ -230,9 +230,8 @@
                 ptext.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
                 const ctext = document.getElementById('ctext');
                 ctext.innerText = "CO2 LEVEL IS " + data.co2.toString() + " ppm";
-                myChart.data.labels.push(data.nr);
+                myChart.data.labels.push(data.timestamp);
                 myChart.data.datasets[0].data.push(data.pressure);
-
                 // re-render the chart
                 myChart.update();
             }

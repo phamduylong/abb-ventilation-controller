@@ -13,93 +13,70 @@
 <body onload="fetching()">
 <!--<div id = "tempChart"-->
 <!--        style="width: 60%; position: absolute; top: 50%; left: 30%; transform: translate(-50%, -50%);">-->
-<div id = "fan" style="width: 40%; position: absolute; top: 20%; left: 70%; transform: translate(-50%, -50%);">
-    <canvas id="fanChart" onclick = "window.location.href = '/statistics/fan'"></canvas>
-</div>
-
-<div id = "pressure" style="width: 40%; position: absolute; top: 20%; left: 30%; transform: translate(-50%, -50%);">
-    <canvas id="pressureChart" onclick = "window.location.href = '/statistics/pressure'"></canvas>
+<div id = "temp" style="width: 30%; position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);">
+    <canvas id="tempChart" onclick = "window.location.href = '/statistics/temperature'"></canvas>
 </div>
 
 
 <div id = "user"
-     style="width: 40%; position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%);">
+        style="width: 30%; position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%);">
     <canvas id="userChart" onclick = "window.location.href = '/statistics/user'"></canvas>
 </div>
 <script>
     const sec_per_day = 86400000;
-    const fanCtx = document.getElementById('fanChart').getContext("2d");
-    const presCtx = document.getElementById('pressureChart').getContext("2d");
-
-    const fan_graph = new Chart(fanCtx, {
+    const ctx = document.getElementById('tempChart').getContext("2d");
+    x = [0, 1, 2, 3];
+    y = [19, 15, 23, 27];
+    var myChart = new Chart(ctx, {
         type: "line",
         data: {
-            labels: [],
+            labels: x,
             datasets: [{
-                data: [],
+                data: y,
                 borderColor: "green",
                 fill: false,
-                label: "Fan Speed Percentage"
+                label: "Temp val"
             }]
         },
         options: {
             responsive: true,
             title: {
                 display: true,
-                text: "Fan value"
-            },
-            padding: {
-                top: 10,
-                bottom: 30
-            }
-        }
-    });
-    const pressure_graph = new Chart(presCtx, {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [{
-                data: [],
-                borderColor: "blue",
-                fill: false,
-                label: "Pressure val"
-            }]
-        },
-        options: {
-            responsive: true,
-            title: {
-                display: true,
-                text: "Pressure value"
-            },
-            padding: {
-                top: 10,
-                bottom: 30
+                text: "Temperature value"
             }
         }
     });
 
-    const read_data = () => {
-        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
-            console.log (JSON.parse(data));
-            data = JSON.parse(data);
-            // if(data.auto === false) {
-            //     window.location.href = "/manual";
-            // }
+    const getData = () => {
+        fetch('/temp_data').then(tmp => tmp.json()).then(arr => {
+            console.log(arr);
+            const x = arr.x;
+            const y = arr.y;
 
-            fan_graph.data.labels.push(data.nr);
-            fan_graph.data.datasets[0].data.push(data.speed);
-            pressure_graph.data.labels.push(data.nr);
-            pressure_graph.data.datasets[0].data.push(data.pressure);
-
+            for (let i = 0; i < x.length; ++i) {
+                myChart.data.labels.push(x[i]);
+                myChart.data.datasets[0].data.push(y[i]);
+            }
+            console.log(y);
             // re-render the chart
-            fan_graph.update();
-            pressure_graph.update();
+            myChart.update();
 
 
-        });
+        })
+    }
+    function getRandomIntInclusive(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    setInterval(read_data,2000);
+    addRand = () => {
+        myChart.data.labels.push(myChart.data.labels.length);
+        myChart.data.datasets[0].data.push(getRandomIntInclusive(1, 25));
+        // re-render the chart
+        myChart.update();
+    }
+    setInterval(addRand, 1000);
     function fetching() {
 
         fetch('/user_data').then(tmp => tmp.json()).then(arr => {
@@ -160,70 +137,70 @@
             // console.log(datas);
 
 
-            new Chart("userChart", {
-                type: "bar",
-                data: {
-                    labels: x,
-                    datasets: [
-                        {
-                            label: x,
-                            data: y,
-                            backgroundColor: [
-                                'rgb(255, 99, 132)',
-                                'rgb(255, 159, 64)',
-                                'rgb(255, 205, 86)',
-                                'rgb(75, 192, 192)',
-                                'rgb(54, 162, 235)',
-                                'rgb(153, 102, 255)',
-                                'rgb(201, 203, 207)'
+                    new Chart("userChart", {
+                        type: "bar",
+                        data: {
+                            labels: x,
+                            datasets: [
+                                {
+                                    label: x,
+                                    data: y,
+                                    backgroundColor: [
+                                        'rgb(255, 99, 132)',
+                                        'rgb(255, 159, 64)',
+                                        'rgb(255, 205, 86)',
+                                        'rgb(75, 192, 192)',
+                                        'rgb(54, 162, 235)',
+                                        'rgb(153, 102, 255)',
+                                        'rgb(201, 203, 207)'
+                                    ]
+
+                                }
                             ]
 
-                        }
-                    ]
+                        },
+                        options: {
+                            title: {
+                                display: true,
+                                text: "User Data"
+                            },
+                            scales: {
+                                xAxes: {
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day',
+                                        tooltipFormat: 'MMM DD'
+                                    }, gridLines: {
+                                        display: false
+                                    }
+                                },
 
-                },
-                options: {
-                    title: {
-                        display: true,
-                        text: "User Data"
-                    },
-                    scales: {
-                        xAxes: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                tooltipFormat: 'MMM DD'
-                            }, gridLines: {
-                                display: false
+                                yAxes: [{
+                                    ticks: {
+                                        userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
+                                        stepSize: 86400000/24,
+                                        beginAtZero: true,
+                                        steps: 24,
+                                        max: 86400000
+                                    }, gridLines: {
+                                        display: false
+                                    }
+                                }]
                             }
                         },
-
-                        yAxes: [{
-                            ticks: {
-                                userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
-                                stepSize: 86400000/24,
-                                beginAtZero: true,
-                                steps: 24,
-                                max: 86400000
-                            }, gridLines: {
-                                display: false
+                        tooltips: {
+                            callbacks: {
+                                label: function(tooltipItem, data) {
+                                    return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.yLabel)
+                                }
                             }
-                        }]
-                    }
-                },
-                tooltips: {
-                    callbacks: {
-                        label: function(tooltipItem, data) {
-                            return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.yLabel)
                         }
-                    }
-                }
-            });
+                    });
 
-        })
-        function epoch_to_hh_mm_ss(epoch) {
-            return new Date(epoch).toISOString().substr(11, 8)
-        }
+                })
+                function epoch_to_hh_mm_ss(epoch) {
+                    return new Date(epoch).toISOString().substr(11, 8)
+                }
 
 
 
@@ -233,4 +210,3 @@
 
 </body>
 </html>
-
