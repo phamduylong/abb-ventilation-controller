@@ -28,8 +28,8 @@ const mongo_url = "mongodb://localhost:27017";
 const client = mqtt.connect(broker_url, { clientId: 'node', clean: true });
 const serial_port_nr = "COM23";
 const serial_baud_rate = 115200;
-const pub_topic = "controller/settings";
-const subs_topic = "controller/status";
+const settings_topic = "controller/settings";
+const status_topic = "controller/status";
 
 
 
@@ -37,15 +37,11 @@ const subs_topic = "controller/status";
 const serial_parser = new ReadlineParser({delimiter: '\r\n'});
 serial_port.pipe(serial_parser);*/
 
-client.subscribe(subs_topic, () => {
+client.subscribe(status_topic, () => {
 
 });
 
-setInterval(() => {
-    client.on('message', (topic, msg) => {
-        console.log("RECEIVED: " + msg);
-    })
-}, 1500);
+
 
 /*-------------------------------------------------------------------GET REQUESTS----------------------------------------------------------------*/
 
@@ -154,7 +150,7 @@ app.get('/logout', (req, res) => {
                     const time_in_old_day = Math.abs(new_day - user.logins[user.logins.length - 1]);
                     const prev_day_logout = new Date(user.logins[user.logins.length - 1] + time_in_old_day);
                     const next_day_logout = new Date(new_day.getTime() + time_in_new_day);
-                    const update_logins = { $set: {logins: [...user.logins, new_day] } };
+                    const update_logins = { $set: {logins: [...user.logins, new_day.getTime()] } };
                     const update_logouts = { $set: {logouts: [...user.logouts, prev_day_logout.getTime(), next_day_logout.getTime()] } };
                     dbo.collection("users").updateMany({username: username}, update_logins).then((res) => {
                         console.log(res);
@@ -179,10 +175,13 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.get('/mutable_data', async (req, res) => {
+
+app.get('/mutable-data', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
     client.on('message', (topic, msg) => {
-        console.log("RECEIVED: " + msg);
-        return res.json(msg);
+        res.status(200);
+        client.removeAllListeners();
+        return res.json(msg.toString());
     });
 })
 
@@ -214,7 +213,7 @@ app.post('/fspeed', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const fspeed = req.body.fspeed || 0;
     console.log(`PRESSURE LEVEL: ${fspeed} Pa`);
-    res.render('manual', {fspeed:fspeed});
+    res.render('manual', {fspeed: fspeed});
 });
 
 //sign up creds
