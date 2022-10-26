@@ -1,6 +1,8 @@
 #ifndef SYSTICK_H_
 #define SYSTICK_H_
 
+#define ARDUINO_SIM 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif

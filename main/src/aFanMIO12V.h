@@ -1,6 +1,7 @@
 #ifndef AFANMIO12V_H_
 #define AFANMIO12V_H_
 
+#include "chip.h"
 #include "modbus/ModbusMaster.h"
 #include "modbus/ModbusRegister.h"
 

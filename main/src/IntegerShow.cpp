@@ -14,7 +14,7 @@
 IntegerShow::IntegerShow(LiquidCrystal *lcd_, std::string editTitle, std::string unit): lcd(lcd_), title(editTitle), unitValue(unit) {
 	value = 0;
 	edit = 0;
-
+	focus = 0;
 }
 
 IntegerShow::~IntegerShow() {}
@@ -36,7 +36,7 @@ void IntegerShow::cancel() {
 }
 
 void IntegerShow::setFocus(bool focus) {
-	this->focus = focus;
+	//this->focus = focus;
 }
 
 bool IntegerShow::getFocus() {

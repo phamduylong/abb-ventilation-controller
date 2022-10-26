@@ -43,18 +43,29 @@ private:
 	void check_fan(bool retry = false);
 	void adjust_fan(float cur_pres, float des_pres);
 	void readPres(bool retry = false);
+	void readRhum(bool retry = false);
+	void readTemp(bool retry = false);
+	void readCo2(bool retry = false);
+	void readCo2Long(bool retry = false);
 	//Display functions.
 	void screen_lock(PropertyEdit *pe);
 	void screen_unlock(PropertyEdit *pe);
 	void screens_update();
+	void screen_pres_update();
 
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
 	LiquidCrystal *lcd; //lcd display
-	unsigned int sensors_timer; //Counts ticks for sensor reading.
-	const unsigned int sensors_timeout; //How many ticks to wait before sensor reading.
+	unsigned int rhum_timer; //Counts ticks for relative humidity reading.
+	const unsigned int rhum_timeout; //How many ticks to wait before relative humidity reading.
+	unsigned int temp_timer; //Counts ticks for relative humidity reading.
+	const unsigned int temp_timeout; //How many ticks to wait before relative humidity reading.
+	unsigned int co2_timer; //Counts ticks for co2 reading.
+	const unsigned int co2_timeout; //How many ticks to wait before co2 reading.
+	uint8_t co2_readings;
 	unsigned int fan_timer; //Counts ticks for fan adjustment.
 	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
+	uint8_t pres_readings;
 	//Menu.
 	SimpleMenu menu;
 	DecimalShow *mrhum;
@@ -96,6 +107,7 @@ private:
 	bool modeauto; //Flag for auto mode.
 	bool busy; //Set true when input from screen can be unavailable for long period of time.
 	bool fast; //Set true to skip retries on manual/auto switch.
+	bool mod;
 	//Sensor/Devices flags.
 	bool sfrht_up;
 	bool sfco2_up;

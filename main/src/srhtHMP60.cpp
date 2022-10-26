@@ -1,8 +1,10 @@
+#include <stdio.h>
 #include "srhtHMP60.h"
 #include "systick.h"
+#include "retarget_uart.h"
 
 srhtHMP60::srhtHMP60(unsigned int retries, unsigned int wait) : node{241}, rh0{&node, 0x0000}, rh1{&node, 0x0001}, t0{&node, 0x0002}, t1{&node, 0x0003},
-err_reg{&node, 0x0200}, retries(retries), wait(wait) {
+err_reg{&node, 0x0200}, err_code{&node, 0x203}, err_code2{&node, 0x204}, retries(retries), wait(wait) {
 	this->node.begin(9600);
 	this->status = false;
 	this->elapsed_time = 0;
@@ -20,6 +22,7 @@ srhtHMP60::~srhtHMP60() {}
  * @return false On failure.
  */
 bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	unsigned int htemp;
 	unsigned int hrhum;
 	int tpr;
@@ -34,10 +37,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		//Check status before reading.
 		if(!this->check_status()) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		///////////////
@@ -48,10 +48,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		htemp |= tpr;
@@ -61,10 +58,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		htemp |= tpr; //htemp is valid here, but it won't be passed if humidity reading will fail.
@@ -77,10 +71,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		hrhum |= tpr;
@@ -90,10 +81,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Reading succeeded if we are here.
@@ -102,7 +90,9 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		rhum = binary32_to_float(hrhum);
 		this->status = true;
 	}
-
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 
@@ -115,6 +105,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
  * @return false On failure. 
  */
 bool srhtHMP60::read_temp(float &data, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	unsigned int htemp;
 	int tpr;
 	this->status = false;
@@ -127,10 +118,7 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 		//Check status before reading.
 		if(!this->check_status()) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 
@@ -139,10 +127,7 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		htemp |= tpr;
@@ -152,10 +137,7 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Reading succeeded if we are here.
@@ -163,7 +145,9 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 		data = binary32_to_float(htemp);
 		this->status = true;
 	}
-
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 
@@ -176,6 +160,7 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
  * @return false On failure. 
  */
 bool srhtHMP60::read_rhum(float &data, bool retry) {
+	unsigned int start_time = DWT->CYCCNT;
 	unsigned int hrhum;
 	int tpr;
 	this->status = false;
@@ -189,10 +174,7 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 		//Check status before reading.
 		if(!this->check_status()) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 
@@ -201,10 +183,7 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		hrhum |= tpr;
@@ -214,10 +193,7 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 		//Start over upon failure.
 		if (tpr == -1) {
 			//If it is not the last attempt - wait for this->wait (100ms by default) in case it was a minor failure.
-			if(i != this->retries) {
-				Sleep(this->wait);
-				this->elapsed_time += this->wait;
-			}
+			if(i != this->retries) Sleep(this->wait);
 			continue;
 		}
 		//Reading succeeded if we are here.
@@ -225,7 +201,9 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 		data = binary32_to_float(hrhum);
 		this->status = true;
 	}
-
+	this->elapsed_time = DWT->CYCCNT;
+	if (this->elapsed_time > start_time) this->elapsed_time -= start_time;
+	else this->elapsed_time = 0xffffffff - start_time + 1 + this->elapsed_time;
 	return this->status;
 }
 
@@ -255,7 +233,30 @@ unsigned int srhtHMP60::get_elapsed_time() {
  * @return false One of the registers returned error.
  */
 bool srhtHMP60::check_status() {
-	return this->err_reg.read();
+	int res = this->err_reg.read();
+	if( res == -1 ) return false;
+	if( res == 0 ) {
+		volatile int err = this->get_error();
+		if(err != 0) printf("Rel humidity sensor error: %d\n", err);
+		#if ARDUINO_SIM
+		return true;
+		#else
+		return false;
+		#endif
+	}
+	#if ARDUINO_SIM
+	return false;
+	#else
+	return true;
+	#endif
+}
+
+int srhtHMP60::get_error() {
+	int vhex = 0;
+	vhex = this->err_code2.read();
+	vhex <<= 16;
+	vhex |= this->err_code.read();
+	return vhex;
 }
 
 /**
