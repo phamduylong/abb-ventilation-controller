@@ -229,8 +229,8 @@
             else {
                 const text = document.getElementById('pressure-text');
                 text.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
-                    myChart.data.labels.push(data.timestamp);
-                    myChart.data.datasets[0].data.push(data.speed);
+                myChart.data.labels.push(data.timestamp);
+                myChart.data.datasets[0].data.push(data.speed);
                 myChart.update();
             }
 

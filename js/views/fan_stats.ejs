@@ -44,8 +44,6 @@
 
     const read_data = () => {
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
-            console.log (JSON.parse(data));
-            data = JSON.parse(data);
 
 
             fan_graph.data.labels.push(data.nr);

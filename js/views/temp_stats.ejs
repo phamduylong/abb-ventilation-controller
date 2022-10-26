@@ -50,19 +50,6 @@
 
                 })
             }
-            function getRandomIntInclusive(min, max) {
-                min = Math.ceil(min);
-                max = Math.floor(max);
-                return Math.floor(Math.random() * (max - min + 1)) + min;
-            }
-
-            addRand = () => {
-                myChart.data.labels.push(myChart.data.labels.length);
-                myChart.data.datasets[0].data.push(getRandomIntInclusive(1, 25));
-                // re-render the chart
-                myChart.update();
-            }
-            setInterval(addRand, 1000);
 
     </script>
     </body>
