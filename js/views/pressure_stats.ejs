@@ -24,6 +24,12 @@
             }]
         },
         options: {
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 140
+                }
+            },
             responsive: true,
             plugins: {
                 title: {
@@ -44,9 +50,6 @@
             console.log (JSON.parse(data));
             data = JSON.parse(data);
 
-            // if(data.auto === false) {
-            //     window.location.href = "/manual";
-            // }
 
             pressure_graph.data.labels.push(data.nr);
             pressure_graph.data.datasets[0].data.push(data.pressure);

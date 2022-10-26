@@ -8,7 +8,7 @@
 </head>
 
 <body>
-<div style="width: 60%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="fanChart"></canvas></div>
+<div style="width: 70%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="fanChart"></canvas></div>
 <script>
     const ctx = document.getElementById('fanChart').getContext("2d");
 
@@ -24,6 +24,12 @@
             }]
         },
         options: {
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            },
             responsive: true,
             plugins: {
                 title: {
@@ -41,9 +47,6 @@
             console.log (JSON.parse(data));
             data = JSON.parse(data);
 
-            // if(data.auto === false) {
-            //     window.location.href = "/manual";
-            // }
 
             fan_graph.data.labels.push(data.nr);
             fan_graph.data.datasets[0].data.push(data.speed);

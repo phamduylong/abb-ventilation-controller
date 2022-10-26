@@ -13,14 +13,13 @@
 <body onload="fetching()">
 <!--<div id = "tempChart"-->
 <!--        style="width: 60%; position: absolute; top: 50%; left: 30%; transform: translate(-50%, -50%);">-->
-<div id = "fan" style="width: 40%; position: absolute; top: 20%; left: 70%; transform: translate(-50%, -50%);">
+<div id = "fan" style="width: 40%; position: absolute; top: 20%; left: 70%; transform: translate(-50%, -50%);margin-left: 50px;margin-top: 20px">
     <canvas id="fanChart" onclick = "window.location.href = '/statistics/fan'"></canvas>
 </div>
 
-<div id = "pressure" style="width: 40%; position: absolute; top: 20%; left: 30%; transform: translate(-50%, -50%);">
+<div id = "pressure" style="width: 40%; position: absolute; top: 20%; left: 30%; transform: translate(-50%, -50%);margin-right: 50px;margin-top: 20px">
     <canvas id="pressureChart" onclick = "window.location.href = '/statistics/pressure'"></canvas>
 </div>
-
 
 <div id = "user"
      style="width: 40%; position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%);">
@@ -43,6 +42,14 @@
             }]
         },
         options: {
+            scales:{
+                yAxes: [{
+                    ticks: {
+                        min: 0,
+                        max: 100
+                    }
+                }]
+            },
             responsive: true,
             title: {
                 display: true,
@@ -66,6 +73,15 @@
             }]
         },
         options: {
+            scales:{
+                yAxes: [{
+                    ticks: {
+                        // Include a dollar sign in the ticks
+                        min: 0,
+                        max: 140
+                    }
+                }]
+            },
             responsive: true,
             title: {
                 display: true,
@@ -82,9 +98,7 @@
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
             console.log (JSON.parse(data));
             data = JSON.parse(data);
-            // if(data.auto === false) {
-            //     window.location.href = "/manual";
-            // }
+
 
             fan_graph.data.labels.push(data.nr);
             fan_graph.data.datasets[0].data.push(data.speed);
