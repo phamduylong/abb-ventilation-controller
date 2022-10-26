@@ -41,6 +41,10 @@ client.subscribe(status_topic, () => {
 
 });
 
+client.subscribe(settings_topic, () => {
+
+});
+
 
 
 /*-------------------------------------------------------------------GET REQUESTS----------------------------------------------------------------*/
@@ -212,7 +216,10 @@ app.post('/pressure', async (req, res) => {
 app.post('/fspeed', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const fspeed = req.body.fspeed || 0;
-    console.log(`PRESSURE LEVEL: ${fspeed} Pa`);
+    console.log(`FAN SPEED: ${fspeed}`);
+    client.publish(settings_topic, `{"auto": false, "speed": ${fspeed}}`, {qos: 0, retain: false}, (err) => {
+        if (err) console.error(err);
+    });
     res.render('manual', {fspeed: fspeed});
 });
 

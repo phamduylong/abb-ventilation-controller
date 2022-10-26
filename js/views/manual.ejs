@@ -162,9 +162,9 @@
 <br/>
 
 <div id="input-container">
-    <h3>FAN SPEED IS ON <%=fspeed%>%</h3>
-    <h3>MEASURED PRESSURE LEVEL IS 120Pa</h3>
-    <h3>MEASURED CO2 LEVEL IS 700ppm</h3>
+    <h3 id="ftext">FAN SPEED IS ON <%=fspeed%>%</h3>
+    <h3 id="ptext">MEASURED PRESSURE LEVEL IS 120Pa</h3>
+    <h3 id="ctext">MEASURED CO2 LEVEL IS 700ppm</h3>
     <form action="/fspeed" method="post">
         <label for="fspeed">SET FAN SPEED (0-100%)</label><br/>
         <input type="number" min="0" max="100" id="fspeed" name="fspeed" required><br/>
@@ -190,58 +190,59 @@
 </div>
 
 <script type="text/javascript">
-        const ctx = document.getElementById('chart').getContext("2d");
-        x = [0, 1, 2, 3];
-        y = [19, 15, 23, 27];
-        var myChart = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: x,
-                datasets: [{
-                    data: y,
-                    borderColor: "green",
-                    fill: false,
-                    label: "pressure val"
-                }]
-            },
-            options: {
-                responsive: true,
-                title: {
-                    display: true,
-                    text: "Pressure value"
-                }
+    const ctx = document.getElementById('chart').getContext("2d");
+    x = [];
+    y = [];
+    const myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: x,
+            datasets: [{
+                data: y,
+                borderColor: "green",
+                fill: false,
+                label: "Pressure Value (Pa)",
+                tension: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: "Pressure Value (Pa)"
             }
-        });
-       const getData = () => {
-           fetch('/pressure_data').then(tmp => tmp.json()).then(arr => {
-               const x = arr.x;
-               const y = arr.y;
-
-               for (let i = 0; i < x.length; ++i) {
-                   myChart.data.labels.push(x[i]);
-                   myChart.data.datasets[0].data.push(y[i]);
-               }
-               console.log(y);
-               // re-render the chart
-               myChart.update();
-
-           });
-       }
-
-        function getRandomIntInclusive(min, max) {
-            min = Math.ceil(min);
-            max = Math.floor(max);
-            return Math.floor(Math.random() * (max - min + 1)) + min;
         }
+    });
 
-        addRand = () => {
-        myChart.data.labels.push("Post ");
-        myChart.data.datasets[0].data.push(getRandomIntInclusive(-30, 30));
-        // re-render the chart
-        myChart.update();
+
+    const push_data = () => {
+        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
+            console.log (typeof JSON.parse(data));
+            data = JSON.parse(data);
+            console.log(data.nr);
+            if(data.auto === true) {
+                window.location.href = "/auto";
+            }
+            else {
+                const ftext = document.getElementById('ftext');
+                ftext.innerText = "FAN SPEED LEVEL IS " + data.speed.toString() + "%";
+                const ptext = document.getElementById('ptext');
+                ptext.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
+                const ctext = document.getElementById('ctext');
+                ctext.innerText = "CO2 LEVEL IS " + data.co2.toString() + " ppm";
+                myChart.data.labels.push(data.nr);
+                myChart.data.datasets[0].data.push(data.pressure);
+
+                // re-render the chart
+                myChart.update();
+            }
+
+        })
     }
-    setInterval(addRand, 1000);
+
+    setInterval(push_data, 2000);
 
 </script>
+
 </body>
 </html>

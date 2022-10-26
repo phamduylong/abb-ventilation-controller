@@ -203,9 +203,10 @@
             labels: x,
             datasets: [{
                 data: y,
-                borderColor: "blue",
+                borderColor: "green",
                 fill: false,
-                label: "Fan Speed Percentage"
+                label: "Fan Speed Percentage",
+                tension: 1
             }]
         },
         options: {
@@ -216,38 +217,9 @@
             }
         }
     });
-    const getData = () => {
-        fetch('/fan_data').then(tmp => tmp.json()).then(arr => {
-            const x = arr.x;
-            const y = arr.y;
-
-            for (let i = 0; i < x.length; ++i) {
-                myChart.data.labels.push(x[i]);
-                myChart.data.datasets[0].data.push(y[i]);
-            }
-            console.log(y);
-            // re-render the chart
-            myChart.update();
-
-        });
-
-    }
-    function getRandomIntInclusive(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-/*    addRand = () => {
-        myChart.data.labels.push( myChart.data.labels.length);
-        myChart.data.datasets[0].data.push(getRandomIntInclusive(1, 25));
-        // re-render the chart
-        myChart.update();
-    }
-    setInterval(addRand, 1000);*/
 
 
-    const read_data = () => {
+    const push_data = () => {
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
             console.log (typeof JSON.parse(data));
             data = JSON.parse(data);
@@ -259,7 +231,7 @@
                 const text = document.getElementById('pressure-text');
                 text.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
                     myChart.data.labels.push(data.nr);
-                    myChart.data.datasets[0].data.push(data.pressure);
+                    myChart.data.datasets[0].data.push(data.speed);
 
                 // re-render the chart
                 myChart.update();
@@ -268,13 +240,8 @@
         })
     }
 
-    setInterval(read_data, 1000);
+    setInterval(push_data, 2000);
 
-
-
-    function epoch_to_hh_mm_ss(epoch) {
-        return new Date(epoch).toISOString().substr(11, 8)
-    }
 </script>
 
 </body>
