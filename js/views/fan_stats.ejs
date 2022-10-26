@@ -8,7 +8,7 @@
 </head>
 
 <body>
-<div style="width: 70%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="fanChart"></canvas></div>
+<div style="width: 70%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><canvas id="fanChart" onload="read_data()"></canvas></div>
 <script>
     const ctx = document.getElementById('fanChart').getContext("2d");
 
@@ -72,7 +72,7 @@
         });
     }
 
-    setInterval(read_data,2000);
+    setInterval(read_data, 5000);
 
 </script>
 </body>

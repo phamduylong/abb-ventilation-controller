@@ -174,7 +174,7 @@
 </div>
 
 <div id="chart-container">
-    <canvas id="chart"></canvas>
+    <canvas id="chart" onload="push_data()"></canvas>
 </div>
 
 <div>
@@ -263,7 +263,7 @@
         })
     }
 
-    setInterval(push_data, 2000);
+    setInterval(push_data, 5000);
 
 </script>
 
