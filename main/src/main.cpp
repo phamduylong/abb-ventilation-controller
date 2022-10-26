@@ -31,20 +31,27 @@
 #include "mqtt.h"
 
 
+//#define SSID	    "HUAWEI-BFB9" //SmartIotMQTT  /* Use home localhost for test*/
+//#define PASSWORD    "02623972" //SmartIot /* Use home wifi password */
+//#define BROKER_IP   "192.168.8.101"  //192.168.1.254 /* Broker_IP is the home IP address */
+//#define BROKER_PORT  1883
+
+
 #define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
 #define PASSWORD    "WAASAdb81" //SmartIot /* Use home wifi password */
 #define BROKER_IP   "10.0.1.3"  //192.168.1.254 /* Broker_IP is the home IP address */
 #define BROKER_PORT  1883
 
+
 //DEBUG DEFINES //Leave only one ON, or none.
-#define LPC_PROJ 0 //Use this to switch from home-lpc to proj-lpc
+#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
 #define MODBUS_TEST 0
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
 #define CO2_TEST 0
 #define PRES_TEST 0
 #define FAN_PRES_TEST 0
-#define MQTT_TEST 1
+#define MQTT_TEST 0
 #define SOCKET_TEST 0
 //sw1 - A2 - 1 8
 //sw2 - A3 - 0 5
@@ -213,15 +220,20 @@ int main(void) {
 	int delay = 0;
 
 
-	//client and network
+	//define topics
+	char *sub_topic = "controller/setting";
+	char *pub_topic = "controller/status";
 
-//	mqtt mqtt(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
-//	mqtt.mqtt_init();
-	mqttTest();
+
+	mqtt mqtt(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
+	mqtt.mqtt_subscribe(sub_topic);
+//	mqtt.mqtt_publish(pub_topic);
+
+//	mqttTest();
 
 	menu.event(MenuItem::show); // display first menu item
 	while(1){
-		//mqtt.mqtt_subscribe("test/sample");
+
 		timer = millis();
 
 		if(timer == 10000 || timer == delay){
@@ -592,7 +604,7 @@ void mqttTest()
 	else
 		printf("MQTT Connected\n");
 
-	if ((rc = MQTTSubscribe(&client, "test/sample/#", QOS2, messageArrived)) != 0)
+	if ((rc = MQTTSubscribe(&client, "controller/setting", QOS2, messageArrived)) != 0)
 		printf("Return code from MQTT subscribe is %d\n", rc);
 
 	uint32_t sec = 0;
@@ -606,17 +618,13 @@ void mqttTest()
 			sec = get_ticks() / 1000;
 			++count;
 
-//			snprintf(msg, 128, "{\r\n\t\"samplenr\": %d, \r\n\t\"timestamp\": %llu, \r\n\t\"temperature\" :%d\r\n}\r\n", sampleId, timeStamp, temp);
-
-
-
 			message.qos = QOS1;
 			message.retained = 0;
 			message.payload = payload;
 			sprintf(payload, "{\"nr\": %d, \"Speed\": %d, \"Setpoint\": %d, \"Pressure\": %d, \"auto\": %s, \"error\": %s, \"co2\": %d, \"rh\": %d, \"temp\": %d}", count, 23, 32, 10, "false", "false", 200, 37, 25);
 			message.payloadlen = strlen(payload);
 
-			if ((rc = MQTTPublish(&client, "test/sample/a", &message)) != 0)
+			if ((rc = MQTTPublish(&client, "controller/status", &message)) != 0)
 				printf("Return code from MQTT publish is %d\n", rc);
 		}
 
