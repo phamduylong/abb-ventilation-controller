@@ -63,16 +63,19 @@
 
 
     const read_data = () => {
-        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
 
-            pressure_graph.data.labels.push(data.timestamp);
-            pressure_graph.data.datasets[0].data.push(data.pressure);
+        {
+            fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
 
-            // re-render the chart
-            pressure_graph.update();
+                pressure_graph.data.labels.push(data.timestamp);
+                pressure_graph.data.datasets[0].data.push(data.pressure);
+
+                // re-render the chart
+                pressure_graph.update();
 
 
-        });
+            });
+        }
     }
 
     setInterval(read_data, 5000);

@@ -187,6 +187,14 @@
 
 </div>
 
+<div id="time container">
+<form action="/time_interval" method="post">
+    <label for="time_interval">Choose time interval(In minutes)</label><br/>
+    <input type="number" min="0" max="100" id="time_interval" name="time_interval" required><br/>
+    <input type="submit" name="submit" submit>
+</form>
+</div>
+
 
 <div>
 <form action="/logout" id="logout">

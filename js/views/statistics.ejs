@@ -12,6 +12,11 @@
 </head>
 <body onload="fetch_user_data()">
 
+<form action="/time_interval" method="post">
+    <label for="time_interval">Choose time interval(In minutes)</label><br/>
+    <input type="number" min="0" max="100" id="time_interval" name="time_interval" required><br/>
+    <input type="submit" name="submit" submit>
+</form>
 <div id = "fan" style="width: 40%; position: absolute; top: 20%; left: 70%; transform: translate(-50%, -50%);margin-left: 50px;margin-top: 20px">
     <canvas id="fanChart" onload="read_data()" onclick = "window.location.href = '/statistics/fan'"></canvas>
 </div>
