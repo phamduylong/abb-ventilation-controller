@@ -1,10 +1,3 @@
-/*
- * IntegerEdit.h
- *
- *  Created on: 2.2.2016
- *      Author: krl
- */
-
 #ifndef INTEGEREDIT_H_
 #define INTEGEREDIT_H_
 
@@ -22,7 +15,7 @@ public:
 	void decrement();
 	void accept();
 	void cancel();
-	void setFocus(bool focus);
+	bool setFocus(bool focus);
 	bool getFocus();
 	void display();
 	int getValue();

@@ -1,10 +1,3 @@
-/*
- * SimpleMenu.cpp
- *
- *  Created on: 3.2.2016
- *      Author: krl
- */
-
 #include "SimpleMenu.h"
 
 SimpleMenu::SimpleMenu() {
@@ -12,9 +5,7 @@ SimpleMenu::SimpleMenu() {
 	counter = 0;
 }
 
-SimpleMenu::~SimpleMenu() {
-	// TODO Auto-generated destructor stub
-}
+SimpleMenu::~SimpleMenu() {}
 
 void SimpleMenu::addItem(MenuItem *item) {
 
@@ -42,8 +33,16 @@ void SimpleMenu::deleteItem(MenuItem *item) {
 	}
 }
 
-void SimpleMenu::event(MenuItem::menuEvent e) {
-	if(items.size() <= 0) return;
+/**
+ * @brief Dispathes event to selected MenuItem.
+ * 
+ * @param e Event to react to.
+ * @return true If MenuItem handled the event.
+ * @return false If MenuItem hasn't handled the event.
+ */
+bool SimpleMenu::event(MenuItem::menuEvent e) {
+	bool status = true;
+	if(items.size() <= 0) return false;
 
 	switch (items[position]->event(e))
 	{
@@ -55,15 +54,11 @@ void SimpleMenu::event(MenuItem::menuEvent e) {
 		if(position >= (int) items.size()) position = 0;
 
 		items[position]->event(MenuItem::show);
+		status = false;
 		break;
 	default:
+		status = true;
 		break;
 	}
+	return status;
 }
-
-//MenuItem SimpleMenu::getIntValue(){
-//
-//	return 1;
-//
-//
-//}

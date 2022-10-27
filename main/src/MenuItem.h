@@ -1,9 +1,3 @@
-/*
- * MenuItem.h
- *
- *  Created on: 1.2.2016
- *      Author: krl
- */
 #ifndef MENUITEM_H_
 #define MENUITEM_H_
 
@@ -21,10 +15,10 @@ public:
 		show
 	};
 	enum menuItemEvent {
-			unhandled,
-			handled,
-			got_modified
-		};
+		unhandled,
+		handled,
+		got_modified
+	};
 
 	MenuItem(PropertyEdit *property);
 	virtual ~MenuItem();

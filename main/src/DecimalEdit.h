@@ -1,10 +1,3 @@
-/*
- * DecimalEdit.h
- *
- *  Created on: 2022年10月13日
- *      Author: kendrick807
- */
-
 #ifndef DECIMALEDIT_H_
 #define DECIMALEDIT_H_
 
@@ -21,7 +14,7 @@ public:
 	void decrement();
 	void accept();
 	void cancel();
-	void setFocus(bool focus);
+	bool setFocus(bool focus);
 	bool getFocus();
 	void display();
 	float getValue();

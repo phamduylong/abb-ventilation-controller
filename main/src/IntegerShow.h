@@ -1,10 +1,3 @@
-/*
- * IntegerShow.h
- *
- *  Created on: 2022年10月18日
- *      Author: kendrick807
- */
-
 #ifndef INTEGERSHOW_H_
 #define INTEGERSHOW_H_
 
@@ -19,7 +12,7 @@ public:
 	virtual ~IntegerShow();
 	void accept();
 	void cancel();
-	void setFocus(bool focus);
+	bool setFocus(bool focus);
 	bool getFocus();
 	void increment();
 	void decrement();

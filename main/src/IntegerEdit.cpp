@@ -1,10 +1,3 @@
-/*
- * IntegerEdit.cpp
- *
- *  Created on: 2.2.2016
- *      Author: krl
- */
-
 #include "IntegerEdit.h"
 #include <cstdio>
 #include "LpcUart.h"
@@ -41,8 +34,12 @@ void IntegerEdit::cancel() {
 	edit = value;
 }
 
-void IntegerEdit::setFocus(bool focus) {
-	if(this->modifiable) this->focus = focus;
+bool IntegerEdit::setFocus(bool focus) {
+	if(this->modifiable){
+		this->focus = focus;
+		return true;
+	}
+	return false;
 }
 
 bool IntegerEdit::getFocus() {

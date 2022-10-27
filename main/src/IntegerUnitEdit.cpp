@@ -1,10 +1,3 @@
-/*
- * PressureEdit.cpp
- *
- *  Created on: 2022年10月17日
- *      Author: kendrick807
- */
-
 #include "IntegerUnitEdit.h"
 #include <cstdio>
 #include "LpcUart.h"
@@ -36,8 +29,9 @@ void IntegerUnitEdit::cancel() {
 	edit = value;
 }
 
-void IntegerUnitEdit::setFocus(bool focus) {
+bool IntegerUnitEdit::setFocus(bool focus) {
 	this->focus = focus;
+	return true;
 }
 
 bool IntegerUnitEdit::getFocus() {

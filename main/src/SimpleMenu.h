@@ -1,10 +1,3 @@
-/*
- * SimpleMenu.h
- *
- *  Created on: 3.2.2016
- *      Author: krl
- */
-
 #ifndef SIMPLEMENU_H_
 #define SIMPLEMENU_H_
 
@@ -21,7 +14,7 @@ public:
 	SimpleMenu();
 	virtual ~SimpleMenu();
 	void addItem(MenuItem *item);
-	void event(MenuItem::menuEvent e);
+	bool event(MenuItem::menuEvent e);
 	void deleteItem(MenuItem *item);
 //	MenuItem getIntValue();
 private:

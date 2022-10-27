@@ -4,6 +4,7 @@ StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
 lcd(lcd),
 rhum_timeout(500), temp_timeout(500), co2_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
 fan_timeout(13), //Update fan speed every 13ms.
+mqtt_timeout(1000), //Send mqtt messages every 1s (actual gap might be bigger)
 spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
@@ -13,6 +14,7 @@ spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->fan_speed = 0;
 	this->desfan_speed = 0;
 	this->operation_time = 0;
+	this->mqtt_messagenum = 0;
 	this->modeauto = true;
 	this->busy = true;
 	this->mod = false;
@@ -95,6 +97,7 @@ void StateMachine::sinit(const Event& e) {
 		this->temp_timer = 0;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->mqtt_timer = 0;
 		this->co2_readings = 0;
 		this->pres_readings = 0;
 		//Try to enstablish connection with every sensor. (Can take quite a while if sensors were connected incorrectly)
@@ -141,6 +144,7 @@ void StateMachine::sauto(const Event& e) {
 		this->temp_timer = 100;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->mqtt_timer = 0;
 		this->co2_readings = 0;
 		this->pres_readings = 0;
 		//If user is in modification - discard it.
@@ -164,8 +168,7 @@ void StateMachine::sauto(const Event& e) {
 			this->menu.event(MenuItem::down);
 			break;
 		case MenuItem::ok:
-			this->mod = !this->mod;
-			this->menu.event(MenuItem::ok);
+			if (this->menu.event(MenuItem::ok)) this->mod = !this->mod;
 			break;
 		case MenuItem::back:
 			this->mod = false;
@@ -177,6 +180,7 @@ void StateMachine::sauto(const Event& e) {
 			break;
 		case eFastToggle:
 			this->fast = !this->fast;
+			//this->mqtt_get_data();
 			break;
 		default:
 			break;
@@ -187,16 +191,21 @@ void StateMachine::sauto(const Event& e) {
 		this->temp_timer++;
 		this->co2_timer++;
 		this->fan_timer++;
+		this->mqtt_timer++;
 		//Every 0.5s by default. Starts after 300ms timeout.
 		if (this->rhum_timer >= this->rhum_timeout) {
 			this->readRhum(); //Quickly read relative humidity and temperature
+#if MAIN_DEBUG
 			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->rhum_timer = 0;
 		}
 		//Every 0.5s by default. Starts after 400ms timeout.
 		if (this->temp_timer >= this->temp_timeout) {
 			this->readTemp(); //Quickly read temperature
+#if MAIN_DEBUG
 			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->temp_timer = 0;
 		}
 		//Every 0.5s by default.
@@ -212,7 +221,9 @@ void StateMachine::sauto(const Event& e) {
 			else {
 				this->readCo2(); //Quickly read co2
 			}
+#if MAIN_DEBUG
 			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
@@ -222,13 +233,22 @@ void StateMachine::sauto(const Event& e) {
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
+#if MAIN_DEBUG
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->adjust_fan(this->pres, this->despres);
+#if MAIN_DEBUG
 			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			if(!this->mod && this->pres_readings > 5) {
 				this->pres_readings = 0;
 				this->screens_pres_fan_update();
 			}
+		}
+		//Every 1s by default.
+		if (this->mqtt_timer >= this->mqtt_timeout) {
+			this->mqtt_timer = 0;
+			this->mqtt_send_data();
 		}
 		
 		break;
@@ -252,6 +272,7 @@ void StateMachine::smanual(const Event& e) {
 		this->temp_timer = 100;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->mqtt_timer = 0;
 		this->co2_readings = 0;
 		this->pres_readings = 0;
 		//Unlock Fan menu.
@@ -279,8 +300,7 @@ void StateMachine::smanual(const Event& e) {
 			this->menu.event(MenuItem::down);
 			break;
 		case MenuItem::ok:
-			this->mod = !this->mod;
-			this->menu.event(MenuItem::ok);
+			if (this->menu.event(MenuItem::ok)) this->mod = !this->mod;
 			break;
 		case MenuItem::back:
 			this->mod = false;
@@ -292,6 +312,7 @@ void StateMachine::smanual(const Event& e) {
 			break;
 		case eFastToggle:
 			this->fast = !this->fast;
+			//this->mqtt_get_data();
 			break;
 		default:
 			break;
@@ -302,16 +323,21 @@ void StateMachine::smanual(const Event& e) {
 		this->temp_timer++;
 		this->co2_timer++;
 		this->fan_timer++;
+		this->mqtt_timer++;
 		//Every 0.5s by default. Starts after 300ms timeout.
 		if (this->rhum_timer >= this->rhum_timeout) {
 			this->readRhum(); //Quickly read relative humidity
+#if MAIN_DEBUG
 			printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->rhum_timer = 0;
 		}
 		//Every 0.5s by default. Starts after 400ms timeout.
 		if (this->temp_timer >= this->temp_timeout) {
 			this->readTemp(); //Quickly read temperature
+#if MAIN_DEBUG
 			printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->temp_timer = 0;
 		}
 		//Every 0.5s by default.
@@ -327,7 +353,9 @@ void StateMachine::smanual(const Event& e) {
 			else {
 				this->readCo2(); //Quickly read co2
 			}
+#if MAIN_DEBUG
 			printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
@@ -335,15 +363,25 @@ void StateMachine::smanual(const Event& e) {
 		if (this->fan_timer >= this->fan_timeout) {
 			this->pres_readings++;
 			this->fan_timer = 0;
+			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
+#if MAIN_DEBUG
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			this->desfan_speed = this->mfan->getValue() * 10;
 			this->set_fan(this->desfan_speed);
+#if MAIN_DEBUG
 			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+#endif
 			if(!this->mod && this->pres_readings > 5) {
 				this->pres_readings = 0;
 				this->screens_pres_fan_update();
 			}
+		}
+		//Every 1s by default.
+		if (this->mqtt_timer >= this->mqtt_timeout) {
+			this->mqtt_timer = 0;
+			this->mqtt_send_data();
 		}
 		
 		break;
@@ -368,6 +406,7 @@ void StateMachine::ssensors(const Event& e) {
 		this->temp_timer = 0;
 		this->co2_timer = 0;
 		this->fan_timer = 0;
+		this->mqtt_timer = 0;
 		this->co2_readings = 0;
 		this->pres_readings = 0;
 		this->busy = true;
@@ -380,6 +419,7 @@ void StateMachine::ssensors(const Event& e) {
 		printf("CO2       sensor state: %s\n", this->sfco2_up ? "UP" : "DOWN");
 		printf("Fan     actuator state: %s\n", this->affan_up ? "UP" : "DOWN");
 		// /DEBUG prints.
+
 		this->modeauto ? SetState(&StateMachine::sauto) : SetState(&StateMachine::smanual);
 		break;
 	case Event::eExit:
@@ -568,6 +608,7 @@ void StateMachine::screens_update() {
 	this->mtemp->setValue(this->temp);
 	this->mco2->setValue(this->co2);
 	this->mfan->setValue(this->fan_speed / 10);
+	this->mpres->setValue(this->despres);
 	this->mpresm->setValue(this->pres);
 
 	//Setting titles according to flags.
@@ -640,4 +681,40 @@ void StateMachine::screens_pres_fan_update() {
 	this->mpresm->setTitle(buf);
 	//Show everything on LCD
 	this->menu.event(MenuItem::show);
+}
+
+void StateMachine::mqtt_send_data() {
+	status_data sd = {this->mqtt_messagenum, this->fan_speed, this->modeauto ? (unsigned int)this->despres : (unsigned int)this->desfan_speed, this->pres, this->modeauto,
+	 this->sfco2_up && this->sfpres_up && this->sfrht_up && this->affan_up, this->co2, this->rh, this->temp};
+	std::string str = mqtt_json_parser.stringify(sd);
+	mqtt_messagenum++;
+	//TODO: Here should be MQTT
+	printf("MQTT MESSAGE!\n%s\n", str.c_str());
+}
+
+void StateMachine::mqtt_get_data() {
+	//TODO: Here should be MQTT
+	std::string json_str_settings = "{auto: True, pressure: 90}";
+
+	mqtt_json_parser.parse_settings(json_str_settings);
+	settings_data sd = mqtt_json_parser.getSettingsObj();
+	//Pay attention to mqtt only if physical interface is not being modified.
+	if(!this->mod) {
+		//Setting mode and members according to the provided settings.
+		if(sd.auto_mode != this->modeauto) {
+			this->modeauto = !this->modeauto;
+			if(this->modeauto) this->despres = sd.pressure;
+			else this->desfan_speed = sd.speed;
+			SetState(&StateMachine::ssensors);
+		}
+		else {
+			if(this->modeauto) this->despres = sd.pressure;
+			else this->desfan_speed = sd.speed;
+			this->screens_update();
+		}
+	}
+}
+
+void StateMachine::mqtt_reconnect() {
+	//TODO
 }

@@ -1,6 +1,8 @@
 #ifndef STATEMACHINE_H_
 #define STATEMACHINE_H_
 
+#define MAIN_DEBUG 0
+
 #include <stdio.h>
 #include <string>
 #include <cmath>
@@ -17,6 +19,7 @@
 #include "IntegerEdit.h"
 #include "IntegerShow.h"
 #include "LiquidCrystal.h"
+#include "StatusSettingsJsonParser.h"
 
 class StateMachine;
 typedef void (StateMachine::*state_ptr)(const Event &);
@@ -35,7 +38,7 @@ private:
 	void smanual(const Event& e);
 	void ssensors(const Event& e);
 
-	//Functions.
+	//Helper functions.
 	void SetState(state_ptr newState);
 	void check_everything(bool retry = false);
 	void check_sensors(bool retry = false);
@@ -53,7 +56,7 @@ private:
 	void screens_update();
 	void screens_pres_fan_update();
 
-	//Uart, Lcd and timer.
+	//Uart, Lcd and timers.
 	LpcUart *uart; //uart for debug prints.
 	LiquidCrystal *lcd; //lcd display
 	unsigned int rhum_timer; //Counts ticks for relative humidity reading.
@@ -66,6 +69,8 @@ private:
 	unsigned int fan_timer; //Counts ticks for fan adjustment.
 	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
 	uint8_t pres_readings;
+	unsigned int mqtt_timer; //Counts ticks for mqtt send.
+	const unsigned int mqtt_timeout; //How many ticks to wait before mqtt send.
 	//Menu.
 	SimpleMenu menu;
 	DecimalShow *mrhum;
@@ -86,6 +91,13 @@ private:
 	srhtHMP60 srht;
 	sco2GMP252 sco2;
 	aFanMIO12V fan;
+
+	//MQTT and JSON
+	StatusSettingsJsonParser mqtt_json_parser;
+	unsigned int mqtt_messagenum;
+	void mqtt_send_data();
+	void mqtt_get_data();
+	void mqtt_reconnect();
 
 	//Variables.
 	float co2;

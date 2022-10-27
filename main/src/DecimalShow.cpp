@@ -1,11 +1,3 @@
-/*
- * DecimalShow.cpp
- *
- *  Created on: 2022年10月18日
- *      Author: kendrick807
- */
-
-
 #include "DecimalShow.h"
 #include <cstdio>
 #include "LpcUart.h"
@@ -34,8 +26,8 @@ void DecimalShow::cancel() {
 	edit = value;
 }
 
-void DecimalShow::setFocus(bool focus) {
-	//this->focus = focus;
+bool DecimalShow::setFocus(bool focus) {
+	return false;
 }
 
 bool DecimalShow::getFocus() {
