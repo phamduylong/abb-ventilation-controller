@@ -44,7 +44,7 @@ bool sco2GMP252::read_rapid(float &data, bool retry) {
 			continue;
 		}
 		//Read second register value.
-		Sleep(1);
+		Sleep(5);
 		temp = co2_reg2.read();
 		//Start over upon failure.
 		if (temp == -1) {
@@ -56,7 +56,7 @@ bool sco2GMP252::read_rapid(float &data, bool retry) {
 
 		co2_hex <<= 16;
 		//Read first register value.
-		Sleep(1);
+		Sleep(5);
 		temp = co2_reg.read();
 		//Start over upon failure.
 		if (temp == -1) {
@@ -109,7 +109,7 @@ bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
 		this->set_precise(pres, rh);
 
 		//Read second register value.
-		Sleep(1);
+		Sleep(5);
 		temp = co2_reg2.read();
 		//Start over upon failure.
 		if (temp == -1) {
@@ -121,7 +121,7 @@ bool sco2GMP252::read(float &data, float pres, float rh, bool retry) {
 
 		co2_hex <<= 16;
 		//Read first register value.
-		Sleep(1);
+		Sleep(5);
 		temp = co2_reg.read();
 		//Start over upon failure.
 		if (temp == -1) {
@@ -186,7 +186,7 @@ bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
 		}
 
 		//Read second register value.
-		Sleep(1);
+		Sleep(5);
 		temp = co2_reg2.read();
 		//Start over upon failure.
 		if (temp == -1) {
@@ -198,7 +198,7 @@ bool sco2GMP252::read_precise(float &data, float pres, float rh, bool retry) {
 
 		co2_hex <<= 16;
 		//Read first register value.
-		Sleep(1);
+		Sleep(5);
 		temp = co2_reg.read();
 		//Start over upon failure.
 		if (temp == -1) {
@@ -245,19 +245,19 @@ unsigned int sco2GMP252::get_elapsed_time() {
 bool sco2GMP252::init_precise() {
 	bool res = true;
 	int pres_hex = 0;
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->mode_prescom_reg.write(1);
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->mode_tempcom_reg.write(2);
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->mode_humcom_reg.write(1);
 	//Write volatile pressure register with absolute pressure.
 	pres_hex = this->float_to_binary32(this->abspres_value);
 	pres_hex >>= 16;
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->voprcom_reg2.write(pres_hex);
 	pres_hex = this->float_to_binary32(this->abspres_value);
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->voprcom_reg.write(pres_hex);
 	return res;
 }
@@ -268,7 +268,7 @@ bool sco2GMP252::init_precise() {
  * @return int16_t Device status register value or -1 on failure.
  */
 int16_t sco2GMP252::check_device_status() {
-	Sleep(1);
+	Sleep(5);
 	return this->status_device_reg.read();
 }
 
@@ -278,7 +278,7 @@ int16_t sco2GMP252::check_device_status() {
  * @return int16_t CO2 status register value or -1 on failure.
  */
 int16_t sco2GMP252::check_co2_status() {
-	Sleep(1);
+	Sleep(5);
 	return this->status_co2_reg.read();
 }
 
@@ -307,11 +307,11 @@ bool sco2GMP252::check_status() {
 bool sco2GMP252::check_init_precise() {
 	int check = 1;
 	//If one of these registers returns -1 or 0 means, that sensor wasn't set up earlier.
-	Sleep(1);
+	Sleep(5);
 	check *= this->mode_prescom_reg.read(); //expect 1
-	Sleep(1);
+	Sleep(5);
 	check *= this->mode_tempcom_reg.read(); //expect 2
-	Sleep(1);
+	Sleep(5);
 	check *= this->mode_humcom_reg.read(); //expect 1
 	/*Don't care about volatile registers,
 	as long as we are able to communicate with the sensor,
@@ -335,18 +335,18 @@ bool sco2GMP252::set_precise(float pres, float rh) {
 	//Write volatile pressure register with absolute pressure + relative pressure.
 	hex = this->float_to_binary32(pres);
 	hex >>= 16;
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->voprcom_reg2.write(hex);
 	hex = this->float_to_binary32(pres);
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->voprcom_reg.write(hex);
 	//Write volatile relative humidity register with relative humidity.
 	hex = this->float_to_binary32(rh);
 	hex >>= 16;
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->vohumcom_reg2.write(hex);
 	hex = this->float_to_binary32(rh);
-	Sleep(1);
+	Sleep(5);
 	res = res && !this->vohumcom_reg.write(hex);
 	if(res) {
 		this->pres_value = pres;
