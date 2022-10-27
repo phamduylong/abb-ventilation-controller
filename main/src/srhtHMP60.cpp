@@ -44,6 +44,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		//TEMPERATURE//
 		///////////////
 		//Read second register value.
+		Sleep(5);
 		tpr = this->t1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -54,6 +55,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		htemp |= tpr;
 		htemp <<= 16;
 		//Read first register value.
+		Sleep(5);
 		tpr = this->t0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -67,6 +69,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		//HUMIDITY//
 		////////////
 		//Read second register value.
+		Sleep(5);
 		tpr = this->rh1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -77,6 +80,7 @@ bool srhtHMP60::read(float &temp, float &rhum, bool retry) {
 		hrhum |= tpr;
 		hrhum <<= 16;
 		//Read first register value.
+		Sleep(5);
 		tpr = this->rh0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -123,6 +127,7 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 		}
 
 		//Read second register value.
+		Sleep(5);
 		tpr = this->t1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -133,6 +138,7 @@ bool srhtHMP60::read_temp(float &data, bool retry) {
 		htemp |= tpr;
 		htemp <<= 16;
 		//Read first register value.
+		Sleep(5);
 		tpr = this->t0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -179,6 +185,7 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 		}
 
 		//Read second register value.
+		Sleep(5);
 		tpr = this->rh1.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -189,6 +196,7 @@ bool srhtHMP60::read_rhum(float &data, bool retry) {
 		hrhum |= tpr;
 		hrhum <<= 16;
 		//Read first register value.
+		Sleep(5);
 		tpr = this->rh0.read();
 		//Start over upon failure.
 		if (tpr == -1) {
@@ -233,6 +241,7 @@ unsigned int srhtHMP60::get_elapsed_time() {
  * @return false One of the registers returned error.
  */
 bool srhtHMP60::check_status() {
+	Sleep(5);
 	int res = this->err_reg.read();
 	if( res == -1 ) return false;
 	if( res == 0 ) {
@@ -253,8 +262,10 @@ bool srhtHMP60::check_status() {
 
 int srhtHMP60::get_error() {
 	int vhex = 0;
+	Sleep(5);
 	vhex = this->err_code2.read();
 	vhex <<= 16;
+	Sleep(5);
 	vhex |= this->err_code.read();
 	return vhex;
 }

@@ -19,6 +19,7 @@ bool aFanMIO12V::set_speed(int16_t v, bool retry) {
 	unsigned int i = (retry ? this->retries : 1);
 	//Will be executed only once in case of success or !retry.
 	do {
+		Sleep(5);
 		this->status = !(this->ao1.write(v));
 		--i;
 		//On failure wait this->wait (100ms by default) before next loop.
@@ -41,6 +42,7 @@ bool aFanMIO12V::get_speed(int16_t &v, bool retry) {
 	unsigned int i = (retry ? this->retries : 1);
 	//Will be executed only once in case of success or !retry.
 	while(i && cur_sp == -1) {
+		Sleep(5);
 		cur_sp = this->ao1.read();
 		
 		if(cur_sp == -1) {
