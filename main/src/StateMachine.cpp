@@ -168,6 +168,7 @@ void StateMachine::sauto(const Event& e) {
 			this->menu.event(MenuItem::ok);
 			break;
 		case MenuItem::back:
+			this->mod = false;
 			this->menu.event(MenuItem::back);
 			break;
 		case eAutoToggle:
@@ -282,6 +283,7 @@ void StateMachine::smanual(const Event& e) {
 			this->menu.event(MenuItem::ok);
 			break;
 		case MenuItem::back:
+			this->mod = false;
 			this->menu.event(MenuItem::back);
 			break;
 		case eAutoToggle:
