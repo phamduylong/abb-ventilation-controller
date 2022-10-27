@@ -168,6 +168,7 @@ void StateMachine::sauto(const Event& e) {
 			this->menu.event(MenuItem::ok);
 			break;
 		case MenuItem::back:
+			this->mod = false;
 			this->menu.event(MenuItem::back);
 			break;
 		case eAutoToggle:
@@ -222,12 +223,12 @@ void StateMachine::sauto(const Event& e) {
 			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			if(!this->mod && this->pres_readings > 5) {
-				this->pres_readings = 0;
-				this->screen_pres_update();
-			}
 			this->adjust_fan(this->pres, this->despres);
 			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(!this->mod && this->pres_readings > 5) {
+				this->pres_readings = 0;
+				this->screens_pres_fan_update();
+			}
 		}
 		
 		break;
@@ -282,6 +283,7 @@ void StateMachine::smanual(const Event& e) {
 			this->menu.event(MenuItem::ok);
 			break;
 		case MenuItem::back:
+			this->mod = false;
 			this->menu.event(MenuItem::back);
 			break;
 		case eAutoToggle:
@@ -335,13 +337,13 @@ void StateMachine::smanual(const Event& e) {
 			this->fan_timer = 0;
 			this->readPres(); //Takes 3ms.
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
-			if(!this->mod && this->pres_readings > 5) {
-				this->pres_readings = 0;
-				if(!this->mod) this->screen_pres_update();
-			}
 			this->desfan_speed = this->mfan->getValue() * 10;
 			this->set_fan(this->desfan_speed);
 			printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(!this->mod && this->pres_readings > 5) {
+				this->pres_readings = 0;
+				this->screens_pres_fan_update();
+			}
 		}
 		
 		break;
@@ -616,13 +618,20 @@ void StateMachine::screens_update() {
 }
 
 /**
- * @brief Updates pressure screen title and value.
+ * @brief Updates pressure and fan screens title and value.
  */
-void StateMachine::screen_pres_update() {
+void StateMachine::screens_pres_fan_update() {
+	this->mfan->setValue(this->fan_speed / 10);
 	this->mpresm->setValue(this->pres);
 
 	//Setting titles according to flags.
 	char buf[18];
+	//Fan screen.
+	snprintf(buf, 18, "%s %c%c%c", this->titles[3],
+	this->busy ? this->cbusy : this->cidle,
+	this->affan_up ? this->cup : this->cdown,
+	this->modeauto ? this->cauto : this->cman);
+	this->mfan->setTitle(buf);
 	//Pressure Manual screen (With the sensor reading)
 	snprintf(buf, 18, "%s %c%c%c", this->titles[5],
 	this->busy ? this->cbusy : this->cidle,
