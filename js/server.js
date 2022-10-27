@@ -53,6 +53,7 @@ app.get('/', async (req, res) => {
 
 //sign up page
 app.get('/signup', (req, res) => {
+    if(req.cookies.loggedIn === "true") return res.redirect('/auto');
     res.render('signup');
 });
 
