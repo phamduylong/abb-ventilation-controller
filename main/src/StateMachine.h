@@ -1,6 +1,8 @@
 #ifndef STATEMACHINE_H_
 #define STATEMACHINE_H_
 
+#define MAIN_DEBUG 0
+
 #include <stdio.h>
 #include <string>
 #include <cmath>
