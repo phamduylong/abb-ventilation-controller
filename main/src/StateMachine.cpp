@@ -666,6 +666,7 @@ void StateMachine::screens_pres_fan_update() {
  * 
  */
 void StateMachine::mqtt_send_data() {
+	mqtt_messagenum++;
 	status_data sd = {this->mqtt_messagenum, (int16_t)(this->fan_speed / 10),
 	 this->modeauto ? (unsigned int)this->despres : (unsigned int)this->desfan_speed / 10,
 	 this->pres, this->modeauto,
@@ -673,7 +674,6 @@ void StateMachine::mqtt_send_data() {
 	 this->co2, this->rh, this->temp};
 
 	std::string str = mqtt_json_parser.stringify(sd);
-	mqtt_messagenum++;
 	//TODO: Here should be MQTT
 	printf("MQTT MESSAGE!\n%s\n", str.c_str());
 }
