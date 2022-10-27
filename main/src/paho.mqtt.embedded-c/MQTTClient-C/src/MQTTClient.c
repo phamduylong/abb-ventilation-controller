@@ -133,7 +133,7 @@ static int readPacket(MQTTClient* c, Timer* timer)
 #if 1
     // krl: kludge to fix case where timer expires just when we got the first byte
     // if we get the first byte then we should get the rest within 10 ms
-    // if we timout now the packet is dropped
+    // if we timeout now the packet is dropped
     Timer tmp;
     if(TimerLeftMS(timer) < 10) {
     	//printf("read kludge\r\n");
@@ -351,7 +351,7 @@ int cycle(MQTTClient* c, Timer* timer)
     }
 
     if (keepalive(c) != MQTT_SUCCESS) {
-        //check only keepalive MQTT_FAILURE status so that previous MQTT_FAILURE status can be considered as FAULT
+        //check only keep alive MQTT_FAILURE status so that previous MQTT_FAILURE status can be considered as FAULT
         rc = MQTT_FAILURE;
     }
 
