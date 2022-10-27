@@ -2,18 +2,19 @@
  * mqtt.cpp
  *
  *  Created on: 19 Oct 2022
- *      Author: DBY
+ *      Author: DBY & longph
  */
 
 #include "mqtt.h"
 
 
-void message_arrived(MessageData *data){ //here should activate actuator to react
+void message_arrived(MessageData *data){
 
 	printf("Message arrived on topic %.*s: %.*s\n", data->topicName->lenstring.len, data->topicName->lenstring.data,
 			data->message->payloadlen, (char *)data->message->payload);
 	//return message->payload;
 }
+
 
 mqtt::mqtt(char* ssid, char* pass, char* broker_ip, int broker_port ): SSID(ssid), PASSWORD(pass), BROKER_IP(broker_ip), BROKER_PORT(broker_port) {
 
@@ -50,15 +51,15 @@ void mqtt::mqtt_subscribe(const char* sub_topic){
 
 	if (rc != 0){
 		printf("Return code from MQTT subscribe is %d\n", rc);
-	}else{
-		printf("Subscribe to %s", sub_topic);
+	} else {
+	 	printf("Subscribed to %s\n", sub_topic);
 	}
 }
 
 
-void mqtt::mqtt_unsubscribe(const char* sub_topic){
-	if((rc = MQTTUnsubscribe(&client, sub_topic)) !=0){
-		printf("Topic is Unsubscribed.");
+void mqtt::mqtt_unsubscribe(const char* unsub_topic){
+	if((rc = MQTTUnsubscribe(&client, unsub_topic)) !=0){
+		printf("Topic is Unsubscribed\n");
 	}
 }
 
@@ -86,6 +87,32 @@ void mqtt::mqtt_publish(const char* pub_topic, const std::string& data){
 	}
 
 }
+
+
+
+void mqtt::mqtt_publish(const char* pub_topic, const char* msg) {
+
+
+	MQTTMessage message;
+
+	char payload[256];
+
+	message.qos = QOS1;
+	message.retained = 0;
+	message.dup = false;
+	sprintf(payload, "%s", msg);
+	message.payload = payload;
+
+	message.payloadlen = strlen(payload);
+
+	rc = MQTTPublish(&client, pub_topic, &message);
+
+	if(rc != 0){
+		printf("Return code from MQTT publish is %d\n", rc);
+	}
+
+}
+
 
 
 
