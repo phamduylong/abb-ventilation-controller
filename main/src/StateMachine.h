@@ -1,7 +1,8 @@
 #ifndef STATEMACHINE_H_
 #define STATEMACHINE_H_
 
-#define MAIN_DEBUG 0
+#define MAIN_DEBUG 1
+#define SENSORS_DEBUG 0
 
 #include <stdio.h>
 #include <string>
@@ -56,20 +57,19 @@ private:
 	void screens_update();
 	void screens_pres_fan_update();
 
-	//Uart, Lcd and timers.
-	LpcUart *uart; //uart for debug prints.
-	LiquidCrystal *lcd; //lcd display
-	unsigned int rhum_timer; //Counts ticks for relative humidity reading.
+	//Lcd and timers.
+	LiquidCrystal *lcd;              //lcd display
+	unsigned int rhum_timer;         //Counts ticks for relative humidity reading.
 	const unsigned int rhum_timeout; //How many ticks to wait before relative humidity reading.
-	unsigned int temp_timer; //Counts ticks for relative humidity reading.
+	unsigned int temp_timer;         //Counts ticks for relative humidity reading.
 	const unsigned int temp_timeout; //How many ticks to wait before relative humidity reading.
-	unsigned int co2_timer; //Counts ticks for co2 reading.
-	const unsigned int co2_timeout; //How many ticks to wait before co2 reading.
-	uint8_t co2_readings;
-	unsigned int fan_timer; //Counts ticks for fan adjustment.
-	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
-	uint8_t pres_readings;
-	unsigned int mqtt_timer; //Counts ticks for mqtt send.
+	unsigned int co2_timer;          //Counts ticks for co2 reading.
+	const unsigned int co2_timeout;  //How many ticks to wait before co2 reading.
+	uint8_t co2_readings;            //Number of co2 readings.
+	unsigned int fan_timer;          //Counts ticks for fan adjustment.
+	const unsigned int fan_timeout;  //How many ticks to wait before fan adjustment.
+	uint8_t pres_readings;           //Number of pressure readings.
+	unsigned int mqtt_timer;         //Counts ticks for mqtt send.
 	const unsigned int mqtt_timeout; //How many ticks to wait before mqtt send.
 	//Menu.
 	SimpleMenu menu;
@@ -100,14 +100,15 @@ private:
 	void mqtt_reconnect();
 
 	//Variables.
-	float co2;
-	float temp;
-	float rh;
-	float pres;
-	float despres;
-	int16_t fan_speed;
-	int16_t desfan_speed;
-	unsigned int operation_time;
+	float co2;                   //Last co2 reading
+	float temp;                  //Last temperature reading
+	float rh;                    //Last relative humidity reading
+	float pres;                  //Last pressure reading
+	float despres;               //Desired pressure value
+	int16_t fan_speed;           //Current fan speed
+	int16_t desfan_speed;        //Desired fan speed
+	unsigned int operation_time; //Modified by various functions, containing how much clock cycles it took to execute.
+	//Interface text
 	const char titles[6][13] = {"Rel Humidity", "Temperature ", "CO2 Level   ", "Fan Speed   ", "Set Pressure", "Pressure    "};
 	const char cbusy = '*';
 	const char cidle = ' ';
@@ -119,7 +120,7 @@ private:
 	bool modeauto; //Flag for auto mode.
 	bool busy; //Set true when input from screen can be unavailable for long period of time.
 	bool fast; //Set true to skip retries on manual/auto switch.
-	bool mod;
+	bool mod; //State of modifying interface value flag.
 	//Sensor/Devices flags.
 	bool sfrht_up;
 	bool sfco2_up;

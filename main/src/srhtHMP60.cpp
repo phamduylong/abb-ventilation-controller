@@ -260,6 +260,11 @@ bool srhtHMP60::check_status() {
 	#endif
 }
 
+/**
+ * @brief Gets value of error registers.
+ * 
+ * @return int 32-bit error value
+ */
 int srhtHMP60::get_error() {
 	int vhex = 0;
 	Sleep(5);
