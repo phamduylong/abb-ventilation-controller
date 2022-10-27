@@ -110,6 +110,8 @@ private:
 	unsigned int operation_time; //Modified by various functions, containing how much clock cycles it took to execute.
 	//Interface text
 	const char titles[6][13] = {"Rel Humidity", "Temperature ", "CO2 Level   ", "Fan Speed   ", "Set Pressure", "Pressure    "};
+	const char cunr = '!';
+	const char cfea = ' ';
 	const char cbusy = '*';
 	const char cidle = ' ';
 	const char cup = 'U';
@@ -117,10 +119,11 @@ private:
 	const char cauto = 'A';
 	const char cman = 'M';
 	//Flags.
-	bool modeauto; //Flag for auto mode.
-	bool busy; //Set true when input from screen can be unavailable for long period of time.
-	bool fast; //Set true to skip retries on manual/auto switch.
-	bool mod; //State of modifying interface value flag.
+	bool modeauto;    //Flag for auto mode.
+	bool busy;        //Set true when input from screen can be unavailable for long period of time.
+	bool fast;        //Set true to skip retries on manual/auto switch.
+	bool unreachable; //Set true when unable to reach desired pressure using the fan in automatic mode.
+	bool mod;         //State of modifying interface value flag.
 	//Sensor/Devices flags.
 	bool sfrht_up;
 	bool sfco2_up;
