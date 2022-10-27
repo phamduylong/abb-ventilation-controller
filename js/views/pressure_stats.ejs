@@ -30,6 +30,7 @@
                 <option value=60>Last hour</option>
                 <option value=1440>Last day</option>
             </select>
+            <span id="error"></span>
         </form>
     </div>
     <canvas id="pressureChart" onload="read_data()"></canvas>
@@ -37,8 +38,8 @@
 
 
 <script>
+    //Pressure data graph
     const ctx = document.getElementById('pressureChart').getContext("2d");
-
     const pressure_graph = new Chart(ctx, {
         type: "line",
         data: {
@@ -58,6 +59,7 @@
                 },
                 x: {
                     ticks: {
+                        //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
                         callback: function (val, index) {
                             console.log(this.getLabelForValue(val));
                             const time = new Date(this.getLabelForValue(val));
@@ -87,10 +89,15 @@
         },
 
     });
-
+    /**
+     * Filtering data from a time interval
+     * @function
+     * @return Array of filtered datas and datapoints
+     */
     function filterData(){
         const filterDate = [...pressure_graph.data.labels];
         const filter_time = document.getElementById("filterTime").value;
+        const error = document.getElementById("error");
         if(filter_time > 0) {
 
 
@@ -102,6 +109,12 @@
                 }
             }
             console.log(filter_index);
+            if(filter_index == 0 ){
+                error.textContent = "Every data is filtered."
+                error.style.color = "red"
+            } else {
+                error.textContent = ""
+            }
 
             const slicedDate = filterDate.slice(filter_index, filterDate.length);
             const filterDataPoints = [...pressure_graph.data.datasets[0].data];
@@ -114,7 +127,7 @@
 
     }
 
-
+    //Receiving data and updating the chart from server side
     const read_data = () => {
 
         {
@@ -130,7 +143,7 @@
             });
         }
     }
-
+    //Receiving the data every 5 seconds
     setInterval(read_data, 5000);
 
 </script>

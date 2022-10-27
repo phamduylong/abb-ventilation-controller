@@ -54,7 +54,7 @@ app.get('/signup', (req, res) => {
     res.render('signup');
 });
 
-//common statistics page
+//common statistics page which displays all data
 app.get('/statistics', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     res.render('statistics');
@@ -74,7 +74,7 @@ app.get('/statistics/fan', async (req, res) => {
 });
 
 
-//user analytics page
+//user analytics page which displays user session time
 app.get('/statistics/user', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     res.render('user_stats');
@@ -96,6 +96,7 @@ app.get('/user_data', async (req, res) => {
                 const logins = arr[0].logins.slice(0, size - 1);
                 console.log(logins.length);
                 console.log(user.logouts);
+                //x = login timestamp, y = user session time
                 const data1 = {x: logins, y: user.logouts.map((v, i) => v - logins[i]), logout_time: user.logouts, z: 0};
                 console.log(data1);
                 res.json(data1);
@@ -104,7 +105,7 @@ app.get('/user_data', async (req, res) => {
     });
 });
 
-//logout route
+//logout route and redirects to the login page
 app.get('/logout', (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const username = req.cookies.curr_user;
@@ -118,6 +119,7 @@ app.get('/logout', (req, res) => {
             if(arr[0] !== undefined) {
                 const user = arr[0];
                 let logout_time = Date.now();
+                //checking if the login data timestamp and the logout data timestamp is the same day or not
                 if(!isSameDay(new Date(user.logins[user.logins.length - 1]), new Date(logout_time))) {
                     console.log("NOT SAME DAY");
                     logout_time = new Date(logout_time);
@@ -154,7 +156,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-
+//Receiving data via MQTT
 app.get('/mutable-data', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     client.on('message', (topic, msg) => {
@@ -192,7 +194,7 @@ app.get('/manual', async (req, res) => {
 
 /*-------------------------------------------------------------------POST REQUESTS----------------------------------------------------------------*/
 
-//pressure input
+//post route which receives pressure input from user
 app.post('/pressure', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const pressure = req.body.pressure || 0;
@@ -203,7 +205,7 @@ app.post('/pressure', async (req, res) => {
     res.render('auto', {pressure: pressure});
 });
 
-//fan speed input
+//post route which receives fan speed input from user
 app.post('/fspeed', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const fspeed = req.body.fspeed || 0;
@@ -247,6 +249,7 @@ app.post('/login', (req, res) => {
         dbo.collection("users").find(query_obj).toArray((err, user_arr) => {
             const user = user_arr[0];
             if(user !== undefined) {
+                //checking if the inputted password matches the password from the database
                 verifyPassword(password, user.hashedPassword)
                     .then((equal) => {
 

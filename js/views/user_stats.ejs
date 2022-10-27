@@ -18,22 +18,23 @@
 
     const sec_per_day = 86400000;
     function fetching() {
+        //Getting logout and login times of the user from server side.
         fetch('/user_data').then(tmp => tmp.json()).then(arr => {
             const x = arr.x;
             const logout_time = arr.logout_time;
             const y = arr.y;
-            const diff = arr.y;
-            const time_converted = [];
-            diff.forEach(ms => {
-                const days = Math.floor(ms / (24*60*60*1000));
-                const daysms = ms % (24*60*60*1000);
-                const hours = Math.floor(daysms / (60*60*1000));
-                const hoursms = ms % (60*60*1000);
-                const minutes = Math.floor(hoursms / (60*1000));
-                const minutesms = ms % (60*1000);
-                const sec = Math.floor(minutesms / 1000);
-                time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
-            });
+            // const diff = arr.y;
+            // const time_converted = [];
+            // diff.forEach(ms => {
+            //     const days = Math.floor(ms / (24*60*60*1000));
+            //     const daysms = ms % (24*60*60*1000);
+            //     const hours = Math.floor(daysms / (60*60*1000));
+            //     const hoursms = ms % (60*60*1000);
+            //     const minutes = Math.floor(hoursms / (60*1000));
+            //     const minutesms = ms % (60*1000);
+            //     const sec = Math.floor(minutesms / 1000);
+            //     time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
+            // });
             console.log(arr.y);
 
 
@@ -48,6 +49,7 @@
                 const d1 = new Date(x[i]);
                 const d3 = new Date(y[i]);
                 const d2 = new Date(x[i+1]);
+                //Checking if the two nearby login data is in the same date or not
                 if (d1.getFullYear() === d2.getFullYear()
                     && d1.getMonth() === d2.getMonth()
                     && d1.getDate() === d2.getDate() ) {
@@ -62,7 +64,7 @@
 
 
 
-
+                //Checking if one session time exceeds one day
             for(let i = 0; i < y.length; ++i){
                 if(y[i] > 86400000){
                     y[i+1] += y[i] - sec_per_day;
@@ -79,9 +81,8 @@
             }
 
 
-            // console.log(datas);
 
-
+            //User data graph
             new Chart("chart", {
                 type: "bar",
                 data: {
@@ -143,6 +144,12 @@
             });
 
         })
+        /**
+         * Changing the data format from milliseconds to HH:MM:SS
+         * @function
+         * @param int epoch - Data which their format need to be converted
+         * @return Formatted data string
+         */
         function epoch_to_hh_mm_ss(epoch) {
             return new Date(epoch).toISOString().substr(11, 8)
         }

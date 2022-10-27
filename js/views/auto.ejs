@@ -143,10 +143,11 @@
         }
 
 
+
     </style>
 
     <script type="text/javascript">
-
+//switching mode
         function toggleSwitch() {
             const auto_switch = document.getElementById('auto-switch');
             const switch_status = document.getElementById('switch-status');
@@ -187,6 +188,7 @@
                 <option value=60>Last hour</option>
                 <option value=1440>Last day</option>
             </select>
+            <span id="error"></span>
         </form>
     </div>
 </div>
@@ -216,6 +218,7 @@
 </form>
 </div>
 <script type="text/javascript">
+    //Fan speed graph
     const ctx = document.getElementById('chart').getContext("2d");
     x = [];
     y = [];
@@ -239,6 +242,7 @@
                 },
                 x:{
                     ticks: {
+                            //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
                         callback: function (val, index) {
 
                             const time = new Date(this.getLabelForValue(val));
@@ -263,9 +267,17 @@
         }
     });
 
+
+    /**
+     * Filtering data from a time interval
+     * @function
+     * @return Array of filtered datas and datapoints
+     */
+
     function filterData(){
         const filterDate = [...myChart.data.labels];
         let filter_time = Number(document.getElementById("filterTime").value) || 0;
+        const error = document.getElementById("error");
         console.log("FILTER TIME: ", filter_time);
         if(filter_time > 0){
             let filter_index = filterDate.length;
@@ -274,6 +286,12 @@
                 if((Date.now() - filterDate[i]) <= (filter_time*1000*60)){
                     filter_index--;
                 }
+            }
+            if(filter_index == 0 ){
+                error.textContent = "Every data is filtered."
+                error.style.color = "red"
+            } else {
+                error.textContent = ""
             }
             console.log(filter_index);
 
@@ -290,11 +308,9 @@
     }
 
 
-
+    //Receiving data and updating the chart from server side
     const push_data = () => {
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
-            /*console.log (typeof JSON.parse(data));
-            data = JSON.parse(data);*/
             if(data.auto === false) {
                 window.location.href = "/manual";
             }
@@ -310,7 +326,7 @@
 
         })
     }
-
+    //Receiving the data every 5 seconds
     setInterval(push_data, 5000);
 
 </script>

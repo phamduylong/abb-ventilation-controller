@@ -29,7 +29,7 @@
     const sec_per_day = 86400000;
     const fanCtx = document.getElementById('fanChart').getContext("2d");
     const presCtx = document.getElementById('pressureChart').getContext("2d");
-
+    //Fan data graph
     const fan_graph = new Chart(fanCtx, {
         type: "line",
         data: {
@@ -89,7 +89,6 @@
                 yAxes: [{
                     ticks: {
 
-                        // Include a dollar sign in the ticks
                         min: 0,
                         max: 140
                     }
@@ -119,10 +118,17 @@
         }
 
     });
+    /**
+     * Changing the data format from milliseconds to HH:MM:SS
+     * @function
+     * @param int epoch - Data which their format need to be converted
+     * @return Formatted data string
+     */
     function epoch_to_hh_mm_ss(epoch) {
         return new Date(epoch).toString().substr(16, 8)
     }
 
+    //Receiving data and updating the chart from server side
     const read_data = () => {
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
 
@@ -137,38 +143,40 @@
 
         });
     }
-
+    //Receiving the data every 5 seconds
     setInterval(read_data, 5000);
-    function fetch_user_data() {
 
+    function fetch_user_data() {
+        //Getting logout and login times of the user from server side.
         fetch('/user_data').then(tmp => tmp.json()).then(arr => {
             const x = arr.x;
             const logout_time = arr.logout_time;
             const y = arr.y;
-            const diff = arr.y;
-            const time_converted = [];
-            diff.forEach(ms => {
-                const days = Math.floor(ms / (24 * 60 * 60 * 1000));
-                const daysms = ms % (24 * 60 * 60 * 1000);
-                const hours = Math.floor(daysms / (60 * 60 * 1000));
-                const hoursms = ms % (60 * 60 * 1000);
-                const minutes = Math.floor(hoursms / (60 * 1000));
-                const minutesms = ms % (60 * 1000);
-                const sec = Math.floor(minutesms / 1000);
-                time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
-            });
+            // const diff = arr.y;
+            // const time_converted = [];
+            // diff.forEach(ms => {
+            //     const days = Math.floor(ms / (24 * 60 * 60 * 1000));
+            //     const daysms = ms % (24 * 60 * 60 * 1000);
+            //     const hours = Math.floor(daysms / (60 * 60 * 1000));
+            //     const hoursms = ms % (60 * 60 * 1000);
+            //     const minutes = Math.floor(hoursms / (60 * 1000));
+            //     const minutesms = ms % (60 * 1000);
+            //     const sec = Math.floor(minutesms / 1000);
+            //     time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
+            // });
             console.log(arr.y);
 
 
 
             for (let i = 0; i < logout_time.length; ++i) {
                 const d1 = new Date(x[i]);
-                const d3 = new Date(y[i]);
+                // const d3 = new Date(y[i]);
                 const d2 = new Date(x[i + 1]);
+                //Checking if the two nearby login data is in the same date or not
                 if (d1.getFullYear() === d2.getFullYear()
                     && d1.getMonth() === d2.getMonth()
                     && d1.getDate() === d2.getDate()) {
-
+                    //Combining the session time
                     y[i] = y[i] + y[i + 1];
                     y.splice(i + 1, 1);
                     x.splice(i + 1, 1);
@@ -176,7 +184,7 @@
                     i--;
                 }
 
-
+                //Checking if one session time exceeds one day
                 for (let i = 0; i < y.length; ++i) {
                     if (y[i] > 86400000) {
                         y[i + 1] += y[i] - sec_per_day;
@@ -191,9 +199,9 @@
             }
 
 
-            // console.log(datas);
 
 
+            //User data graph
             new Chart("userChart", {
                 type: "bar",
                 data: {
@@ -255,6 +263,12 @@
             });
 
         })
+        /**
+         * Changing the data format from milliseconds to HH:MM:SS
+         * @function
+         * @param int epoch - Data which their format need to be converted
+         * @return Formatted data string
+         */
         function epoch_to_hh_mm_ss(epoch) {
             return new Date(epoch).toISOString().substr(11, 8)
         }
