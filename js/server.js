@@ -111,8 +111,6 @@ app.get('/user_data', async (req, res) => {
 app.get('/logout', (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const username = req.cookies.curr_user;
-    session_data = [];
-
     MongoClient.connect(mongo_url, function (err, db) {
         if (err) console.error("FAILED TO CONNECT TO DATABASE");
         const dbo = db.db("users");
@@ -190,6 +188,7 @@ app.get('/session_data',async (req,res)=>{
 //auto mode operation page
 app.get('/auto', async (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
+    console.log(session_data);
     res.render('auto', {pressure: 0});
 });
 
@@ -212,7 +211,6 @@ app.post('/pressure', async (req, res) => {
     client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
         if (err) console.error(err);
     });
-    session_data.push(pressure);
     res.render('auto', {pressure: pressure});
 });
 
@@ -225,7 +223,6 @@ app.post('/fspeed', async (req, res) => {
     client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
         if (err) console.error(err);
     });
-    session_data.push(fspeed);
     res.render('manual', {fspeed: fspeed});
 });
 

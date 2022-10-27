@@ -5,12 +5,31 @@
     <!--Load the AJAX API-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>-->
+
+    <style>
+        #logout-warning{
+            margin: 20px;
+            position: absolute;
+            top: 1.25%;
+            left: 79%;
+            text-align: right;
+            transform: translate(-50%, -50%);
+            width:30%
+        }
+        .zerowidth {
+            padding-left: 0; padding-right: 0;
+            border-left-width: 0; border-right-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0%;
+        }
+    </style>
 
 
 
 </head>
-<body onload="fetch_user_data(),receive_session_data()">
+<body onload="fetch_user_data(),receive_session_data(),read_data(),inactivityTime();">
 
 
 <div id = "fan" style="width: 40%; position: absolute; top: 20%; left: 70%; transform: translate(-50%, -50%);margin-left: 50px;margin-top: 20px">
@@ -25,54 +44,17 @@
      style="width: 40%; position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%);">
     <canvas id="userChart" onclick = "window.location.href = '/statistics/user'"></canvas>
 </div>
+<div>
+    <form action="/logout" >
+        <input id="logout-btn" type="submit" value="Log Out" class = "zerowidth">
+    </form>
+    <span id = "logout-warning"> </span>
+</div>
+
 <script>
     const sec_per_day = 86400000;
     const fanCtx = document.getElementById('fanChart').getContext("2d");
     const presCtx = document.getElementById('pressureChart').getContext("2d");
-    //Fan data graph
-    const fan_graph = new Chart(fanCtx, {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [{
-                data: [],
-                borderColor: "green",
-                fill: false,
-                label: "Fan Speed Percentage"
-            }]
-        },
-        options: {
-            scales:{
-                yAxes: [{
-                    ticks: {
-                        min: 0,
-                        max: 100
-                    }
-                }],
-                xAxes: [{
-                    ticks:{
-                        userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
-                    }
-                }]
-            },
-            responsive: true,
-            title: {
-                display: true,
-                text: "Fan value"
-            },
-            padding: {
-                top: 10,
-                bottom: 30
-            }
-        },
-        tooltips: {
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.xAxes)
-                }
-            }
-        }
-    });
     const pressure_graph = new Chart(presCtx, {
         type: "line",
         data: {
@@ -85,39 +67,91 @@
             }]
         },
         options: {
-            scales:{
-                yAxes: [{
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 140
+                },
+                x: {
                     ticks: {
+                        //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
+                        callback: function (val, index) {
+                            console.log(this.getLabelForValue(val));
+                            const time = new Date(this.getLabelForValue(val));
+                            const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                            const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                            const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                            const h = (time.getHours() < 10) ? "0" + time.getHours() : time.getHours();
+                            const m = (time.getMinutes() < 10) ? "0" + time.getMinutes() : time.getMinutes();
+                            const s = (time.getSeconds() < 10) ? "0" + time.getSeconds() : time.getSeconds();
+                            return d + "/" + mo + "/" + y + "\n" + h + ":" + m + ":" + s;
 
-                        min: 0,
-                        max: 140
+                        }
                     }
-                }],
-                xAxes: [{
-                    ticks:{
-                        userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
-                    }
-                }]
+                }
             },
             responsive: true,
-            title: {
-                display: true,
-                text: "Pressure value"
-            },
-            padding: {
-                top: 10,
-                bottom: 30
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Pressure value"
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
+                },
             }
         },
-        tooltips: {
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.xAxes)
+
+    });
+    const fan_graph = new Chart(fanCtx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                borderColor: "green",
+                fill: false,
+                label: "Fan Speed Percentage"
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                },
+                x:{
+                    ticks: {
+                        //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
+                        callback: function (val, index) {
+                            console.log(this.getLabelForValue(val));
+                            const time = new Date(this.getLabelForValue(val));
+                            const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                            const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                            const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                            const h = (time.getHours() < 10) ? "0" + time.getHours() : time.getHours();
+                            const m = (time.getMinutes() < 10) ? "0" + time.getMinutes() : time.getMinutes();
+                            const s = (time.getSeconds() < 10) ? "0" + time.getSeconds() : time.getSeconds();
+                            return d + "/" + mo + "/" + y + "\n" + h + ":" + m + ":" + s;
+
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Fan value",
+
+
                 }
             }
         }
-
     });
+
+
     /**
      * Changing the data format from milliseconds to HH:MM:SS
      * @function
@@ -176,52 +210,51 @@
             const x = arr.x;
             const logout_time = arr.logout_time;
             const y = arr.y;
-            // const diff = arr.y;
-            // const time_converted = [];
-            // diff.forEach(ms => {
-            //     const days = Math.floor(ms / (24 * 60 * 60 * 1000));
-            //     const daysms = ms % (24 * 60 * 60 * 1000);
-            //     const hours = Math.floor(daysms / (60 * 60 * 1000));
-            //     const hoursms = ms % (60 * 60 * 1000);
-            //     const minutes = Math.floor(hoursms / (60 * 1000));
-            //     const minutesms = ms % (60 * 1000);
-            //     const sec = Math.floor(minutesms / 1000);
-            //     time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
-            // });
+
             console.log(arr.y);
 
 
 
+            //TEST DATA
+            // let x2 =  [ 1666343483631,1666347483631, 1666349483631,1666553494355,1667553494355 ] //login time
+            // let x3 =  [ 1666350870717,1666357483631,1666350483631, 1666560945605,1668553494355 ] //logout time
+            // let y2 =  [ 10048,323232 ,443100,123323,1223332 ]
+
+
             for (let i = 0; i < logout_time.length; ++i) {
                 const d1 = new Date(x[i]);
-                // const d3 = new Date(y[i]);
-                const d2 = new Date(x[i + 1]);
+                const d3 = new Date(y[i]);
+                const d2 = new Date(x[i+1]);
                 //Checking if the two nearby login data is in the same date or not
                 if (d1.getFullYear() === d2.getFullYear()
                     && d1.getMonth() === d2.getMonth()
-                    && d1.getDate() === d2.getDate()) {
-                    //Combining the session time
-                    y[i] = y[i] + y[i + 1];
-                    y.splice(i + 1, 1);
-                    x.splice(i + 1, 1);
+                    && d1.getDate() === d2.getDate() ) {
+
+                    y[i] = y[i] + y[i+1];
+                    y.splice(i+1, 1);
+                    x.splice(i+1, 1);
                     console.log(x)
                     i--;
                 }
 
+
+
+
                 //Checking if one session time exceeds one day
-                for (let i = 0; i < y.length; ++i) {
-                    if (y[i] > 86400000) {
-                        y[i + 1] += y[i] - sec_per_day;
+                for(let i = 0; i < y.length; ++i){
+                    if(y[i] > 86400000){
+                        y[i+1] += y[i] - sec_per_day;
                         y[i] = sec_per_day;
                     }
                 }
 
 
-            }
-            for (let i = 0; i < x.length; i++) {
-                x[i] = new Date(x[i]).toString().substring(4, 16);
-            }
 
+
+            }
+            for(let i=0; i<x.length;i++){
+                x[i] = new Date(x[i]).toString().substring(4,16);
+            }
 
 
 
@@ -243,47 +276,48 @@
                                 'rgb(153, 102, 255)',
                                 'rgb(201, 203, 207)'
                             ]
-
                         }
                     ]
 
                 },
                 options: {
-                    title: {
-                        display: true,
-                        text: "User Data"
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: "User Activities"
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 30
+                        },
                     },
                     scales: {
-                        xAxes: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                tooltipFormat: 'MMM DD'
-                            }, gridLines: {
-                                display: false
-                            }
-                        },
-
-                        yAxes: [{
+                        y: {
                             ticks: {
-                                userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
+                                callback: function(v) { return epoch_to_hh_mm_ss(v) },
                                 stepSize: 86400000/24,
                                 beginAtZero: true,
                                 steps: 24,
                                 max: 86400000
-                            }, gridLines: {
-                                display: false
                             }
-                        }]
-                    }
-                },
-                tooltips: {
-                    callbacks: {
-                        label: function(tooltipItem, data) {
-                            return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.yLabel)
+                        },
+                        x: {
+                            ticks: {
+                                //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
+                                callback: function (val, index) {
+                                    console.log(this.getLabelForValue(val));
+                                    const time = new Date(this.getLabelForValue(val));
+                                    const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                                    const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                                    const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                                    return d + "/" + mo + "/" + y;
+
+                                }
+                            }
                         }
                     }
-                }
+                },
+
             });
 
         })
@@ -300,6 +334,54 @@
 
 
     }
+
+    const x = true;
+    //logout if user has closed the page
+    function check_window(){
+        const logout = document.getElementById("logout-btn");
+        if (typeof x === undefined) {
+            // the variable is defined
+            logout.click();
+        }
+    }
+    const inactivityTime = function() {
+        let time;
+        const logout_warning = document.getElementById("logout-warning");
+        let i = 0;
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        const logout_time = 1800000;
+
+
+        function increment(){
+            i = i + 1000;
+            console.log(i)
+            if(i >=1500000 && i< logout_time){
+                logout_warning.textContent = "Warning. You will be logout in " + Math.round((logout_time- i)/60000) +" minutes if you stay inactive.";
+                logout_warning.style.color = "red"
+            }
+            else if(i >= logout_time) {
+                logout();
+            }else{
+                logout_warning.textContent = ""
+            }
+        }
+        setInterval( increment, 1000);
+
+        function logout(){
+            const logout_btn = document.getElementById("logout-btn");
+            logout_btn.click();
+        }
+        function resetTimer() {
+            clearTimeout(time);
+            i = 0;
+            time = setTimeout(logout, logout_time)
+
+        }
+    };
+
+    setInterval(check_window,60000);
 
 </script>
 

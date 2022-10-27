@@ -15,9 +15,25 @@
         text-align: center;
         transform: translate(-50%, -50%);
     }
+    #logout-warning{
+        margin: 20px;
+        position: absolute;
+        top: 1.25%;
+        left: 79%;
+        text-align: right;
+        transform: translate(-50%, -50%);
+        width:30%
+    }
+    .zerowidth {
+        padding-left: 0; padding-right: 0;
+        border-left-width: 0; border-right-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 0%;
+    }
 </style>
 
-<body onload = "receive_session_data()">
+<body onload = "receive_session_data(),inactivityTime()">
 <div style="width: 70%; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);">
     <div id="filter-input">
         <form onchange="filterData();return false;">
@@ -36,6 +52,12 @@
 </div>
 
 
+<div>
+    <form action="/logout">
+        <input id="logout-btn" type="submit" value="Log Out" class = "zerowidth">
+    </form>
+    <span id = "logout-warning"> </span>
+</div>
 
 <script>
     //Fan data graph,, displaying fan speed data from most recent login
@@ -162,6 +184,53 @@
     }
     //Receiving the data every 5 seconds
     setInterval(read_data, 5000);
+    const x = true;
+    //logout if user has closed the page
+    function check_window(){
+        const logout = document.getElementById("logout-btn");
+        if (typeof x == undefined) {
+            // the variable is defined
+            logout.click();
+        }
+    }
+    const inactivityTime = function() {
+        let time;
+        const logout_warning = document.getElementById("logout-warning");
+        let i = 0;
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        const logout_time = 1800000;
+
+
+        function increment(){
+            i = i + 1000;
+            console.log(i)
+            if(i >=1500000 && i< logout_time){
+                logout_warning.textContent = "Warning. You will be logout in " + Math.round((logout_time- i)/60000) +" minutes if you stay inactive.";
+                logout_warning.style.color = "red"
+            }
+            else if(i >= logout_time) {
+                logout();
+            }else{
+                logout_warning.textContent = ""
+            }
+        }
+        setInterval( increment, 1000);
+
+        function logout(){
+            const logout_btn = document.getElementById("logout-btn");
+            logout_btn.click();
+        }
+        function resetTimer() {
+            clearTimeout(time);
+            i = 0;
+            time = setTimeout(logout, logout_time)
+
+        }
+    };
+    setInterval(check_window,60000);
+
 
 </script>
 </body>

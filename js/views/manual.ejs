@@ -140,6 +140,15 @@
             text-align: center;
             transform: translate(-50%, -50%);
         }
+        #logout-warning{
+            margin: 20px;
+            position: absolute;
+            top: 1.25%;
+            left: 79%;
+            text-align: right;
+            transform: translate(-50%, -50%);
+            width:30%
+        }
 
 
     </style>
@@ -204,6 +213,7 @@
 <div>
     <form action="/logout" id="logout">
         <input id="logout-btn" type="submit" value="Log Out">
+        <span id = "logout-warning"></span>
     </form>
 </div>
 
@@ -213,17 +223,22 @@
     </form>
 </div>
 
+<div>
+    <span id = "logout-warning"></span>
+</div>
+
+
 <script type="text/javascript">
     //Pressure data graph,, displaying pressure data from most recent login
     const ctx = document.getElementById('chart').getContext("2d");
-    x = [];
-    y = [];
+    // x = [];
+    // y = [];
     const pressureGraph = new Chart(ctx, {
         type: "line",
         data: {
-            labels: x,
+            labels: [],
             datasets: [{
-                data: y,
+                data: [],
                 borderColor: "green",
                 fill: false,
                 label: "Pressure Value (Pa)",
@@ -348,6 +363,56 @@
     }
     //Receiving the data every 5 seconds
     setInterval(push_data, 5000);
+
+    const x = true;
+    //logout if user has closed the page
+    function check_window(){
+        const logout = document.getElementById("logout-btn");
+        if (typeof x == undefined) {
+            // the variable is defined
+            logout.click();
+        }
+    }
+    const inactivityTime = function() {
+        let time;
+        const logout_warning = document.getElementById("logout-warning");
+        let i = 0;
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        const logout_time = 1800000;
+
+
+        function increment(){
+            i = i + 1000;
+            console.log(i)
+            if(i >=1500000 && i< logout_time){
+                logout_warning.textContent = "Warning. You will be logout in " + Math.round((logout_time- i)/60000) +" minutes if you stay inactive.";
+                logout_warning.style.color = "red"
+            }
+            else if(i >= logout_time) {
+                logout();
+            }else{
+                logout_warning.textContent = ""
+            }
+        }
+        setInterval( increment, 1000);
+
+        function logout(){
+            const logout_btn = document.getElementById("logout-btn");
+            logout_btn.click();
+        }
+        function resetTimer() {
+            clearTimeout(time);
+            i = 0;
+            time = setTimeout(logout, logout_time)
+
+        }
+    };
+    window.onload = function() {
+        inactivityTime();
+    }
+    setInterval(check_window,60000);
 
 </script>
 
