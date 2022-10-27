@@ -17,6 +17,7 @@
 #include "IntegerEdit.h"
 #include "IntegerShow.h"
 #include "LiquidCrystal.h"
+#include "StatusSettingsJsonParser.h"
 
 class StateMachine;
 typedef void (StateMachine::*state_ptr)(const Event &);
@@ -35,7 +36,7 @@ private:
 	void smanual(const Event& e);
 	void ssensors(const Event& e);
 
-	//Functions.
+	//Helper functions.
 	void SetState(state_ptr newState);
 	void check_everything(bool retry = false);
 	void check_sensors(bool retry = false);
@@ -53,7 +54,7 @@ private:
 	void screens_update();
 	void screens_pres_fan_update();
 
-	//Uart, Lcd and timer.
+	//Uart, Lcd and timers.
 	LpcUart *uart; //uart for debug prints.
 	LiquidCrystal *lcd; //lcd display
 	unsigned int rhum_timer; //Counts ticks for relative humidity reading.
@@ -86,6 +87,10 @@ private:
 	srhtHMP60 srht;
 	sco2GMP252 sco2;
 	aFanMIO12V fan;
+
+	//MQTT and JSON
+	StatusSettingsJsonParser mqtt_json_parser;
+	unsigned int mqtt_messagenum;
 
 	//Variables.
 	float co2;
