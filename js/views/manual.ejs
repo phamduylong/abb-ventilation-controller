@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Manual Mode</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .switch {
             position: relative;
@@ -75,7 +76,7 @@
 
         #input-container {
             position: absolute;
-            top: 50%;
+            top: 80%;
             left: 50%;
             transform: translate(-50%, -50%);
             display: inline-block;
@@ -102,9 +103,58 @@
             width: 60%;
         }
 
+        #stats {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #stats-btn {
+            width: 80%;
+        }
+
+        #chart-container {
+            margin: 20px;
+            border-radius: 5px;
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #chart {
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #filter-input {
+            margin: 20px;
+            position: absolute;
+            top: -5%;
+            left: 93%;
+            text-align: center;
+            transform: translate(-50%, -50%);
+        }
+        #logout-warning{
+            margin: 20px;
+            position: absolute;
+            top: 1.25%;
+            left: 79%;
+            text-align: right;
+            transform: translate(-50%, -50%);
+            width:30%
+        }
+
+
     </style>
 
     <script type="text/javascript">
+        //switching mode
         function toggleSwitch() {
             const auto_switch = document.getElementById('auto-switch');
             const switch_status = document.getElementById('switch-status');
@@ -120,7 +170,7 @@
     </script>
 
 </head>
-<body>
+<body onload="push_data(),receive_session_data()">
 <div id="switch-container">
     <p id="switch-status">AUTO MODE IS OFF</p>
     <label class="switch">
@@ -131,9 +181,9 @@
 <br/>
 
 <div id="input-container">
-    <h3>FAN SPEED IS ON 100%</h3>
-    <h3>MEASURED PRESSURE LEVEL IS 120Pa</h3>
-    <h3>MEASURED CO2 LEVEL IS 700ppm</h3>
+    <h3 id="ftext">FAN SPEED IS ON <%=fspeed%>%</h3>
+    <h3 id="ptext">MEASURED PRESSURE LEVEL IS 120Pa</h3>
+    <h3 id="ctext">MEASURED CO2 LEVEL IS 700ppm</h3>
     <form action="/fspeed" method="post">
         <label for="fspeed">SET FAN SPEED (0-100%)</label><br/>
         <input type="number" min="0" max="100" id="fspeed" name="fspeed" required><br/>
@@ -141,10 +191,230 @@
     </form>
 
 </div>
+
+<div id="chart-container">
+    <canvas id="chart" onload="push_data()"></canvas>
+    <div id="filter-input">
+        <form onchange="filterData();return false;">
+            <label for="filterTime">Filter data: </label>
+            <select id="filterTime" >
+                <option value=0></option>
+                <option value=0.5>30 seconds</option>
+                <option value=1>Last minute</option>
+                <option value=60>Last hour</option>
+                <option value=1440>Last day</option>
+            </select>
+            <span id="error"></span>
+        </form>
+    </div>
+</div>
+
+
 <div>
     <form action="/logout" id="logout">
         <input id="logout-btn" type="submit" value="Log Out">
+        <span id = "logout-warning"></span>
     </form>
 </div>
+
+<div>
+    <form action="/statistics" id="stats">
+        <input id="stats-btn" type="submit" value="See Full Statistics">
+    </form>
+</div>
+
+<div>
+    <span id = "logout-warning"></span>
+</div>
+
+
+<script type="text/javascript">
+    //Pressure data graph,, displaying pressure data from most recent login
+    const ctx = document.getElementById('chart').getContext("2d");
+    // x = [];
+    // y = [];
+    const pressureGraph = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                borderColor: "green",
+                fill: false,
+                label: "Pressure Value (Pa)",
+                tension: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 140
+                },
+                x:{
+                    ticks: {
+                        //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
+                        callback: function (val, index) {
+                            console.log(this.getLabelForValue(val));
+                            const time = new Date(this.getLabelForValue(val));
+                            const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                            const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                            const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                            const h = (time.getHours() < 10) ? "0" + time.getHours() : time.getHours();
+                            const m = (time.getMinutes() < 10) ? "0" + time.getMinutes() : time.getMinutes();
+                            const s = (time.getSeconds() < 10) ? "0" + time.getSeconds() : time.getSeconds();
+                            return d + "/" + mo + "/" + y + "\n" + h + ":" + m + ":" + s;
+
+                        }
+                    }
+                }
+            },
+
+
+            responsive: true,
+            title: {
+                display: true,
+                text: "Pressure Value (Pa)"
+            }
+        }
+    });
+    /**
+     * Filtering data from a time interval
+     * @function
+     * @return Array of filtered datas and datapoints
+     */
+    function filterData(){
+        const filterDate = [...pressureGraph.data.labels];
+        const filter_time = document.getElementById("filterTime").value;
+        const error = document.getElementById("error");
+        if(filter_time > 0) {
+            let filter_index = filterDate.length;
+            for (let i = 0; i < filterDate.length; ++i) {
+
+                if ((Date.now() - filterDate[i]) <= (filter_time * 1000 * 60)) {
+                    filter_index--;
+                }
+            }
+            console.log(filter_index);
+            if(filter_index == 0 ){
+                error.textContent = "Every data is filtered."
+                error.style.color = "red"
+            } else {
+                error.textContent = ""
+            }
+
+            const slicedDate = filterDate.slice(filter_index, filterDate.length);
+            const filterDataPoints = [...pressureGraph.data.datasets[0].data];
+            const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
+            console.log(slicedDataPoints);
+            pressureGraph.config.data.labels = slicedDate;
+            pressureGraph.config.data.datasets[0].data = slicedDataPoints;
+            pressureGraph.update();
+        }else if(filter_time == 0){
+            receive_session_data();
+        }
+    }
+
+
+
+
+    //Receiving data and updating the chart from server side
+    const push_data = () => {
+        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
+            /*console.log (typeof JSON.parse(data));
+            data = JSON.parse(data);*/
+            console.log(data);
+            if(data.auto === true) {
+                window.location.href = "/auto";
+            }
+            else {
+                const ftext = document.getElementById('ftext');
+                ftext.innerText = "FAN SPEED LEVEL IS " + data.speed.toString() + "%";
+                const ptext = document.getElementById('ptext');
+                ptext.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
+                const ctext = document.getElementById('ctext');
+                ctext.innerText = "CO2 LEVEL IS " + data.co2.toString() + " ppm";
+                pressureGraph.data.labels.push(data.timestamp);
+                pressureGraph.data.datasets[0].data.push(data.pressure);
+                // re-render the chart
+                pressureGraph.update();
+            }
+
+        })
+    }
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp=>tmp.json()).then(data =>{
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_pressure = [];
+            for(let i = 0; i < data.length;++i){
+                session_timestamp.push(data[i].timestamp);
+                session_pressure.push(data[i].pressure);
+            }
+            if(filter_time == 0){
+                pressureGraph.config.data.labels = session_timestamp;
+                pressureGraph.config.data.datasets[0].data = session_pressure;
+                pressureGraph.update();
+            }
+
+
+        })
+    }
+    //Receiving the data every 5 seconds
+    setInterval(push_data, 5000);
+
+    const x = true;
+    //logout if user has closed the page
+    function check_window(){
+        const logout = document.getElementById("logout-btn");
+        if (typeof x == undefined) {
+            // the variable is defined
+            logout.click();
+        }
+    }
+    const inactivityTime = function() {
+        let time;
+        const logout_warning = document.getElementById("logout-warning");
+        let i = 0;
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        const logout_time = 1800000;
+
+
+        function increment(){
+            i = i + 1000;
+            console.log(i)
+            if(i >=1500000 && i< logout_time){
+                logout_warning.textContent = "Warning. You will be logout in " + Math.round((logout_time- i)/60000) +" minutes if you stay inactive.";
+                logout_warning.style.color = "red"
+            }
+            else if(i >= logout_time) {
+                logout();
+            }else{
+                logout_warning.textContent = ""
+            }
+        }
+        setInterval( increment, 1000);
+
+        function logout(){
+            const logout_btn = document.getElementById("logout-btn");
+            logout_btn.click();
+        }
+        function resetTimer() {
+            clearTimeout(time);
+            i = 0;
+            time = setTimeout(logout, logout_time)
+
+        }
+    };
+    window.onload = function() {
+        inactivityTime();
+    }
+    setInterval(check_window,60000);
+
+</script>
+
 </body>
 </html>

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Auto Mode</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .switch {
             position: relative;
@@ -75,7 +76,7 @@
 
         #input-container {
             position: absolute;
-            top: 50%;
+            top: 75%;
             left: 50%;
             transform: translate(-50%, -50%);
             display: inline-block;
@@ -96,16 +97,69 @@
             position: absolute;
             top: 0;
             right: 0;
+
         }
 
         #logout-btn {
             width: 60%;
+            right: 0;
+
         }
+
+        #stats {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #stats-btn {
+            width: 80%;
+        }
+
+        #chart-container {
+            margin: 20px;
+            border-radius: 5px;
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #chart {
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #filter-input {
+            margin: 20px;
+            position: absolute;
+            top: -5%;
+            left: 93%;
+            text-align: center;
+            transform: translate(-50%, -50%);
+        }
+        #logout-warning{
+            margin: 20px;
+            position: absolute;
+            top: 1.25%;
+            left: 79%;
+            text-align: right;
+            transform: translate(-50%, -50%);
+            width:30%
+        }
+
 
 
     </style>
 
     <script type="text/javascript">
+//switching mode
         function toggleSwitch() {
             const auto_switch = document.getElementById('auto-switch');
             const switch_status = document.getElementById('switch-status');
@@ -123,7 +177,7 @@
     </script>
 
 </head>
-<body>
+<body onload = "receive_session_data(),push_data()">
 <div id="switch-container">
     <p id="switch-status">AUTO MODE IS ON</p>
     <label class="switch">
@@ -133,21 +187,247 @@
 </div>
 <br/>
 
+
+<div id="chart-container">
+    <canvas onload="push_data()" id="chart"></canvas>
+    <div id="filter-input">
+        <form onchange="filterData();return false;">
+            <label for="filterTime">Filter data: </label>
+            <select id="filterTime" >
+                <option value=0></option>
+                <option value=0.5>30 seconds</option>
+                <option value=1>Last minute</option>
+                <option value=60>Last hour</option>
+                <option value=1440>Last day</option>
+            </select>
+            <span id="error"></span>
+        </form>
+    </div>
+</div>
+<br/>
+
+<div>
+    <form action="/statistics" id="stats">
+        <input id="stats-btn" type="submit" value="See Full Statistics">
+    </form>
+</div>
+
 <div id="input-container">
-    <h3>PRESSURE LEVEL IS <%=pressure%>Pa</h3>
-    <form action="/pressure" method="post">
+    <h3 id="pressure-text">PRESSURE LEVEL IS <%=pressure%> Pa</h3>
+    <form  action="/pressure" method="post">
         <label for="pressure">Change pressure level (0-125) Pa</label><br/>
         <input type="number" min="0" max="125" id="pressure" name="pressure" required><br/>
-        <input type="submit">
+        <input type="submit" name="submit"submit>
     </form>
 
 </div>
 
+<div>
+    <span id = "logout-warning"></span>
+</div>
 
 <div>
 <form action="/logout" id="logout">
     <input id="logout-btn" type="submit" value="Log Out">
+
 </form>
 </div>
+<script type="text/javascript">
+    //Fan speed graph,, displaying fan speed data from most recent login
+    const ctx = document.getElementById('chart').getContext("2d");
+    // x = [];
+    // y = [];
+    const myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                borderColor: "green",
+                fill: false,
+                label: "Fan Speed Percentage",
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                },
+                x:{
+                    ticks: {
+                            //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
+                        callback: function (val, index) {
+
+                            const time = new Date(this.getLabelForValue(val));
+                            const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                            const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                            const year = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                            const h = (time.getHours() < 10) ? "0" + time.getHours() : time.getHours();
+                            const m = (time.getMinutes() < 10) ? "0" + time.getMinutes() : time.getMinutes();
+                            const s = (time.getSeconds() < 10) ? "0" + time.getSeconds() : time.getSeconds();
+                            return d + "/" + mo + "/" + year + "\n" + h + ":" + m + ":" + s;
+
+                        }
+                    }
+                }
+            },
+
+            responsive: true,
+            title: {
+                display: true,
+                text: "Fan value"
+            }
+        }
+    });
+
+
+    /**
+     * Filtering data from a time interval
+     * @function
+     * @return Array of filtered datas and datapoints
+     */
+
+    function filterData(){
+        fetch('/session_data').then(tmp=>tmp.json()).then(data =>{
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_fspeed = [];
+            for(let i = 0; i < data.length;++i){
+                session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+            }
+            const filterDate = [...session_timestamp];
+            const error = document.getElementById("error");
+            console.log("FILTER TIME: ", filter_time);
+            if(filter_time > 0) {
+                let filter_index = filterDate.length;
+                for (let i = 0; i < filterDate.length; ++i) {
+
+                    if ((Date.now() - filterDate[i]) <= (filter_time * 1000 * 60)) {
+                        filter_index--;
+                    }
+                }
+                if (filter_index == 0) {
+                    error.textContent = "Every data is filtered."
+                    error.style.color = "red"
+                } else {
+                    error.textContent = ""
+                }
+                console.log(filter_index);
+
+                const slicedDate = filterDate.slice(filter_index, filterDate.length);
+                const filterDataPoints = [...session_fspeed];
+                const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
+                console.log(slicedDataPoints);
+                myChart.config.data.labels = slicedDate;
+                myChart.config.data.datasets[0].data = slicedDataPoints;
+                myChart.update();
+            }else if(filter_time == 0){  //Display all data if there is no filter time.
+                receive_session_data();
+            }
+
+
+        })
+
+
+
+
+
+    }
+
+
+    //Receiving data and updating the chart from server side
+    const push_data = () => {
+        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
+            if(data.auto === false) {
+                window.location.href = "/manual";
+            }
+            else {
+                const text = document.getElementById('pressure-text');
+                console.log(data.timestamp);
+
+                text.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
+                myChart.data.labels.push(data.timestamp);
+                myChart.data.datasets[0].data.push(data.speed);
+                myChart.update();
+            }
+
+        })
+    }
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp=>tmp.json()).then(data =>{
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_fspeed = [];
+            for(let i = 0; i < data.length;++i){
+                session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+            }
+            if(filter_time == 0){
+                myChart.config.data.labels = session_timestamp;
+                myChart.config.data.datasets[0].data = session_fspeed
+                myChart.update();
+            }
+
+
+        })
+    }
+    //Receiving the data every 5 seconds
+    setInterval(push_data, 5000);
+    const x = true;
+    //logout if user has closed the page
+    function check_window(){
+       const logout = document.getElementById("logout-btn");
+        if (typeof x == undefined) {
+            // the variable is defined
+            logout.click();
+        }
+    }
+    const inactivityTime = function() {
+        let time;
+        const logout_warning = document.getElementById("logout-warning");
+        let i = 0;
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        const logout_time = 1800000;
+
+
+        function increment(){
+            i = i + 1000;
+            console.log(i)
+            if(i >=1500000 && i< logout_time){
+                logout_warning.textContent = "Warning. You will be logout in " + Math.round((logout_time- i)/60000) +" minutes if you stay inactive.";
+                logout_warning.style.color = "red"
+            }
+            else if(i >= logout_time) {
+                logout();
+            }else{
+                logout_warning.textContent = ""
+            }
+        }
+        setInterval( increment, 1000);
+
+        function logout(){
+            const logout_btn = document.getElementById("logout-btn");
+            logout_btn.click();
+        }
+        function resetTimer() {
+            clearTimeout(time);
+            i = 0;
+            time = setTimeout(logout, logout_time)
+
+        }
+    };
+    window.onload = function() {
+        inactivityTime();
+    }
+    setInterval(check_window,60000);
+
+</script>
+
 </body>
 </html>

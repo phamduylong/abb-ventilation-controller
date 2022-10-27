@@ -1,0 +1,237 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Fan Speed Statistics</title>
+    <!--Load the AJAX API-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<style>
+    #filter-input {
+        margin: 20px;
+        position: absolute;
+        top: -5%;
+        left: 93%;
+        text-align: center;
+        transform: translate(-50%, -50%);
+    }
+    #logout-warning{
+        margin: 20px;
+        position: absolute;
+        top: 1.25%;
+        left: 79%;
+        text-align: right;
+        transform: translate(-50%, -50%);
+        width:30%
+    }
+    .zerowidth {
+        padding-left: 0; padding-right: 0;
+        border-left-width: 0; border-right-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 0%;
+    }
+</style>
+
+<body onload = "receive_session_data(),inactivityTime()">
+<div style="width: 70%; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);">
+    <div id="filter-input">
+        <form onchange="filterData();return false;">
+            <label for="filterTime">Filter data: </label>
+            <select id="filterTime" >
+                <option value=0></option>
+                <option value=0.5>30 seconds</option>
+                <option value=1>Last minute</option>
+                <option value=60>Last hour</option>
+                <option value=1440>Last day</option>
+            </select>
+            <span id="error"></span>
+        </form>
+    </div>
+    <canvas id="fanChart" onload="read_data()"></canvas>
+</div>
+
+
+<div>
+    <form action="/logout">
+        <input id="logout-btn" type="submit" value="Log Out" class = "zerowidth">
+    </form>
+    <span id = "logout-warning"> </span>
+</div>
+
+<script>
+    //Fan data graph,, displaying fan speed data from most recent login
+    const ctx = document.getElementById('fanChart').getContext("2d");
+
+    const fan_graph = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                borderColor: "green",
+                fill: false,
+                label: "Fan Speed Percentage"
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                },
+                x:{
+                    ticks: {
+                        //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
+                        callback: function (val, index) {
+                            console.log(this.getLabelForValue(val));
+                            const time = new Date(this.getLabelForValue(val));
+                            const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                            const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                            const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                            const h = (time.getHours() < 10) ? "0" + time.getHours() : time.getHours();
+                            const m = (time.getMinutes() < 10) ? "0" + time.getMinutes() : time.getMinutes();
+                            const s = (time.getSeconds() < 10) ? "0" + time.getSeconds() : time.getSeconds();
+                            return d + "/" + mo + "/" + y + "\n" + h + ":" + m + ":" + s;
+
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Fan value",
+
+
+                }
+            }
+        }
+    });
+    /**
+     * Filtering data from a time interval
+     * @function
+     * @return Array of filtered datas and datapoints
+     */
+    function filterData(){
+        const filterDate = [...fan_graph.data.labels];
+        const filter_time = document.getElementById("filterTime").value;
+        const error = document.getElementById("error");
+        if(filter_time > 0) {
+            let filter_index = filterDate.length;
+            for (let i = 0; i < filterDate.length; ++i) {
+
+                if ((Date.now() - filterDate[i]) <= (filter_time * 1000 * 60)) {
+                    filter_index--;
+                }
+            }
+            console.log(filter_index);
+            if(filter_index == 0 ){
+                error.textContent = "Every data is filtered."
+                error.style.color = "red"
+            } else {
+                error.textContent = ""
+            }
+
+            const slicedDate = filterDate.slice(filter_index, filterDate.length);
+            const filterDataPoints = [...fan_graph.data.datasets[0].data];
+            const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
+            console.log(slicedDataPoints);
+            fan_graph.config.data.labels = slicedDate;
+            fan_graph.config.data.datasets[0].data = slicedDataPoints;
+            fan_graph.update();
+        }else if (filter_time == 0) {
+            receive_session_data();
+        }
+
+
+
+    }
+
+    //Receiving data and updating the chart from server side
+    const read_data = () => {
+        fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
+
+
+            fan_graph.data.labels.push(data.timestamp);
+            fan_graph.data.datasets[0].data.push(data.speed);
+
+            // re-render the chart
+            fan_graph.update();
+
+
+        });
+    }
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp => tmp.json()).then(data => {
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_fspeed = [];
+            for (let i = 0; i < data.length; ++i) {
+                session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+            }
+            if (filter_time == 0) {
+                fan_graph.config.data.labels = session_timestamp;
+                fan_graph.config.data.datasets[0].data = session_fspeed;
+                fan_graph.update();
+            }
+
+
+        })
+    }
+    //Receiving the data every 5 seconds
+    setInterval(read_data, 5000);
+    const x = true;
+    //logout if user has closed the page
+    function check_window(){
+        const logout = document.getElementById("logout-btn");
+        if (typeof x == undefined) {
+            // the variable is defined
+            logout.click();
+        }
+    }
+    const inactivityTime = function() {
+        let time;
+        const logout_warning = document.getElementById("logout-warning");
+        let i = 0;
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        const logout_time = 1800000;
+
+
+        function increment(){
+            i = i + 1000;
+            console.log(i)
+            if(i >=1500000 && i< logout_time){
+                logout_warning.textContent = "Warning. You will be logout in " + Math.round((logout_time- i)/60000) +" minutes if you stay inactive.";
+                logout_warning.style.color = "red"
+            }
+            else if(i >= logout_time) {
+                logout();
+            }else{
+                logout_warning.textContent = ""
+            }
+        }
+        setInterval( increment, 1000);
+
+        function logout(){
+            const logout_btn = document.getElementById("logout-btn");
+            logout_btn.click();
+        }
+        function resetTimer() {
+            clearTimeout(time);
+            i = 0;
+            time = setTimeout(logout, logout_time)
+
+        }
+    };
+    setInterval(check_window,60000);
+
+
+</script>
+</body>
+</html>

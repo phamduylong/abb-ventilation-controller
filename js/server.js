@@ -9,30 +9,27 @@ const mqtt = require('mqtt');
 const {SerialPort} = require('serialport');
 const {ReadlineParser} = require("@serialport/parser-readline");
 const {hashPassword, verifyPassword} = require("./pbkdf2");
-const moment = require('moment');
-
 const MongoClient = require('mongodb').MongoClient;
-const url = "mongodb://localhost:27017";
-
 const app = express();
 
+/*-------------------------------------------------------------------MIDDLEWARES----------------------------------------------------------------*/
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
-
 app.use(nocache());
 app.set('view engine', 'ejs');
 app.set("views", (path.join(__dirname, "views")));
 
 
 
-
+/*-------------------------------------------------------------------CONSTANTS----------------------------------------------------------------*/
 const port = process.env.PORT || 3000;
 const broker_url = 'mqtt://127.0.0.1:1883';
+const mongo_url = "mongodb://localhost:27017";
 const client = mqtt.connect(broker_url, { clientId: 'node', clean: true });
 const serial_port_nr = "COM23";
 const serial_baud_rate = 115200;
-const pub_topic = "controller/settings";
-const subs_topic = "controller/status";
+const settings_topic = "controller/settings";
+const status_topic = "controller/status";
 
 
 
@@ -40,30 +37,197 @@ const subs_topic = "controller/status";
 const serial_parser = new ReadlineParser({delimiter: '\r\n'});
 serial_port.pipe(serial_parser);*/
 
-client.subscribe(subs_topic, () => {
+client.subscribe(status_topic, () => {
 
 });
 
-client.publish(pub_topic, "Test string 3", { qos: 1, retain: true }, (error) => {
-    if (error) {
-        console.error(error);
-    }
+let session_data = [];
+
+
+/*-------------------------------------------------------------------GET REQUESTS----------------------------------------------------------------*/
+
+//login page
+app.get('/', async (req, res) => {
+    res.render("login");
 });
 
-client.publish(subs_topic, "I hope it works", {qos: 1, retain: true}, (err) => {
-    if (err) {
-        console.error(err)
-    }
-});
-
-client.on('message', (topic, msg) => {
-    console.log("RECEIVED: " + msg);
-})
-
+//sign up page
 app.get('/signup', (req, res) => {
+    if(req.cookies.loggedIn === "true") return res.redirect('/auto');
     res.render('signup');
 });
 
+//common statistics page which displays all data
+app.get('/statistics', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.render('statistics');
+});
+
+//pressure stats page
+app.get('/statistics/pressure', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.render('pressure_stats');
+});
+
+
+//fan speed stats page
+app.get('/statistics/fan', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.render('fan_stats');
+});
+
+
+//user analytics page which displays user session time
+app.get('/statistics/user', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.render('user_stats');
+})
+
+
+//get route to fetch user activities data
+app.get('/user_data', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    const username = req.cookies.curr_user;
+    MongoClient.connect(mongo_url, function (err, db) {
+        if (err) console.error("FAILED TO CONNECT TO DATABASE");
+        const dbo = db.db("users");
+        dbo.collection("users").find({username: username}).project({_id: 0, logins: 1, logouts: 1}).toArray((err, arr) => {
+            if (err) throw err;
+            if (arr[0] !== undefined) {
+                const user = arr[0];
+                const size = user.logins.length;
+                const logins = arr[0].logins.slice(0, size - 1);
+                console.log(logins.length);
+                console.log(user.logouts);
+                //x = login timestamp, y = user session time
+                const data1 = {x: logins, y: user.logouts.map((v, i) => v - logins[i]), logout_time: user.logouts, z: 0};
+                console.log(data1);
+                res.json(data1);
+            }
+        });
+    });
+});
+
+//logout route and redirects to the login page
+app.get('/logout', (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    const username = req.cookies.curr_user;
+    MongoClient.connect(mongo_url, function (err, db) {
+        if (err) console.error("FAILED TO CONNECT TO DATABASE");
+        const dbo = db.db("users");
+        dbo.collection("users").find({username: username}).toArray((err, arr) => {
+            if (err) throw err;
+            if(arr[0] !== undefined) {
+                const user = arr[0];
+                let logout_time = Date.now();
+                //checking if the login data timestamp and the logout data timestamp is the same day or not
+                if(!isSameDay(new Date(user.logins[user.logins.length - 1]), new Date(logout_time))) {
+                    console.log("NOT SAME DAY");
+                    logout_time = new Date(logout_time);
+                    const logout_date = logout_time.getDate();
+                    const logout_month = logout_time.getMonth();
+                    const logout_year = logout_time.getFullYear();
+                    const new_day = new Date(logout_year, logout_month, logout_date);
+                    const time_in_new_day = Math.abs(logout_time - new_day);
+                    const time_in_old_day = Math.abs(new_day - user.logins[user.logins.length - 1]);
+                    const prev_day_logout = new Date(user.logins[user.logins.length - 1] + time_in_old_day);
+                    const next_day_logout = new Date(new_day.getTime() + time_in_new_day);
+                    const update_logins = { $set: {logins: [...user.logins, new_day.getTime()] } };
+                    const update_logouts = { $set: {logouts: [...user.logouts, prev_day_logout.getTime(), next_day_logout.getTime()] } };
+                    dbo.collection("users").updateMany({username: username}, update_logins).then((res) => {
+                        console.log(res);
+                    });
+
+                    dbo.collection("users").updateOne({username: username}, update_logouts).then((res) => {
+                        console.log(res);
+                    });
+                } else {
+                    console.log("SAME DAY")
+                    const update_obj_logouts = { $set : {logouts : [...user.logouts, +new Date()] } };
+                    dbo.collection("users").updateOne({username: username}, update_obj_logouts).then((res) => {
+                        console.log(res);
+                    })
+                }
+            }
+        });
+
+    });
+    res.cookie("curr_user", "");
+    res.cookie("loggedIn", false);
+    res.redirect('/');
+});
+
+//Receiving data via MQTT
+app.get('/mutable-data', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    client.on('message', (topic, msg) => {
+        client.removeAllListeners();
+        msg = msg.toString();
+        msg = JSON.parse(msg);
+        msg.timestamp = Date.now();
+        MongoClient.connect(mongo_url, function (err, db) {
+            if (err) console.error("FAILED TO CONNECT TO DATABASE");
+            const dbo = db.db("stats");
+
+            dbo.collection("stats").insertOne(msg).then((result) => {
+                console.log(result);
+            });
+            session_data.push(msg);
+        });
+        res.json(msg);
+    });
+
+});
+
+//fetching data which stored in array
+app.get('/session_data',async (req,res)=>{
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.json(session_data);
+})
+
+
+//auto mode operation page
+app.get('/auto', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    console.log(session_data);
+    res.render('auto', {pressure: 0});
+});
+
+
+//manual mode operation page
+app.get('/manual', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.render('manual',{fspeed: 0});
+});
+
+
+
+/*-------------------------------------------------------------------POST REQUESTS----------------------------------------------------------------*/
+
+//post route which receives pressure input from user
+app.post('/pressure', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    const pressure = req.body.pressure || 0;
+    const pub_obj = {auto: true, pressure: pressure};
+    client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
+        if (err) console.error(err);
+    });
+    res.render('auto', {pressure: pressure});
+});
+
+//post route which receives fan speed input from user
+app.post('/fspeed', async (req, res) => {
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    const fspeed = req.body.fspeed || 0;
+    console.log(`FAN SPEED: ${fspeed}`);
+    const pub_obj = {auto: false, speed: fspeed};
+    client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
+        if (err) console.error(err);
+    });
+    res.render('manual', {fspeed: fspeed});
+});
+
+//sign up creds
 app.post('/signup', (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
@@ -84,22 +248,18 @@ app.post('/signup', (req, res) => {
     });
 });
 
-app.get('/', async (req, res) => {
-    //default view
-    res.render("login");
-});
-
-
+//login creds
 app.post('/login', (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
     let query_obj = { username: username };
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(mongo_url, function(err, db) {
         if (err) throw err;
         const dbo = db.db("users");
         dbo.collection("users").find(query_obj).toArray((err, user_arr) => {
             const user = user_arr[0];
             if(user !== undefined) {
+                //checking if the inputted password matches the password from the database
                 verifyPassword(password, user.hashedPassword)
                     .then((equal) => {
 
@@ -112,9 +272,9 @@ app.post('/login', (req, res) => {
                                 console.log(`User ${user.username} logged in at ${Date.now().toString()}`);
                                 dbo.collection("users").updateOne({username: user.username}, update_obj,
                                     (err, res) =>{
-                                    if(err) throw err;
-                                    console.log(res);
-                                });
+                                        if(err) throw err;
+                                        console.log(res);
+                                    });
                             }
                             res.cookie("login_err", 200);
                             return res.redirect('/auto');
@@ -136,101 +296,23 @@ app.post('/login', (req, res) => {
     });
 });
 
-
-app.get('/statistics/temperature', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('temp_stats');
-});
-
-app.get('/statistics/user', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('user_stats');
-})
-
-app.get('/temp_data', async (req, res) => {
-    //random data for testing purposes
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const data = {x: [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
-        y: [7, 10, 15, 4, -10, -35, -36, -20, -10, -5, -4]};
-    res.json(data);
-});
-
-app.get('/user_data', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const username = req.cookies.curr_user;
-    MongoClient.connect(url, function (err, db) {
-        if (err) console.error("FAILED TO CONNECT TO DATABASE");
-        const dbo = db.db("users");
-        dbo.collection("users").find({username: username}).project({_id: 0, logins: 1, logouts: 1}).toArray((err, arr) => {
-            if (err) throw err;
-            if (arr[0] !== undefined) {
-                const user = arr[0];
-                const size = user.logins.length;
-                const logins = arr[0].logins.slice(0, size - 1);
-                console.log(logins.length);
-                console.log(user.logouts);
-                const data1 = {x: logins, y: user.logouts.map((v, i) => v - logins[i]), logout_time: user.logouts, z: 0};
-                console.log(data1);
-                res.json(data1);
-            }
-        });
-
-
-    })
-});
-app.get('/logout', (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const username = req.cookies.curr_user;
-    MongoClient.connect(url, function (err, db) {
-        if (err) console.error("FAILED TO CONNECT TO DATABASE");
-        const dbo = db.db("users");
-        dbo.collection("users").find({username: username}).toArray((err, arr) => {
-            if (err) throw err;
-            if(arr[0] !== undefined) {
-                const user = arr[0];
-                const update_obj = {$set: {logouts: [...user.logouts, Date.now()]}};
-                console.log(`User ${user.username} logged out at ${Date.now().toString()}`);
-                dbo.collection("users").updateOne({username: user.username}, update_obj,
-                    (err, res) =>{
-                    if(err) throw err;
-                    console.log(res);
-                });
-            }
-        });
-
-    });
-    res.cookie("curr_user", "");
-    res.cookie("loggedIn", false);
-    res.redirect('/');
-});
-
-app.get('/auto', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('auto', {pressure: 0});
-});
-
-app.get('/manual', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    res.render('manual');
-});
-
-
-app.post('/pressure', async (req, res) => {
-    if(req.cookies.loggedIn === "false") return res.redirect('/');
-    const pressure = req.body.pressure || 0;
-    console.log(`PRESSURE LEVEL: ${pressure} Pa`);
-    res.render('auto', {pressure: pressure});
-});
-
-
 app.listen(port, () => {
     console.log(`SERVER UP ON PORT ${port}`);
 });
 
 
+
+
+/*-------------------------------------------------------------------CUSTOM FUNCTIONS----------------------------------------------------------------*/
+/**
+ * Adding a single new user to database
+ * @function
+ * @param {object} newUser - New user to add to database.
+ * @return Promise
+ */
 const addUser = (newUser) => {
     return new Promise((resolve, reject) => {
-        MongoClient.connect(url, function (err, db) {
+        MongoClient.connect(mongo_url, function (err, db) {
             if (err) reject("FAILED TO CONNECT TO DATABASE");
             const dbo = db.db("users");
 
@@ -248,8 +330,16 @@ const addUser = (newUser) => {
     });
 }
 
+/**
+ * Comparing date objects to the scale of date, daytime is omitted
+ * @function
+ * @param {Date} d1 - Date 1 to compare.
+ * @param {Date} d2 - Date 2 to compare.
+ * @returns Boolean
+ */
 const isSameDay = (d1, d2) => {
     return d1.getFullYear() === d2.getFullYear() &&
         d1.getMonth() === d2.getMonth() &&
         d1.getDate() === d2.getDate();
 }
+

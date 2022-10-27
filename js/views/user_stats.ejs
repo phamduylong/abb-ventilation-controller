@@ -1,38 +1,53 @@
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Temperature Statistics</title>
+    <title>User Statistics</title>
     <!--Load the AJAX API-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
-
-
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    #logout-warning{
+    margin: 20px;
+    position: absolute;
+    top: 1.25%;
+    left: 79%;
+    text-align: right;
+    transform: translate(-50%, -50%);
+    width:30%
+    }
+    .zerowidth {
+    padding-left: 0; padding-right: 0;
+    border-left-width: 0; border-right-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0%;
+    }
+    </style>
 </head>
 
-<body onload="fetching()">
-<div style="width: 50%; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);"><canvas id="chart"></canvas></div>
-<h2 id = "averageTime"></h2>
+<body onload="fetching(),inactivityTime()">
+<div
+        style="width: 70%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+    <canvas id="chart"></canvas>
+</div>
+<div>
+    <form action="/logout">
+        <input id="logout-btn" type="submit" value="Log Out" class = "zerowidth">
+    </form>
+    <span id = "logout-warning"> </span>
+</div>
+
+
 <script>
 
-
+    const sec_per_day = 86400000;
     function fetching() {
+        //Getting logout and login times of the user from server side.
         fetch('/user_data').then(tmp => tmp.json()).then(arr => {
             const x = arr.x;
             const logout_time = arr.logout_time;
             const y = arr.y;
-            const diff = arr.y;
-            const time_converted = [];
-            diff.forEach(ms => {
-                const days = Math.floor(ms / (24*60*60*1000));
-                const daysms = ms % (24*60*60*1000);
-                const hours = Math.floor(daysms / (60*60*1000));
-                const hoursms = ms % (60*60*1000);
-                const minutes = Math.floor(hoursms / (60*1000));
-                const minutesms = ms % (60*1000);
-                const sec = Math.floor(minutesms / 1000);
-                time_converted.push(days + ":" + hours + ":" + minutes + ":" + sec);
-            });
+
             console.log(arr.y);
 
 
@@ -47,6 +62,7 @@
                 const d1 = new Date(x[i]);
                 const d3 = new Date(y[i]);
                 const d2 = new Date(x[i+1]);
+                //Checking if the two nearby login data is in the same date or not
                 if (d1.getFullYear() === d2.getFullYear()
                     && d1.getMonth() === d2.getMonth()
                     && d1.getDate() === d2.getDate() ) {
@@ -61,8 +77,13 @@
 
 
 
-
-
+                //Checking if one session time exceeds one day
+                for(let i = 0; i < y.length; ++i){
+                    if(y[i] > 86400000){
+                        y[i+1] += y[i] - sec_per_day;
+                        y[i] = sec_per_day;
+                    }
+                }
 
 
 
@@ -73,9 +94,8 @@
             }
 
 
-            // console.log(datas);
 
-
+            //User data graph
             new Chart("chart", {
                 type: "bar",
                 data: {
@@ -93,48 +113,109 @@
                                 'rgb(153, 102, 255)',
                                 'rgb(201, 203, 207)'
                             ]
-
                         }
                     ]
 
                 },
                 options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: "User Activities"
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 30
+                        },
+                    },
                     scales: {
-                        xAxes: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                tooltipFormat: 'MMM DD'
-                            }, gridLines: {
-                                show: false
+                        y: {
+                            ticks: {
+                                callback: function(v) { return epoch_to_hh_mm_ss(v) },
+                                stepSize: 86400000/24,
+                                beginAtZero: true,
+                                steps: 24,
+                                max: 86400000
                             }
                         },
-
-                        yAxes: [{
+                        x: {
                             ticks: {
-                                userCallback: function(v) { return epoch_to_hh_mm_ss(v) },
-                                stepSize: 30 * 60,
-                                beginAtZero: true
-                            }, gridLines: {
-                                show: false
+                                //changing the time format from milliseconds to DD/MM/YY HH:MM:SS format
+                                callback: function (val, index) {
+                                    console.log(this.getLabelForValue(val));
+                                    const time = new Date(this.getLabelForValue(val));
+                                    const d = (time.getDate() < 10) ? "0" + time.getDate() : time.getDate();
+                                    const mo = (time.getMonth() < 10) ? "0" + time.getMonth() : time.getMonth();
+                                    const y = (time.getFullYear() < 10) ? "0" + time.getFullYear() : time.getFullYear();
+                                    return d + "/" + mo + "/" + y;
+
+                                }
                             }
-                        }]
-                    }
-                },
-                tooltips: {
-                    callbacks: {
-                        label: function(tooltipItem, data) {
-                            return data.datasets[tooltipItem.datasetIndex].label + ': ' + epoch_to_hh_mm_ss(tooltipItem.yLabel)
                         }
                     }
-                }
+                },
+
             });
 
         })
+        /**
+         * Changing the data format from milliseconds to HH:MM:SS
+         * @function
+         * @param int epoch - Data which their format need to be converted
+         * @return Formatted data string
+         */
         function epoch_to_hh_mm_ss(epoch) {
             return new Date(epoch).toISOString().substr(11, 8)
         }
     }
+
+    const x = true;
+    //logout if user has closed the page
+    function check_window(){
+        const logout = document.getElementById("logout-btn");
+        if (typeof x == undefined) {
+            // the variable is defined
+            logout.click();
+        }
+    }
+    const inactivityTime = function() {
+        let time;
+        const logout_warning = document.getElementById("logout-warning");
+        let i = 0;
+        window.onload = resetTimer;
+        document.onmousemove = resetTimer;
+        document.onkeypress = resetTimer;
+        const logout_time = 1800000;
+
+
+        function increment(){
+            i = i + 1000;
+            console.log(i)
+            if(i >=1500000 && i< logout_time){
+                logout_warning.textContent = "Warning. You will be logout in " + Math.round((logout_time- i)/60000) +" minutes if you stay inactive.";
+                logout_warning.style.color = "red"
+            }
+            else if(i >= logout_time) {
+                logout();
+            }else{
+                logout_warning.textContent = ""
+            }
+        }
+        setInterval( increment, 1000);
+
+        function logout(){
+            const logout_btn = document.getElementById("logout-btn");
+            logout_btn.click();
+        }
+        function resetTimer() {
+            clearTimeout(time);
+            i = 0;
+            time = setTimeout(logout, logout_time)
+
+        }
+    };
+
+    setInterval(check_window,60000);
 
 
 
@@ -142,3 +223,4 @@
 
 </body>
 </html>
+
