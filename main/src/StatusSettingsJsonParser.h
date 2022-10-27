@@ -1,6 +1,7 @@
 #ifndef STATUSSETTINGSJSONPARSER_H_
 #define STATUSSETTINGSJSONPARSER_H_
 
+#include <stdio.h>
 #include <string>
 #include <cstdio>
 #include <vector>
@@ -10,13 +11,13 @@ void tokenize(std::string const &str, const char* delim, std::vector<std::string
 
 typedef struct settings_data {
 	bool auto_mode;
-	unsigned int speed;
+	int16_t speed;
 	float pressure;
 } settings_data;
 
 typedef struct status_data {
 	unsigned int nr;
-	unsigned int speed;
+	int16_t speed;
 	unsigned int setpoint;
 	float pressure;
 	bool auto_mode;

@@ -67,6 +67,8 @@ private:
 	unsigned int fan_timer; //Counts ticks for fan adjustment.
 	const unsigned int fan_timeout; //How many ticks to wait before fan adjustment.
 	uint8_t pres_readings;
+	unsigned int mqtt_timer; //Counts ticks for mqtt send.
+	const unsigned int mqtt_timeout; //How many ticks to wait before mqtt send.
 	//Menu.
 	SimpleMenu menu;
 	DecimalShow *mrhum;
@@ -91,6 +93,9 @@ private:
 	//MQTT and JSON
 	StatusSettingsJsonParser mqtt_json_parser;
 	unsigned int mqtt_messagenum;
+	void mqtt_send_data();
+	void mqtt_get_data();
+	void mqtt_reconnect();
 
 	//Variables.
 	float co2;
