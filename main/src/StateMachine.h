@@ -17,6 +17,7 @@
 #include "IntegerEdit.h"
 #include "IntegerShow.h"
 #include "LiquidCrystal.h"
+#include "systick.h"
 
 class StateMachine;
 typedef void (StateMachine::*state_ptr)(const Event &);
