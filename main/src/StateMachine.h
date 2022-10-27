@@ -51,7 +51,7 @@ private:
 	void screen_lock(PropertyEdit *pe);
 	void screen_unlock(PropertyEdit *pe);
 	void screens_update();
-	void screen_pres_update();
+	void screens_pres_fan_update();
 
 	//Uart, Lcd and timer.
 	LpcUart *uart; //uart for debug prints.
