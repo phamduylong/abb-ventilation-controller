@@ -416,14 +416,11 @@ void StateMachine::check_everything(bool retry) {
  */
 void StateMachine::check_sensors(bool retry) {
 	this->operation_time = 0;
-	Sleep(1);
 	//We should be able to communicate with all sensors.
 	sfrht_up = this->srht.read(this->temp, this->rh, retry);
 	this->operation_time += this->srht.get_elapsed_time();
-	Sleep(1);
 	sfpres_up = this->spres.read(this->pres, retry);
 	this->operation_time += this->spres.get_elapsed_time();
-	Sleep(1);
 	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
 	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
 	this->operation_time += this->sco2.get_elapsed_time();
@@ -436,7 +433,6 @@ void StateMachine::check_sensors(bool retry) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::readPres(bool retry) {
-	Sleep(1);
 	this->operation_time = 0;
 	this->sfpres_up = this->spres.read(this->pres, retry);
 	this->operation_time += this->spres.get_elapsed_time();
@@ -449,7 +445,6 @@ void StateMachine::readPres(bool retry) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::readRhum(bool retry) {
-	Sleep(1);
 	this->operation_time = 0;
 	sfrht_up = this->srht.read_rhum(this->rh, retry);
 	this->operation_time += this->srht.get_elapsed_time();
@@ -462,7 +457,6 @@ void StateMachine::readRhum(bool retry) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::readTemp(bool retry) {
-	Sleep(1);
 	this->operation_time = 0;
 	sfrht_up = this->srht.read_temp(this->temp, retry);
 	this->operation_time += this->srht.get_elapsed_time();
@@ -475,7 +469,6 @@ void StateMachine::readTemp(bool retry) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::readCo2(bool retry) {
-	Sleep(1);
 	this->operation_time = 0;
 	sfco2_up = this->sco2.read_rapid(this->co2, retry);
 	this->operation_time += this->sco2.get_elapsed_time();
@@ -488,7 +481,6 @@ void StateMachine::readCo2(bool retry) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::readCo2Long(bool retry) {
-	Sleep(1);
 	this->operation_time = 0;
 	//CO2 sensor requires other sensors readings. (Don't care about precision so much, thus simple read())
 	sfco2_up = this->sco2.read(this->co2, this->pres, this->rh, retry);
@@ -505,7 +497,6 @@ void StateMachine::readCo2Long(bool retry) {
 void StateMachine::set_fan(int speed) {
 	this->check_fan(false); //operation_time zeroed out here. 
 	if(speed != this->fan_speed) {
-		Sleep(1);
 		this->affan_up = this->fan.set_speed(speed, false);
 		this->operation_time += this->fan.get_elapsed_time();
 		if (this->affan_up) this->fan_speed = speed;
@@ -520,7 +511,6 @@ void StateMachine::set_fan(int speed) {
  * @param retry Whether to retry communication.
  */
 void StateMachine::check_fan(bool retry) {
-	Sleep(1);
 	this->operation_time = 0;
 	this->affan_up = this->fan.get_speed(this->fan_speed, retry);
 	this->operation_time += this->fan.get_elapsed_time();
