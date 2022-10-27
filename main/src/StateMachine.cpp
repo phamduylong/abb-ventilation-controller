@@ -535,7 +535,7 @@ void StateMachine::adjust_fan(float cur_pres, float des_pres) {
 	else if((round(cur_pres) < round(des_pres)) && this->fan_speed < 1000) {
 		this->set_fan((des_pres - cur_pres > 10.0) ? this->fan_speed + 10 : this->fan_speed + 1);
 	}
-	else if(fan_speed < 90) this->set_fan(0);
+	//else if(fan_speed < 90) this->set_fan(0);
 }
 
 /**
