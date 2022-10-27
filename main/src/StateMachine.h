@@ -1,7 +1,8 @@
 #ifndef STATEMACHINE_H_
 #define STATEMACHINE_H_
 
-#define MAIN_DEBUG 0
+#define MAIN_DEBUG 1
+#define SENSORS_DEBUG 0
 
 #include <stdio.h>
 #include <string>
@@ -99,14 +100,14 @@ private:
 	void mqtt_reconnect();
 
 	//Variables.
-	float co2; //last co2 reading
-	float temp; //last temperature reading
-	float rh; //last relative humidity reading
-	float pres; //las pressure reading
-	float despres; //desired pressure value
-	int16_t fan_speed; //current fan speed
-	int16_t desfan_speed; //desired fan speed
-	unsigned int operation_time; //modified by various functions, containing how much clock cycles it took to execute.
+	float co2;                   //Last co2 reading
+	float temp;                  //Last temperature reading
+	float rh;                    //Last relative humidity reading
+	float pres;                  //Last pressure reading
+	float despres;               //Desired pressure value
+	int16_t fan_speed;           //Current fan speed
+	int16_t desfan_speed;        //Desired fan speed
+	unsigned int operation_time; //Modified by various functions, containing how much clock cycles it took to execute.
 	//Interface text
 	const char titles[6][13] = {"Rel Humidity", "Temperature ", "CO2 Level   ", "Fan Speed   ", "Set Pressure", "Pressure    "};
 	const char cbusy = '*';

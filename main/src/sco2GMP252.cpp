@@ -6,7 +6,6 @@ voprcom_reg{&node, 0x208}, voprcom_reg2{&node, 0x209}, vohumcom_reg{&node, 0x20c
 mode_prescom_reg{&node, 0x304}, mode_tempcom_reg{&node, 0x305}, mode_humcom_reg{&node, 0x306},
 status_device_reg{&node, 0x800}, status_co2_reg{&node, 0x801},
 retries(retries), wait(wait), abspres_value(1015.0) {
-	//TODO: add 0x0100 and 0x0101 regs handling. (overflow) (Check if it is really a case for the float value.)
 	this->node.begin(9600);
 	this->status = false;
 	this->elapsed_time = 0;

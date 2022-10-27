@@ -195,13 +195,13 @@ void StateMachine::sauto(const Event& e) {
 		//Every 0.5s by default. Starts after 300ms timeout.
 		if (this->rhum_timer >= this->rhum_timeout) {
 			this->readRhum(); //Quickly read relative humidity and temperature
-			if(MAIN_DEBUG) printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->rhum_timer = 0;
 		}
 		//Every 0.5s by default. Starts after 400ms timeout.
 		if (this->temp_timer >= this->temp_timeout) {
 			this->readTemp(); //Quickly read temperature
-			if(MAIN_DEBUG) printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->temp_timer = 0;
 		}
 		//Every 0.5s by default.
@@ -217,7 +217,7 @@ void StateMachine::sauto(const Event& e) {
 			else {
 				this->readCo2(); //Quickly read co2
 			}
-			if(MAIN_DEBUG) printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
@@ -227,9 +227,9 @@ void StateMachine::sauto(const Event& e) {
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
-			if(MAIN_DEBUG) printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->adjust_fan(this->pres, this->despres);
-			if(MAIN_DEBUG) printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			if(!this->mod && this->pres_readings > 5) {
 				this->pres_readings = 0;
 				this->screens_pres_fan_update();
@@ -317,13 +317,13 @@ void StateMachine::smanual(const Event& e) {
 		if (this->rhum_timer >= this->rhum_timeout) {
 			this->readRhum(); //Quickly read relative humidity
 			this->rhum_timer = 0;
-			if(MAIN_DEBUG) printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Rel Hum reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		}
 		//Every 0.5s by default. Starts after 400ms timeout.
 		if (this->temp_timer >= this->temp_timeout) {
 			this->readTemp(); //Quickly read temperature
 			this->temp_timer = 0;
-			if(MAIN_DEBUG) printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Temperature reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 		}
 		//Every 0.5s by default.
 		if (this->co2_timer >= this->co2_timeout) {
@@ -338,7 +338,7 @@ void StateMachine::smanual(const Event& e) {
 			else {
 				this->readCo2(); //Quickly read co2
 			}
-			if(MAIN_DEBUG) printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("CO2 reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->co2_timer = 0;
 			if(!this->mod) this->screens_update();
 		}
@@ -348,10 +348,10 @@ void StateMachine::smanual(const Event& e) {
 			this->fan_timer = 0;
 			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
-			if(MAIN_DEBUG) printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			this->desfan_speed = this->mfan->getValue() * 10;
 			this->set_fan(this->desfan_speed);
-			if(MAIN_DEBUG) printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+			if(SENSORS_DEBUG) printf("Fan setting. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 			if(!this->mod && this->pres_readings > 5) {
 				this->pres_readings = 0;
 				this->screens_pres_fan_update();
@@ -633,7 +633,7 @@ void StateMachine::screens_update() {
 	this->operation_time = DWT->CYCCNT;
 	if (this->operation_time > start_time) this->operation_time -= start_time;
 	else this->operation_time = 0xffffffff - start_time + 1 + this->operation_time;
-	printf("Screen update. Time elapsed: %fms\n", (float) this->operation_time / 72000);
+	if(MAIN_DEBUG) printf("Screen update. Time elapsed: %fms\n", (float) this->operation_time / 72000);
 }
 
 /**
