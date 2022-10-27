@@ -1,10 +1,3 @@
-/*
- * PressureEdit.h
- *
- *  Created on: 2022年10月17日
- *      Author: kendrick807
- */
-
 #ifndef INTEGERUNITEDIT_H_
 #define INTEGERUNITEDIT_H_
 
@@ -21,7 +14,7 @@ public:
 	void decrement();
 	void accept();
 	void cancel();
-	void setFocus(bool focus);
+	bool setFocus(bool focus);
 	bool getFocus();
 	void display();
 	int getValue();

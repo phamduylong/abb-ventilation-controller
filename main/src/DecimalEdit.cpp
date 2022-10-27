@@ -1,10 +1,3 @@
-/*
- * DecimalEdit.cpp
- *
- *  Created on: 2022年10月13日
- *      Author: kendrick807
- */
-
 #include "DecimalEdit.h"
 #include <cstdio>
 #include "LpcUart.h"
@@ -41,8 +34,12 @@ void DecimalEdit::cancel() {
 	edit = value;
 }
 
-void DecimalEdit::setFocus(bool focus) {
-	if(this->modifiable) this->focus = focus;
+bool DecimalEdit::setFocus(bool focus) {
+	if(this->modifiable){
+		this->focus = focus;
+		return true;
+	}
+	return false;
 }
 
 bool DecimalEdit::getFocus() {

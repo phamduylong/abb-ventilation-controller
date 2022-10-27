@@ -4,7 +4,7 @@ StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
 lcd(lcd),
 rhum_timeout(500), temp_timeout(500), co2_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
 fan_timeout(13), //Update fan speed every 13ms.
-mqtt_timeout(4000), //Send mqtt messages every 4s (actual gap might be 5s or more)
+mqtt_timeout(1000), //Send mqtt messages every 1s (actual gap might be bigger)
 spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
@@ -168,8 +168,7 @@ void StateMachine::sauto(const Event& e) {
 			this->menu.event(MenuItem::down);
 			break;
 		case MenuItem::ok:
-			this->mod = !this->mod;
-			this->menu.event(MenuItem::ok);
+			if (this->menu.event(MenuItem::ok)) this->mod = !this->mod;
 			break;
 		case MenuItem::back:
 			this->mod = false;
@@ -245,7 +244,7 @@ void StateMachine::sauto(const Event& e) {
 				this->screens_pres_fan_update();
 			}
 		}
-		//Every 4s by default.
+		//Every 1s by default.
 		if (this->mqtt_timer >= this->mqtt_timeout) {
 			this->mqtt_timer = 0;
 			this->mqtt_send_data();
@@ -300,8 +299,7 @@ void StateMachine::smanual(const Event& e) {
 			this->menu.event(MenuItem::down);
 			break;
 		case MenuItem::ok:
-			this->mod = !this->mod;
-			this->menu.event(MenuItem::ok);
+			if (this->menu.event(MenuItem::ok)) this->mod = !this->mod;
 			break;
 		case MenuItem::back:
 			this->mod = false;
@@ -363,6 +361,7 @@ void StateMachine::smanual(const Event& e) {
 		if (this->fan_timer >= this->fan_timeout) {
 			this->pres_readings++;
 			this->fan_timer = 0;
+			this->despres = this->mpres->getValue();
 			this->readPres(); //Takes 3ms.
 #if MAIN_DEBUG
 			printf("Pressure reading. Time elapsed: %fms\n", (float) this->operation_time / 72000);
@@ -377,7 +376,7 @@ void StateMachine::smanual(const Event& e) {
 				this->screens_pres_fan_update();
 			}
 		}
-		//Every 4s by default.
+		//Every 1s by default.
 		if (this->mqtt_timer >= this->mqtt_timeout) {
 			this->mqtt_timer = 0;
 			this->mqtt_send_data();
@@ -418,11 +417,6 @@ void StateMachine::ssensors(const Event& e) {
 		printf("CO2       sensor state: %s\n", this->sfco2_up ? "UP" : "DOWN");
 		printf("Fan     actuator state: %s\n", this->affan_up ? "UP" : "DOWN");
 		// /DEBUG prints.
-
-		// DEBUG
-		this->mqtt_get_data();
-		// /DEBUG
-
 
 		this->modeauto ? SetState(&StateMachine::sauto) : SetState(&StateMachine::smanual);
 		break;
@@ -691,6 +685,7 @@ void StateMachine::mqtt_send_data() {
 	status_data sd = {this->mqtt_messagenum, this->fan_speed, this->modeauto ? (unsigned int)this->despres : (unsigned int)this->desfan_speed, this->pres, this->modeauto,
 	 this->sfco2_up && this->sfpres_up && this->sfrht_up && this->affan_up, this->co2, this->rh, this->temp};
 	std::string str = mqtt_json_parser.stringify(sd);
+	mqtt_messagenum++;
 	//TODO: Here should be MQTT
 	printf("MQTT MESSAGE!\n%s\n", str.c_str());
 }

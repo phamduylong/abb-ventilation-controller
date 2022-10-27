@@ -1,25 +1,13 @@
-/*
- * MenuItem.cpp
- *
- *  Created on: 1.2.2016
- *      Author: krl
- */
-
 #include "MenuItem.h"
 
+MenuItem::MenuItem(PropertyEdit *property): pe(property) {}
 
-MenuItem::MenuItem(PropertyEdit *property): pe(property) {
+MenuItem::~MenuItem() {}
 
-}
-
-MenuItem::~MenuItem() {
-
-}
 const char* MenuItem::getName() {
-
-return pe->getTitle();
-
+	return pe->getTitle();
 }
+
 MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
 	MenuItem::menuItemEvent res = handled;
 	switch(e) {
@@ -31,9 +19,10 @@ MenuItem::menuItemEvent MenuItem::event(menuEvent e) {
 		}
 		else if(!pe->getStatus()){
 			pe->setFocus(false);
+			res = unhandled;
 		}
 		else if(!pe->getFocus()){
-			pe->setFocus(true);
+			if (!pe->setFocus(true)) res = unhandled;
 		}
 		break;
 	case back:

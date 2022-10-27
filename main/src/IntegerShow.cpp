@@ -1,12 +1,3 @@
-/*
- * IntegerShow.cpp
- *
- *  Created on: 2022年10月18日
- *      Author: kendrick807
- */
-
-
-
 #include "IntegerShow.h"
 #include <cstdio>
 #include "LpcUart.h"
@@ -35,8 +26,8 @@ void IntegerShow::cancel() {
 	edit = value;
 }
 
-void IntegerShow::setFocus(bool focus) {
-	//this->focus = focus;
+bool IntegerShow::setFocus(bool focus) {
+	return false;
 }
 
 bool IntegerShow::getFocus() {
