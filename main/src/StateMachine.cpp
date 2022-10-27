@@ -180,6 +180,7 @@ void StateMachine::sauto(const Event& e) {
 			break;
 		case eFastToggle:
 			this->fast = !this->fast;
+			//this->mqtt_get_data();
 			break;
 		default:
 			break;
@@ -311,6 +312,7 @@ void StateMachine::smanual(const Event& e) {
 			break;
 		case eFastToggle:
 			this->fast = !this->fast;
+			//this->mqtt_get_data();
 			break;
 		default:
 			break;
@@ -696,16 +698,20 @@ void StateMachine::mqtt_get_data() {
 
 	mqtt_json_parser.parse_settings(json_str_settings);
 	settings_data sd = mqtt_json_parser.getSettingsObj();
-	//Setting mode and members according to the provided settings.
-	if(sd.auto_mode != this->modeauto) {
-		this->modeauto = !this->modeauto;
-		if(this->modeauto) this->despres = sd.pressure;
-		else this->desfan_speed = sd.speed;
-		SetState(&StateMachine::ssensors);
-	}
-	else {
-		if(this->modeauto) this->despres = sd.pressure;
-		else this->desfan_speed = sd.speed;
+	//Pay attention to mqtt only if physical interface is not being modified.
+	if(!this->mod) {
+		//Setting mode and members according to the provided settings.
+		if(sd.auto_mode != this->modeauto) {
+			this->modeauto = !this->modeauto;
+			if(this->modeauto) this->despres = sd.pressure;
+			else this->desfan_speed = sd.speed;
+			SetState(&StateMachine::ssensors);
+		}
+		else {
+			if(this->modeauto) this->despres = sd.pressure;
+			else this->desfan_speed = sd.speed;
+			this->screens_update();
+		}
 	}
 }
 

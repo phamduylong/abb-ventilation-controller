@@ -124,6 +124,8 @@ int main(void) {
 	StateMachine base(lcd, true);
 	EventQueue events;
 
+	unsigned int back_timer = 0;
+	unsigned int back_timout = 10000;
 	unsigned int up_ok_held = 0;
 	unsigned int down_back_held = 0;
 	bool control_pressed = false; //control button flag.
@@ -132,9 +134,11 @@ int main(void) {
 	bool auto_fast_pressed = false; //"auto"/"fast" button flag.
 	while(1) {
 		Sleep(1);
+		back_timer++;
 		//Control button
 		if(control.read()) {
 			control_pressed = true;
+			back_timer = 0;
 		}
 		else if(control_pressed){
 			control_pressed = false;
@@ -142,6 +146,7 @@ int main(void) {
 		//Up / Ok
 		if(up_ok.read()) {
 			up_ok_pressed = true;
+			back_timer = 0;
 			++up_ok_held;
 			//Button held more than 1s, send rapid commands "up" if control is released.
 			if(!control_pressed && up_ok_held >= 250) {
@@ -158,6 +163,7 @@ int main(void) {
 		//Down / Back
 		if(down_back.read()) {
 			down_back_pressed = true;
+			back_timer = 0;
 			++down_back_held;
 			//Button held more than 1s, send rapid commands "down" if control is released.
 			if(!control_pressed && down_back_held >= 250) {
@@ -174,11 +180,17 @@ int main(void) {
 		//Auto / Fast (No rapid commands for you!)
 		if(auto_fast.read()) {
 			auto_fast_pressed = true;
+			back_timer = 0;
 		}
 		else if(auto_fast_pressed) {
 			if(control_pressed) events.publish(Event(Event::eKey, StateMachine::eFastToggle)); //Fast
 			else events.publish(Event(Event::eKey, StateMachine::eAutoToggle)); //Auto
 			auto_fast_pressed = false;
+		}
+
+		if(back_timer >= back_timout) {
+			events.publish(Event(Event::eKey, MenuItem::back)); //Back
+			back_timer = 0;
 		}
 
 		//Tick is given every 1 ms.

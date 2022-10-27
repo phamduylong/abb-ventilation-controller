@@ -34,6 +34,13 @@ void StatusSettingsJsonParser::parse_status(const std::string& json_str) {
 			tokenize(i, ": ", tmp);
 		}
 
+		for(size_t i = 0; i < tmp[9].length(); i++) {
+			tmp[9][i] = tolower(tmp[9][i]);
+		}
+		for(size_t i = 0; i < tmp[11].length(); i++) {
+			tmp[11][i] = tolower(tmp[11][i]);
+		}
+
 		this->status_json_obj.nr = std::stoul(tmp[1]);
 		this->status_json_obj.speed = std::stoul(tmp[3]);
 		this->status_json_obj.setpoint = std::stoi(tmp[5]);
@@ -57,6 +64,10 @@ void StatusSettingsJsonParser::parse_settings(const std::string& json_str) {
 		tokenize(props, ", ", kp_vals);
 		for (auto i : kp_vals) {
 			tokenize(i, ": ", tmp);
+		}
+
+		for(size_t i = 0; i < tmp[1].length(); i++) {
+			tmp[1][i] = tolower(tmp[1][i]);
 		}
 
 		if(tmp[1] == "true") {
