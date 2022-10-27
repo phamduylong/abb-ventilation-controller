@@ -161,7 +161,7 @@
     </script>
 
 </head>
-<body onload="push_data()">
+<body onload="push_data(),receive_session_data()">
 <div id="switch-container">
     <p id="switch-status">AUTO MODE IS OFF</p>
     <label class="switch">
@@ -214,7 +214,7 @@
 </div>
 
 <script type="text/javascript">
-    //Pressure data graph
+    //Pressure data graph,, displaying pressure data from most recent login
     const ctx = document.getElementById('chart').getContext("2d");
     x = [];
     y = [];
@@ -289,12 +289,14 @@
             }
 
             const slicedDate = filterDate.slice(filter_index, filterDate.length);
-            const filterDataPoints = [...pressureGraph .data.datasets[0].data];
+            const filterDataPoints = [...pressureGraph.data.datasets[0].data];
             const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
             console.log(slicedDataPoints);
             pressureGraph.config.data.labels = slicedDate;
             pressureGraph.config.data.datasets[0].data = slicedDataPoints;
             pressureGraph.update();
+        }else if(filter_time == 0){
+            receive_session_data();
         }
     }
 
@@ -317,11 +319,30 @@
                 ptext.innerText = "PRESSURE LEVEL IS " + data.pressure.toString() + " Pa";
                 const ctext = document.getElementById('ctext');
                 ctext.innerText = "CO2 LEVEL IS " + data.co2.toString() + " ppm";
-                myChart.data.labels.push(data.timestamp);
-                myChart.data.datasets[0].data.push(data.pressure);
+                pressureGraph.data.labels.push(data.timestamp);
+                pressureGraph.data.datasets[0].data.push(data.pressure);
                 // re-render the chart
-                myChart.update();
+                pressureGraph.update();
             }
+
+        })
+    }
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp=>tmp.json()).then(data =>{
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_pressure = [];
+            for(let i = 0; i < data.length;++i){
+                session_timestamp.push(data[i].timestamp);
+                session_pressure.push(data[i].pressure);
+            }
+            if(filter_time == 0){
+                pressureGraph.config.data.labels = session_timestamp;
+                pressureGraph.config.data.datasets[0].data = session_pressure;
+                pressureGraph.update();
+            }
+
 
         })
     }

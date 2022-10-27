@@ -41,6 +41,8 @@ client.subscribe(status_topic, () => {
 
 });
 
+let session_data = [];
+
 
 /*-------------------------------------------------------------------GET REQUESTS----------------------------------------------------------------*/
 
@@ -109,7 +111,7 @@ app.get('/user_data', async (req, res) => {
 app.get('/logout', (req, res) => {
     if(req.cookies.loggedIn === "false") return res.redirect('/');
     const username = req.cookies.curr_user;
-
+    session_data = [];
 
     MongoClient.connect(mongo_url, function (err, db) {
         if (err) console.error("FAILED TO CONNECT TO DATABASE");
@@ -171,10 +173,18 @@ app.get('/mutable-data', async (req, res) => {
             dbo.collection("stats").insertOne(msg).then((result) => {
                 console.log(result);
             });
+            session_data.push(msg);
         });
         res.json(msg);
     });
+
 });
+
+//fetching data which stored in array
+app.get('/session_data',async (req,res)=>{
+    if(req.cookies.loggedIn === "false") return res.redirect('/');
+    res.json(session_data);
+})
 
 
 //auto mode operation page
@@ -202,6 +212,7 @@ app.post('/pressure', async (req, res) => {
     client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
         if (err) console.error(err);
     });
+    session_data.push(pressure);
     res.render('auto', {pressure: pressure});
 });
 
@@ -214,6 +225,7 @@ app.post('/fspeed', async (req, res) => {
     client.publish(settings_topic, JSON.stringify(pub_obj), {qos: 0, retain: false}, (err) => {
         if (err) console.error(err);
     });
+    session_data.push(fspeed);
     res.render('manual', {fspeed: fspeed});
 });
 

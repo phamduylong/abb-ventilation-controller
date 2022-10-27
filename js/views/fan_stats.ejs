@@ -17,7 +17,7 @@
     }
 </style>
 
-<body>
+<body onload = "receive_session_data()">
 <div style="width: 70%; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);">
     <div id="filter-input">
         <form onchange="filterData();return false;">
@@ -38,7 +38,7 @@
 
 
 <script>
-    //Fan data graph
+    //Fan data graph,, displaying fan speed data from most recent login
     const ctx = document.getElementById('fanChart').getContext("2d");
 
     const fan_graph = new Chart(ctx, {
@@ -119,7 +119,10 @@
             fan_graph.config.data.labels = slicedDate;
             fan_graph.config.data.datasets[0].data = slicedDataPoints;
             fan_graph.update();
+        }else if (filter_time == 0) {
+            receive_session_data();
         }
+
 
 
     }
@@ -137,6 +140,25 @@
 
 
         });
+    }
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp => tmp.json()).then(data => {
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_fspeed = [];
+            for (let i = 0; i < data.length; ++i) {
+                session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+            }
+            if (filter_time == 0) {
+                fan_graph.config.data.labels = session_timestamp;
+                fan_graph.config.data.datasets[0].data = session_fspeed;
+                fan_graph.update();
+            }
+
+
+        })
     }
     //Receiving the data every 5 seconds
     setInterval(read_data, 5000);

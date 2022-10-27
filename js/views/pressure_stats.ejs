@@ -18,7 +18,7 @@
 </head>
 
 
-<body>
+<body onload="receive_session_data()">
 <div style="width: 70%; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);">
     <div id="filter-input">
         <form onchange="filterData();return false;">
@@ -38,7 +38,7 @@
 
 
 <script>
-    //Pressure data graph
+    //Pressure data graph,, displaying pressure data from most recent login
     const ctx = document.getElementById('pressureChart').getContext("2d");
     const pressure_graph = new Chart(ctx, {
         type: "line",
@@ -95,36 +95,47 @@
      * @return Array of filtered datas and datapoints
      */
     function filterData(){
-        const filterDate = [...pressure_graph.data.labels];
-        const filter_time = document.getElementById("filterTime").value;
-        const error = document.getElementById("error");
-        if(filter_time > 0) {
+        fetch('/session_data').then(tmp=>tmp.json()).then(data => {
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_fspeed = [];
+            for (let i = 0; i < data.length; ++i) {
+                session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+            }
+            const filterDate = [...pressure_graph.data.labels];
+            const error = document.getElementById("error");
+            if (filter_time > 0) {
 
 
-            let filter_index = filterDate.length;
-            for (let i = 0; i < filterDate.length; ++i) {
+                let filter_index = filterDate.length;
+                for (let i = 0; i < filterDate.length; ++i) {
 
-                if ((Date.now() - filterDate[i]) <= (filter_time * 1000 * 60)) {
-                    filter_index--;
+                    if ((Date.now() - filterDate[i]) <= (filter_time * 1000 * 60)) {
+                        filter_index--;
+                    }
                 }
-            }
-            console.log(filter_index);
-            if(filter_index == 0 ){
-                error.textContent = "Every data is filtered."
-                error.style.color = "red"
-            } else {
-                error.textContent = ""
+                console.log(filter_index);
+                if (filter_index == 0) {
+                    error.textContent = "Every data is filtered."
+                    error.style.color = "red"
+                } else {
+                    error.textContent = ""
+                }
+
+                const slicedDate = filterDate.slice(filter_index, filterDate.length);
+                const filterDataPoints = [...pressure_graph.data.datasets[0].data];
+                const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
+                console.log(slicedDataPoints);
+                pressure_graph.config.data.labels = slicedDate;
+                pressure_graph.config.data.datasets[0].data = slicedDataPoints;
+                pressure_graph.update();
+            } else if (filter_time == 0) {
+                receive_session_data();
             }
 
-            const slicedDate = filterDate.slice(filter_index, filterDate.length);
-            const filterDataPoints = [...pressure_graph.data.datasets[0].data];
-            const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
-            console.log(slicedDataPoints);
-            pressure_graph.config.data.labels = slicedDate;
-            pressure_graph.config.data.datasets[0].data = slicedDataPoints;
-            pressure_graph.update();
-        }
-
+        })
     }
 
     //Receiving data and updating the chart from server side
@@ -142,6 +153,25 @@
 
             });
         }
+    }
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp => tmp.json()).then(data => {
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_pressure = [];
+            for (let i = 0; i < data.length; ++i) {
+                session_timestamp.push(data[i].timestamp);
+                session_pressure.push(data[i].pressure);
+            }
+            if (filter_time == 0) {
+                pressure_graph.config.data.labels = session_timestamp;
+                pressure_graph.config.data.datasets[0].data = session_pressure;
+                pressure_graph.update();
+            }
+
+
+        })
     }
     //Receiving the data every 5 seconds
     setInterval(read_data, 5000);

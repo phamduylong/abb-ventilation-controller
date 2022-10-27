@@ -10,7 +10,7 @@
 
 
 </head>
-<body onload="fetch_user_data()">
+<body onload="fetch_user_data(),receive_session_data()">
 
 
 <div id = "fan" style="width: 40%; position: absolute; top: 20%; left: 70%; transform: translate(-50%, -50%);margin-left: 50px;margin-top: 20px">
@@ -129,6 +129,30 @@
     }
 
     //Receiving data and updating the chart from server side
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp => tmp.json()).then(data => {
+            console.log(data);
+            let pressure_session_timestamp = [];
+            let session_fspeed = [];
+            let speed_session_timestamp = [];
+            let session_pressure = [];
+            for (let i = 0; i < data.length; ++i) {
+                pressure_session_timestamp.push(data[i].timestamp);
+                speed_session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+                session_pressure.push(data[i].pressure);
+            }
+            fan_graph.config.data.labels = speed_session_timestamp;
+            fan_graph.config.data.datasets[0].data = session_fspeed;
+            pressure_graph.config.data.labels = pressure_session_timestamp;
+            pressure_graph.config.data.datasets[0].data = session_pressure;
+            pressure_graph.update();
+            fan_graph.update();
+
+
+
+        })
+    }
     const read_data = () => {
         fetch('/mutable-data').then(tmp => tmp.json()).then(data => {
 

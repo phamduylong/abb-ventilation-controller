@@ -165,7 +165,7 @@
     </script>
 
 </head>
-<body>
+<body onload = "receive_session_data(),push_data()">
 <div id="switch-container">
     <p id="switch-status">AUTO MODE IS ON</p>
     <label class="switch">
@@ -218,7 +218,7 @@
 </form>
 </div>
 <script type="text/javascript">
-    //Fan speed graph
+    //Fan speed graph,, displaying fan speed data from most recent login
     const ctx = document.getElementById('chart').getContext("2d");
     x = [];
     y = [];
@@ -275,34 +275,50 @@
      */
 
     function filterData(){
-        const filterDate = [...myChart.data.labels];
-        let filter_time = Number(document.getElementById("filterTime").value) || 0;
-        const error = document.getElementById("error");
-        console.log("FILTER TIME: ", filter_time);
-        if(filter_time > 0){
-            let filter_index = filterDate.length;
-            for(let i=0;i < filterDate.length;++i){
+        fetch('/session_data').then(tmp=>tmp.json()).then(data =>{
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_fspeed = [];
+            for(let i = 0; i < data.length;++i){
+                session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+            }
+            const filterDate = [...session_timestamp];
+            const error = document.getElementById("error");
+            console.log("FILTER TIME: ", filter_time);
+            if(filter_time > 0) {
+                let filter_index = filterDate.length;
+                for (let i = 0; i < filterDate.length; ++i) {
 
-                if((Date.now() - filterDate[i]) <= (filter_time*1000*60)){
-                    filter_index--;
+                    if ((Date.now() - filterDate[i]) <= (filter_time * 1000 * 60)) {
+                        filter_index--;
+                    }
                 }
-            }
-            if(filter_index == 0 ){
-                error.textContent = "Every data is filtered."
-                error.style.color = "red"
-            } else {
-                error.textContent = ""
-            }
-            console.log(filter_index);
+                if (filter_index == 0) {
+                    error.textContent = "Every data is filtered."
+                    error.style.color = "red"
+                } else {
+                    error.textContent = ""
+                }
+                console.log(filter_index);
 
-            const slicedDate = filterDate.slice(filter_index,filterDate.length);
-            const filterDataPoints = [... myChart.data.datasets[0].data];
-            const slicedDataPoints = filterDataPoints.slice(filter_index,filterDate.length)
-            console.log(slicedDataPoints);
-            myChart.config.data.labels = slicedDate;
-            myChart.config.data.datasets[0].data = slicedDataPoints;
-            myChart.update();
-        }
+                const slicedDate = filterDate.slice(filter_index, filterDate.length);
+                const filterDataPoints = [...session_fspeed];
+                const slicedDataPoints = filterDataPoints.slice(filter_index, filterDate.length)
+                console.log(slicedDataPoints);
+                myChart.config.data.labels = slicedDate;
+                myChart.config.data.datasets[0].data = slicedDataPoints;
+                myChart.update();
+            }else if(filter_time == 0){  //Display all data if there is no filter time.
+                receive_session_data();
+            }
+
+
+        })
+
+
+
 
 
     }
@@ -323,6 +339,25 @@
                 myChart.data.datasets[0].data.push(data.speed);
                 myChart.update();
             }
+
+        })
+    }
+    const receive_session_data = () => {
+        fetch('/session_data').then(tmp=>tmp.json()).then(data =>{
+            let filter_time = Number(document.getElementById("filterTime").value) || 0;
+            console.log(data);
+            let session_timestamp = [];
+            let session_fspeed = [];
+            for(let i = 0; i < data.length;++i){
+                session_timestamp.push(data[i].timestamp);
+                session_fspeed.push(data[i].speed);
+            }
+            if(filter_time == 0){
+                myChart.config.data.labels = session_timestamp;
+                myChart.config.data.datasets[0].data = session_fspeed
+                myChart.update();
+            }
+
 
         })
     }
