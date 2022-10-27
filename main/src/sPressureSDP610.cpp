@@ -66,7 +66,7 @@ bool sPressureSDP610::read(float &data, bool retry) {
 		pres_value <<= 8;
 		pres_value |= pres_raw[1];
 		int16_t diff_pres = *((int16_t *)&pres_value);
-		data = (float)diff_pres / 240;
+		data = (float)diff_pres / 240 * 0.95;
 		--i;
 	}
 	this->elapsed_time = DWT->CYCCNT;
