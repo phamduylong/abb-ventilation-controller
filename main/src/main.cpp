@@ -143,7 +143,7 @@ int main(void) {
 		else if(control_pressed){
 			control_pressed = false;
 		}
-		//Up / Ok
+		//Up / (Control) Ok
 		if(up_ok.read()) {
 			up_ok_pressed = true;
 			back_timer = 0;
@@ -160,7 +160,7 @@ int main(void) {
 			up_ok_pressed = false;
 			up_ok_held = 0;
 		}
-		//Down / Back
+		//Down / (Control) Back
 		if(down_back.read()) {
 			down_back_pressed = true;
 			back_timer = 0;
@@ -177,7 +177,7 @@ int main(void) {
 			down_back_pressed = false;
 			down_back_held = 0;
 		}
-		//Auto / Fast (No rapid commands for you!)
+		//Auto / (Control) Fast (No rapid commands for you!)
 		if(auto_fast.read()) {
 			auto_fast_pressed = true;
 			back_timer = 0;
@@ -188,6 +188,8 @@ int main(void) {
 			auto_fast_pressed = false;
 		}
 
+		//If manual interface is left alone - dispatch "back" event around every 10s.
+		//(*Needed for web functionality, since manual interface has a greater priority, locking any modifications from the web interface.)
 		if(back_timer >= back_timout) {
 			events.publish(Event(Event::eKey, MenuItem::back)); //Back
 			back_timer = 0;
