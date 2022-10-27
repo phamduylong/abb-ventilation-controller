@@ -17,6 +17,7 @@ spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->mqtt_messagenum = 0;
 	this->modeauto = true;
 	this->busy = true;
+	this->unreachable = false;
 	this->mod = false;
 	
 	//Initialise all menu items.
@@ -30,7 +31,7 @@ spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->mifan = new MenuItem(this->mfan);
 	this->mpresm = new DecimalShow(this->lcd, std::string("Pressure     *DA"), std::string("Pa"));
 	this->mipresm = new MenuItem(this->mpresm);
-	this->mpres = new DecimalEdit(this->lcd, std::string("Set Pressure *DA"), 135.0, 0.0, 1.0, std::string("Pa"), true);
+	this->mpres = new DecimalEdit(this->lcd, std::string("Set Pressure *DA"), 120.0, 0.0, 1.0, std::string("Pa"), true);
 	this->mipres = new MenuItem(this->mpres);
 
 	//Add all menu items to the menu, don't care for the mode just yet.
@@ -156,6 +157,7 @@ void StateMachine::sauto(const Event& e) {
 		this->screens_update();
 		break;
 	case Event::eExit:
+		this->unreachable = false;
 		printf("Exited sauto.\n");
 		break;
 	case Event::eKey:
@@ -544,6 +546,7 @@ void StateMachine::check_fan(bool retry) {
  * @param des_pres Desired pressure level.
  */
 void StateMachine::adjust_fan(float cur_pres, float des_pres) {
+	this->unreachable = false;
 	//Check fan right away.
 	this->check_fan();
 	if(!this->affan_up) return; //return if it's unavailable.
@@ -555,6 +558,12 @@ void StateMachine::adjust_fan(float cur_pres, float des_pres) {
 	}
 	else if((round(cur_pres) < round(des_pres)) && this->fan_speed < 1000) {
 		this->set_fan((des_pres - cur_pres > 30.0) ? this->fan_speed + 10 : this->fan_speed + 1);
+	}
+	else if((round(cur_pres) < round(des_pres)) && this->fan_speed == 1000) {
+		this->unreachable = true;
+	}
+	else if((round(cur_pres) > round(des_pres)) && this->fan_speed == 0) {
+		this->unreachable = true;
 	}
 }
 
@@ -592,37 +601,43 @@ void StateMachine::screens_update() {
 	//Setting titles according to flags.
 	char buf[18];
 	//Relative Humidity screen.
-	snprintf(buf, 18, "%s %c%c%c", this->titles[0],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[0],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->sfrht_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mrhum->setTitle(buf);
 	//Temperature screen.
-	snprintf(buf, 18, "%s %c%c%c", this->titles[1],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[1],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->sfrht_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mtemp->setTitle(buf);
 	//CO2 screen.
-	snprintf(buf, 18, "%s %c%c%c", this->titles[2],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[2],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->sfco2_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mco2->setTitle(buf);
 	//Fan screen.
-	snprintf(buf, 18, "%s %c%c%c", this->titles[3],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[3],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->affan_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mfan->setTitle(buf);
 	//Pressure screen. (Setting desired pressure)
-	snprintf(buf, 18, "%s %c%c%c", this->titles[4],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[4],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->sfpres_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mpres->setTitle(buf);
 	//Pressure Manual screen (With the sensor reading)
-	snprintf(buf, 18, "%s %c%c%c", this->titles[5],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[5],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->sfpres_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
@@ -646,13 +661,15 @@ void StateMachine::screens_pres_fan_update() {
 	//Setting titles according to flags.
 	char buf[18];
 	//Fan screen.
-	snprintf(buf, 18, "%s %c%c%c", this->titles[3],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[3],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->affan_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
 	this->mfan->setTitle(buf);
 	//Pressure Manual screen (With the sensor reading)
-	snprintf(buf, 18, "%s %c%c%c", this->titles[5],
+	snprintf(buf, 18, "%s%c%c%c%c", this->titles[5],
+	this->unreachable ? this->cunr : this->cfea,
 	this->busy ? this->cbusy : this->cidle,
 	this->sfpres_up ? this->cup : this->cdown,
 	this->modeauto ? this->cauto : this->cman);
@@ -684,7 +701,7 @@ void StateMachine::mqtt_send_data() {
  */
 void StateMachine::mqtt_get_data() {
 	//TODO: Here should be MQTT
-	std::string json_str_settings = "{auto: True, pressure: 90}";
+	std::string json_str_settings = "{auto: True, pressure: 130}";
 
 	mqtt_json_parser.parse_settings(json_str_settings);
 	settings_data sd = mqtt_json_parser.getSettingsObj();
@@ -693,12 +710,20 @@ void StateMachine::mqtt_get_data() {
 		//Setting mode and members according to the provided settings.
 		if(sd.auto_mode != this->modeauto) {
 			this->modeauto = !this->modeauto;
-			if(this->modeauto) this->despres = sd.pressure;
+			if(this->modeauto) {
+				if(sd.pressure > 120) this->despres = 120;
+				else if(sd.pressure < 0) this->despres = 0;
+				else this->despres = sd.pressure;
+			}
 			else this->desfan_speed = sd.speed * 10;
 			SetState(&StateMachine::ssensors);
 		}
 		else {
-			if(this->modeauto) this->despres = sd.pressure;
+			if(this->modeauto) {
+				if(sd.pressure > 120) this->despres = 120;
+				else if(sd.pressure < 0) this->despres = 0;
+				else this->despres = sd.pressure;
+			}
 			else this->desfan_speed = sd.speed * 10;
 			this->screens_update();
 		}
