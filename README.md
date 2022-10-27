@@ -47,15 +47,20 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
 - #### Sensors
 
 	1. #### GMP252 CO2 Sensor
-		GMP252 CO2 Sensor communicates with LPC1549 through Modbus RTU over RS-845 interface. The Modbus address for the sensor is **240**. The measurement range is **0-10000** ppmCO2 (can reach upto 30000 ppmCO2 with reduced accuracy).
+		GMP252 CO2 Sensor communicates with LPC1549 through Modbus RTU over RS-845 interface. The Modbus address for the sensor is **240**. The measurement range is **0 <= co2 <= 10000** ppmCO2 (can reach upto 30000 ppmCO2 with reduced accuracy).
 	2. #### HMP60 Relative Humidity and Temperature Sensor
-		HMP60 RH&T Sensor also uses Modbus RTU over RS-845 interface to do transactions with the main control board, as well as having a Modbus address of **241**. The limit for temperature measurements lie in range of **−40 °C - 60 °C** and **0% - 100%** for relative humidity reads.
+		HMP60 RH&T Sensor also uses Modbus RTU over RS-845 interface to do transactions with the main control board, as well as having a Modbus address of **241**. The limit for temperature measurements lie in range of **−40 <= t <= °C - 60 °C** and **0% <= rh <= 100%** for relative humidity reads.
 	3. #### SDP600 Differential Pressure Sensor
-		SDP600 make use of I2C communication to exchange data with the MCU, with an I2C address of **0x40**. The limit range for SDP600 measurements in standard operation is **-500Pa - 500Pa**.
+		SDP600 make use of I2C communication to exchange data with the MCU, with an I2C address of **0x40**. The limit range for SDP600 measurements in standard operation is **-500Pa <= p <= 500Pa**.
 
 - #### Actuator
 	The Produal MIO 12V fan is attached to the system as the only actuator. Its usage is to control the operation inside the duct, adjusting pressure and its own speed to serve the wanted conditions to end user.
 
 - #### Communication Protocols
+	1. #### Message Queuing Telemetry Transport (MQTT)
+		MQTT was used as a bridge for communication purposes between the Internet part and the Things part of the system. Whenever a change occurs, either the modification was made through LCD or Web Interface, a JSON-formatted message is published to MQTT, to which both the LPC1549 and the webpage subscribe. Both parties should receive the message from the MQTT Broker, react in the same way and the system works correspondingly.
+	2. #### Modbus RTU 
+		
+	3. #### I2C
 
 
