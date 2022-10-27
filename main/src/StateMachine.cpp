@@ -684,8 +684,12 @@ void StateMachine::screens_pres_fan_update() {
 }
 
 void StateMachine::mqtt_send_data() {
-	status_data sd = {this->mqtt_messagenum, this->fan_speed, this->modeauto ? (unsigned int)this->despres : (unsigned int)this->desfan_speed, this->pres, this->modeauto,
-	 this->sfco2_up && this->sfpres_up && this->sfrht_up && this->affan_up, this->co2, this->rh, this->temp};
+	status_data sd = {this->mqtt_messagenum, (int16_t)(this->fan_speed / 10),
+	 this->modeauto ? (unsigned int)this->despres : (unsigned int)this->desfan_speed / 10,
+	 this->pres, this->modeauto,
+	 !(this->sfco2_up && this->sfpres_up && this->sfrht_up && this->affan_up),
+	 this->co2, this->rh, this->temp};
+
 	std::string str = mqtt_json_parser.stringify(sd);
 	mqtt_messagenum++;
 	//TODO: Here should be MQTT
@@ -704,12 +708,12 @@ void StateMachine::mqtt_get_data() {
 		if(sd.auto_mode != this->modeauto) {
 			this->modeauto = !this->modeauto;
 			if(this->modeauto) this->despres = sd.pressure;
-			else this->desfan_speed = sd.speed;
+			else this->desfan_speed = sd.speed * 10;
 			SetState(&StateMachine::ssensors);
 		}
 		else {
 			if(this->modeauto) this->despres = sd.pressure;
-			else this->desfan_speed = sd.speed;
+			else this->desfan_speed = sd.speed * 10;
 			this->screens_update();
 		}
 	}
