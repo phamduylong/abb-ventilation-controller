@@ -19,9 +19,6 @@
 #include "Event.h"
 #include "EventQueue.h"
 #include "StateMachine.h"
-#include "I2CDevice.h"
-#include "sPressureSDP610.h"
-#include "sco2GMP252.h"
 #include "Networking.h"
 
 #define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
@@ -31,6 +28,7 @@
 
 //DEBUG DEFINES //Leave only one ON, or none.
 #define MQTT_TEST 0
+#define SOCKET_TEST 0
 // /DEBUG DEFINES
 
 static volatile int counter = 0;
