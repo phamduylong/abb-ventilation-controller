@@ -19,10 +19,14 @@
 #include "Event.h"
 #include "EventQueue.h"
 #include "StateMachine.h"
+#include "I2CDevice.h"
+#include "sPressureSDP610.h"
+#include "sco2GMP252.h"
+#include "Networking.h"
 
-#define SSID	    "SmartIotMQTT"
-#define PASSWORD    "SmartIot"
-#define BROKER_IP   "192.168.1.254"
+#define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
+#define PASSWORD    "WAASAdb81" //SmartIot /* Use home wifi password */
+#define BROKER_IP   "10.0.1.3"  //192.168.1.254 /* Broker_IP is the home IP address */
 #define BROKER_PORT  1883
 
 //DEBUG DEFINES //Leave only one ON, or none.
@@ -124,6 +128,15 @@ int main(void) {
 	StateMachine base(lcd, true);
 	EventQueue events;
 
+	/*
+	Networking network(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
+
+	while(1){
+		network.MQTT_subscribe("controller/setting");
+		network.MQTT_yield(25);
+	}
+	*/
+
 	unsigned int back_timer = 0;
 	unsigned int back_timout = 10000;
 	unsigned int up_ok_held = 0;
@@ -209,7 +222,7 @@ int main(void) {
 // WEB STUFF ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if MQTT_TEST  // example of opening a plain socket
+#if SOCKET_TEST  // example of opening a plain socket
 void socketTest()
 {
 
@@ -254,7 +267,7 @@ void mqttTest()
 	/* connect to mqtt broker, subscribe to a topic, send and receive messages regularly every 1 sec */
 	MQTTClient client;
 	Network network;
-	unsigned char sendbuf[256], readbuf[2556];
+	unsigned char sendbuf[256], readbuf[256];
 	int rc = 0, count = 0;
 	MQTTPacket_connectData connectData = MQTTPacket_connectData_initializer;
 
@@ -274,7 +287,7 @@ void mqttTest()
 	else
 		printf("MQTT Connected\n");
 
-	if ((rc = MQTTSubscribe(&client, "test/sample/#", QOS2, messageArrived)) != 0)
+	if ((rc = MQTTSubscribe(&client, "controller/setting", QOS2, messageArrived)) != 0)
 		printf("Return code from MQTT subscribe is %d\n", rc);
 
 	uint32_t sec = 0;
@@ -283,7 +296,7 @@ void mqttTest()
 		// send one message per second
 		if(get_ticks() / 1000 != sec) {
 			MQTTMessage message;
-			char payload[30];
+			char payload[256];
 
 			sec = get_ticks() / 1000;
 			++count;
@@ -291,10 +304,10 @@ void mqttTest()
 			message.qos = QOS1;
 			message.retained = 0;
 			message.payload = payload;
-			sprintf(payload, "message number %d", count);
+			sprintf(payload, "{\"nr\": %d, \"Speed\": %d, \"Setpoint\": %d, \"Pressure\": %d, \"auto\": %s, \"error\": %s, \"co2\": %d, \"rh\": %d, \"temp\": %d}", count, 23, 32, 10, "false", "false", 200, 37, 25);
 			message.payloadlen = strlen(payload);
 
-			if ((rc = MQTTPublish(&client, "test/sample/a", &message)) != 0)
+			if ((rc = MQTTPublish(&client, "controller/status", &message)) != 0)
 				printf("Return code from MQTT publish is %d\n", rc);
 		}
 
