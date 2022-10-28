@@ -7,10 +7,11 @@
 
 #include "Networking.h"
 
-void MessageArrived(MessageData* data)
+char MessageArrived(MessageData* data)
 {
 	printf("Message arrived on topic %.*s: %.*s\n", data->topicName->lenstring.len, data->topicName->lenstring.data,
 			data->message->payloadlen, (char *)data->message->payload);
+	return (char*) data->message->payload;
 }
 
 
