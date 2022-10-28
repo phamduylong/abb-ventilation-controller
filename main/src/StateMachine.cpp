@@ -7,7 +7,7 @@ lcd(lcd),
 rhum_timeout(500), temp_timeout(500), co2_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
 fan_timeout(13), //Update fan speed every 13ms.
 mqtt_timeout(1000), //Send mqtt messages every 1s (actual gap might be bigger)
-spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, network{"DBIN", "WAASAdb81", "10.0.1.3", 1883},
+spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, network{"SmartIotMQTT", "SmartIot", "192.168.1.254", 1883},
 mqtt_rec_attempts(20), fast(fast) {
 	this->rh = 0;
 	this->temp = 0;

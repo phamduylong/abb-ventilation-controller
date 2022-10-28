@@ -28,7 +28,7 @@ bool Networking::MQTT_subscribe(const char* topic, messageHandler mh){
 
 	if(rc != 0) printf("Return code from MQTT subscribe is %d\n", rc);
 	else printf("Subscribe to %s\n", topic);
-	return rc;
+	return !rc;
 }
 
 bool Networking::MQTT_publish(const char* pub_topic, const std::string& data){
@@ -48,7 +48,7 @@ bool Networking::MQTT_publish(const char* pub_topic, const std::string& data){
 	rc = MQTTPublish(&client, pub_topic, &message);
 
 	if(rc != 0) printf("Return code from MQTT publish is %d\n", rc);
-	return rc;
+	return !rc;
 }
 
 bool Networking::MQTT_publish(const char* pub_topic, const char* msg){
@@ -65,13 +65,13 @@ bool Networking::MQTT_publish(const char* pub_topic, const char* msg){
 
 	rc = MQTTPublish(&client, pub_topic, &message);
 	if(rc != 0) printf("Return code from MQTT publish is %d\n", rc);
-	return rc;
+	return !rc;
 }
 
 bool Networking::MQTT_yield(int duration){
 	rc = MQTTYield(&client, duration);
 	if(rc != 0) printf("Return code from yield is %d\n", rc);
-	return rc;
+	return !rc;
 }
 
 bool Networking::Network_reconnect(){
@@ -81,7 +81,7 @@ bool Networking::Network_reconnect(){
 
 		rc = NetworkConnect(&network, (char*)BROKER_IP, BROKER_PORT);
 	}
-	return rc;
+	return !rc;
 }
 
 bool Networking::MQTT_reconnect(){
@@ -98,9 +98,9 @@ bool Networking::MQTT_reconnect(){
 		rc = MQTTConnect(&client, &connectData);
 		if(rc != 0) printf("MQTT reconnected.\n");
 	}
-	return rc;
+	return !rc;
 }
 
 bool Networking::check_rc() {
-	return this->rc;
+	return !(this->rc);
 }
