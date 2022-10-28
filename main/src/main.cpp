@@ -9,6 +9,7 @@
 #include <cr_section_macros.h>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <cmath>
 #include "DigitalIoPin.h"
 #include "LpcUart.h"
@@ -28,23 +29,23 @@
 #include "IntegerEdit.h"
 #include "DecimalEdit.h"
 #include "IntegerUnitEdit.h"
-#include "mqtt.h"
+#include "Networking.h"
 
 
 //#define SSID	    "HUAWEI-BFB9" //SmartIotMQTT  /* Use home localhost for test*/
 //#define PASSWORD    "02623972" //SmartIot /* Use home wifi password */
-//#define BROKER_IP   "192.168.8.101"  //192.168.1.254 /* Broker_IP is the home IP address */
+//#define BROKER_IP   "192.168.8.100"  //192.168.1.254 /* Broker_IP is the home IP address */
 //#define BROKER_PORT  1883
 
 
 #define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
-#define PASSWORD    "afewgrghth" //SmartIot /* Use home wifi password */
-#define BROKER_IP   "jkhfshf"  //192.168.1.254 /* Broker_IP is the home IP address */
+#define PASSWORD    "WAASAdb81" //SmartIot /* Use home wifi password */
+#define BROKER_IP   "10.0.1.3"  //192.168.1.254 /* Broker_IP is the home IP address */
 #define BROKER_PORT  1883
 
 
 //DEBUG DEFINES //Leave only one ON, or none.
-#define LPC_PROJ 1 //Use this to switch from home-lpc to proj-lpc
+#define LPC_PROJ 0 //Use this to switch from home-lpc to proj-lpc
 #define MODBUS_TEST 0
 #define FAN_TEST 0
 #define HUM_TEMP_TEST 0
@@ -221,13 +222,18 @@ int main(void) {
 
 
 	//define topics
-	char *sub_topic = "controller/setting";
-	char *pub_topic = "controller/status";
+//	char* sub_topic = "controller/setting";
+//	char* pub_topic = "controller/status";
 
 
-	mqtt mqtt(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
-	mqtt.mqtt_subscribe(sub_topic);
-//	mqtt.mqtt_publish(pub_topic);
+	Networking network(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
+
+	while(1){
+		network.MQTT_subscribe("controller/setting");
+		network.MQTT_yield(25);
+	}
+
+	//network.MQTT_publish("controller/status", char* msg);
 
 //	mqttTest();
 
