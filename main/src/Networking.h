@@ -1,10 +1,3 @@
-/*
- * Networking.h
- *
- *  Created on: 28 Oct 2022
- *      Author: DBY
- */
-
 #ifndef NETWORKING_H_
 #define NETWORKING_H_
 
@@ -21,13 +14,14 @@
 class Networking {
 public:
 	Networking(char* ssid, char* password, char* broker_ip, int broker_port);
-	void MQTT_subscribe(const char* topic);
-	void MQTT_publish(const char* pub_topic, const std::string &data);
-	void MQTT_publish(const char* pub_topic, const char* msg);
-	void MQTT_yield(int duration);
+	bool MQTT_subscribe(const char* topic);
+	bool MQTT_publish(const char* pub_topic, const std::string &data);
+	bool MQTT_publish(const char* pub_topic, const char* msg);
+	bool MQTT_yield(int duration);
 	bool MQTT_reconnect();
 	bool Network_reconnect();
 	virtual ~Networking();
+	bool check_rc();
 
 
 private:

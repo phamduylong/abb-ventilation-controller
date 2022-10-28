@@ -1,20 +1,10 @@
-/*
- * Networking.cpp
- *
- *  Created on: 28 Oct 2022
- *      Author: DBY
- */
-
 #include "Networking.h"
 
-char MessageArrived(MessageData* data)
+void MessageArrived(MessageData* data)
 {
-	printf("Message arrived on topic %.*s: %.*s\n", data->topicName->lenstring.len, data->topicName->lenstring.data,
-			data->message->payloadlen, (char *)data->message->payload);
-	return (char*) data->message->payload;
+	printf("Message arrived on topic %.*s: %.*s\n", data->topicName->lenstring.len, data->topicName->lenstring.data, 
+	                                                data->message->payloadlen, (char *)data->message->payload);
 }
-
-
 
 Networking::Networking(char* ssid, char* password, char* broker_ip, int broker_port): SSID(ssid), PASSWORD(password), BROKER_IP(broker_ip), BROKER_PORT (broker_port){
 
@@ -32,34 +22,22 @@ Networking::Networking(char* ssid, char* password, char* broker_ip, int broker_p
 
 	rc = MQTTConnect(&client, &connectData);
 
-	if(rc != 0)
-		printf("Return code from MQTT connect is %d\n", rc);
-	else
-		printf("MQTT Connected\n");
-
+	if(rc != 0) printf("Return code from MQTT connect is %d\n", rc);
+	else printf("MQTT Connected\n");
 }
 
+Networking::~Networking() {}
 
-
-
-Networking::~Networking() {
-	// TODO Auto-generated destructor stub
-}
-
-
-void Networking::MQTT_subscribe(const char* topic){
+bool Networking::MQTT_subscribe(const char* topic){
 
 	rc = MQTTSubscribe(&client, topic, QOS2, MessageArrived);
 
-	if(rc != 0){
-		printf("Return code from MQTT subscribe is %d\n", rc);
-	}else{
-		printf("Subscribe to %s\n", topic);
-	}
+	if(rc != 0) printf("Return code from MQTT subscribe is %d\n", rc);
+	else printf("Subscribe to %s\n", topic);
+	return rc;
 }
 
-
-void Networking::MQTT_publish(const char* pub_topic, const std::string& data){
+bool Networking::MQTT_publish(const char* pub_topic, const std::string& data){
 
 	MQTTMessage message;
 
@@ -75,13 +53,11 @@ void Networking::MQTT_publish(const char* pub_topic, const std::string& data){
 
 	rc = MQTTPublish(&client, pub_topic, &message);
 
-	if(rc != 0){
-		printf("Return code from MQTT publish is %d\n", rc);
-	}
-
+	if(rc != 0) printf("Return code from MQTT publish is %d\n", rc);
+	return rc;
 }
 
-void Networking::MQTT_publish(const char* pub_topic, const char* msg){
+bool Networking::MQTT_publish(const char* pub_topic, const char* msg){
 
 	MQTTMessage message;
 	char payload[256];
@@ -94,15 +70,14 @@ void Networking::MQTT_publish(const char* pub_topic, const char* msg){
 	message.payloadlen = strlen(payload);
 
 	rc = MQTTPublish(&client, pub_topic, &message);
-	if(rc != 0){
-		printf("Return code from MQTT publish is %d\n", rc);
-	}
+	if(rc != 0) printf("Return code from MQTT publish is %d\n", rc);
+	return rc;
 }
 
-void Networking::MQTT_yield(int duration){
+bool Networking::MQTT_yield(int duration){
 	rc = MQTTYield(&client, duration);
-	if(rc != 0)
-		printf("Return code from yield is %d\n", rc);
+	if(rc != 0) printf("Return code from yield is %d\n", rc);
+	return rc;
 }
 
 bool Networking::Network_reconnect(){
@@ -111,8 +86,8 @@ bool Networking::Network_reconnect(){
 		NetworkInit(&network, SSID, PASSWORD);
 
 		rc = NetworkConnect(&network, (char*)BROKER_IP, BROKER_PORT);
-		if(rc != 0) return true;
 	}
+	return rc;
 }
 
 bool Networking::MQTT_reconnect(){
@@ -120,17 +95,18 @@ bool Networking::MQTT_reconnect(){
 
 		connectData = MQTTPacket_connectData_initializer;
 
-		MQTTClientInit(&client, &network, 30000, sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
+		MQTTClientInit(&client, &network, 6000, sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
 
 		connectData.MQTTVersion = 3;
 
 		connectData.clientID.cstring = (char *)"Ventilation_Project";
 
 		rc = MQTTConnect(&client, &connectData);
-		if(rc != 0){
-			printf("MQTT reconnected.\n");
-			return true;
-		}
+		if(rc != 0) printf("MQTT reconnected.\n");
 	}
+	return rc;
 }
 
+bool Networking::check_rc() {
+	return this->rc;
+}
