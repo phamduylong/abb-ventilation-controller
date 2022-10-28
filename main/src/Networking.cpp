@@ -1,11 +1,5 @@
 #include "Networking.h"
 
-void MessageArrived(MessageData* data)
-{
-	printf("Message arrived on topic %.*s: %.*s\n", data->topicName->lenstring.len, data->topicName->lenstring.data, 
-	                                                data->message->payloadlen, (char *)data->message->payload);
-}
-
 Networking::Networking(char* ssid, char* password, char* broker_ip, int broker_port): SSID(ssid), PASSWORD(password), BROKER_IP(broker_ip), BROKER_PORT (broker_port){
 
 	NetworkInit(&network, SSID, PASSWORD);
@@ -28,9 +22,9 @@ Networking::Networking(char* ssid, char* password, char* broker_ip, int broker_p
 
 Networking::~Networking() {}
 
-bool Networking::MQTT_subscribe(const char* topic){
+bool Networking::MQTT_subscribe(const char* topic, messageHandler mh){
 
-	rc = MQTTSubscribe(&client, topic, QOS2, MessageArrived);
+	rc = MQTTSubscribe(&client, topic, QOS2, mh);
 
 	if(rc != 0) printf("Return code from MQTT subscribe is %d\n", rc);
 	else printf("Subscribe to %s\n", topic);

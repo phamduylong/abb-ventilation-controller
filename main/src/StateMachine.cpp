@@ -1,11 +1,14 @@
 #include "StateMachine.h"
 
+std::string json_str_settings = "Lazy mqtt";
+
 StateMachine::StateMachine(LiquidCrystal *lcd, bool fast):
 lcd(lcd),
 rhum_timeout(500), temp_timeout(500), co2_timeout(500), //Buttons are read every millisecond. Sensors should be checked every 0.5s.
 fan_timeout(13), //Update fan speed every 13ms.
 mqtt_timeout(1000), //Send mqtt messages every 1s (actual gap might be bigger)
-spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
+spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, network{"DBIN", "WAASAdb81", "10.0.1.3", 1883},
+mqtt_rec_attempts(20), fast(fast) {
 	this->rh = 0;
 	this->temp = 0;
 	this->co2 = 0;
@@ -15,6 +18,7 @@ spres{3, 50}, srht{3, 50}, sco2{3, 50}, fan{3, 50}, fast(fast) {
 	this->desfan_speed = 0;
 	this->operation_time = 0;
 	this->mqtt_messagenum = 0;
+	this->mqtt_attempts = 0;
 	this->modeauto = true;
 	this->busy = true;
 	this->unreachable = false;
@@ -240,7 +244,16 @@ void StateMachine::sauto(const Event& e) {
 		//Every 1s by default.
 		if (this->mqtt_timer >= this->mqtt_timeout) {
 			this->mqtt_timer = 0;
+			this->mqtt_attempts++;
+			if(!this->network.check_rc() && this->mqtt_attempts >= this->mqtt_rec_attempts) {
+				this->busy = true;
+				this->screens_update();
+				this->mqtt_reconnect();
+				this->busy = false;
+				mqtt_attempts = 0;
+			}
 			this->mqtt_send_data();
+			this->mqtt_get_data();
 		}
 		
 		break;
@@ -363,7 +376,16 @@ void StateMachine::smanual(const Event& e) {
 		//Every 1s by default.
 		if (this->mqtt_timer >= this->mqtt_timeout) {
 			this->mqtt_timer = 0;
+			this->mqtt_attempts++;
+			if(!this->network.check_rc() && this->mqtt_attempts >= this->mqtt_rec_attempts) {
+				this->busy = true;
+				this->screens_update();
+				this->mqtt_reconnect();
+				this->busy = false;
+				mqtt_attempts = 0;
+			}
 			this->mqtt_send_data();
+			this->mqtt_get_data();
 		}
 		
 		break;
@@ -690,8 +712,18 @@ void StateMachine::mqtt_send_data() {
 	 this->pres, this->modeauto, this->unreachable, this->co2, this->rh, this->temp};
 
 	std::string str = mqtt_json_parser.stringify(sd);
-	//TODO: Here should be MQTT
-	printf("MQTT MESSAGE!\n%s\n", str.c_str());
+	if(MAIN_DEBUG) printf("MQTT MESSAGE!\n%s\n", str.c_str());
+
+	//Actual MQTT send.
+	if(!this->network.check_rc()){
+		printf("Unable to connect to mqtt.\n");
+		return;
+	}
+	this->network.MQTT_publish("controller/status", str.c_str());
+}
+
+void mqtt_got_data(MessageData* data) {
+	json_str_settings = (char *)data->message->payload;
 }
 
 /**
@@ -699,9 +731,29 @@ void StateMachine::mqtt_send_data() {
  * 
  */
 void StateMachine::mqtt_get_data() {
-	//TODO: Here should be MQTT
-	std::string json_str_settings = "{auto: True, pressure: 130}";
+	if(!this->network.check_rc()){
+		printf("Unable to connect to mqtt.\n");
+		return;
+	}
+	network.MQTT_subscribe("controller/setting", mqtt_got_data);
+	network.MQTT_yield(25);
+	if(!this->network.check_rc() || !strcmp(json_str_settings.c_str(), "Lazy mqtt")){
+		printf("Unable to connect to mqtt.\n");
+		return;
+	}
+	this->mqtt_parse_data();
+}
 
+/**
+ * @brief TODO:
+ * 
+ */
+void StateMachine::mqtt_reconnect() {
+	this->network.Network_reconnect();
+	this->network.MQTT_reconnect();
+}
+
+void StateMachine::mqtt_parse_data() {
 	mqtt_json_parser.parse_settings(json_str_settings);
 	settings_data sd = mqtt_json_parser.getSettingsObj();
 	//Pay attention to mqtt only if physical interface is not being modified.
@@ -727,12 +779,4 @@ void StateMachine::mqtt_get_data() {
 			this->screens_update();
 		}
 	}
-}
-
-/**
- * @brief TODO:
- * 
- */
-void StateMachine::mqtt_reconnect() {
-	//TODO
 }

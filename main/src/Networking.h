@@ -14,7 +14,7 @@
 class Networking {
 public:
 	Networking(char* ssid, char* password, char* broker_ip, int broker_port);
-	bool MQTT_subscribe(const char* topic);
+	bool MQTT_subscribe(const char* topic, messageHandler mh);
 	bool MQTT_publish(const char* pub_topic, const std::string &data);
 	bool MQTT_publish(const char* pub_topic, const char* msg);
 	bool MQTT_yield(int duration);

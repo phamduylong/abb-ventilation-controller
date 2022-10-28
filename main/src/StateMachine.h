@@ -21,15 +21,18 @@
 #include "IntegerShow.h"
 #include "LiquidCrystal.h"
 #include "StatusSettingsJsonParser.h"
+#include "Networking.h"
 
 class StateMachine;
 typedef void (StateMachine::*state_ptr)(const Event &);
+
 
 class StateMachine {
 public:
 	StateMachine(LiquidCrystal *lcd, bool fast = false);
 	virtual ~StateMachine();
 	void HandleState(const Event& e);
+	friend void mqtt_got_data(MessageData* data);
 	enum smEvent {eAutoToggle = 4, eFastToggle = 5};
 private:
 	//States.
@@ -93,10 +96,14 @@ private:
 	aFanMIO12V fan;
 
 	//MQTT and JSON
+	Networking network;
 	StatusSettingsJsonParser mqtt_json_parser;
 	unsigned int mqtt_messagenum;
+	uint8_t mqtt_attempts;
+	const uint8_t mqtt_rec_attempts;
 	void mqtt_send_data();
 	void mqtt_get_data();
+	void mqtt_parse_data();
 	void mqtt_reconnect();
 
 	//Variables.

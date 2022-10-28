@@ -19,7 +19,6 @@
 #include "Event.h"
 #include "EventQueue.h"
 #include "StateMachine.h"
-#include "Networking.h"
 
 #define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
 #define PASSWORD    "WAASAdb81" //SmartIot /* Use home wifi password */
@@ -125,15 +124,6 @@ int main(void) {
 
 	StateMachine base(lcd, true);
 	EventQueue events;
-
-	/*
-	Networking network(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
-
-	while(1){
-		network.MQTT_subscribe("controller/setting");
-		network.MQTT_yield(25);
-	}
-	*/
 
 	unsigned int back_timer = 0;
 	unsigned int back_timout = 10000;
