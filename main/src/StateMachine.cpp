@@ -304,6 +304,7 @@ void StateMachine::smanual(const Event& e) {
 			break;
 		case eFastToggle:
 			this->fast = !this->fast;
+			//this->mqtt_get_data();
 			break;
 		default:
 			break;
@@ -686,9 +687,7 @@ void StateMachine::mqtt_send_data() {
 	mqtt_messagenum++;
 	status_data sd = {this->mqtt_messagenum, (int16_t)(this->fan_speed / 10),
 	 this->modeauto ? (unsigned int)this->despres : (unsigned int)this->desfan_speed / 10,
-	 this->pres, this->modeauto,
-	 !(this->sfco2_up && this->sfpres_up && this->sfrht_up && this->affan_up),
-	 this->co2, this->rh, this->temp};
+	 this->pres, this->modeauto, this->unreachable, this->co2, this->rh, this->temp};
 
 	std::string str = mqtt_json_parser.stringify(sd);
 	//TODO: Here should be MQTT
