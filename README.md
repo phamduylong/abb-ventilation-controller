@@ -74,5 +74,8 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
 			The language choice for backend server was NodeJs along with Express. The server was implemented with simplicity in mind, so it only contains most basic routes for login, signup, logout, posting data and sending views. The authentication system used **PBKDF2** for password encryption. MQTT messages were not being polled to reduce overload potential of the server.
 		2. ###### Database
 			MongoDB was the go to option for this project due to ease of use and its compability with NodeJs and its popularity among the web devs community. The app uses 2 collections, **users** and **stats**. Users collection, obviously contain user credentials, activities history. Stats collection store data collected from the devices and received from MQTT's server.
+			
+## Issues
+The project was completed for grading purposes but improvements are desired. Implementing MQTT to work properly on the embedded side is a forseeable challenge waiting to be solved. Categorizing account type for admin and casual user will also be considered carefully. Robot Framework Test should be written for web testing purposes as it could be very problematic to test the whole website manually.
 
 
