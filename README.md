@@ -2,6 +2,16 @@
 
 <em>The system is not yet a complete product and require slight modifications to function properly.</em>
 
+## Contributors
+
+[Daniil Marinec](https://github.com/Redperij)
+
+[Dongbin Yang](https://github.com/DBYang81)
+
+[Kendrick Kwong](https://github.com/kendrick-807)
+
+[Long Pham](https://github.com/phamduylong)
+
 ## Device Manuals
 
 [PDF](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/Ventilation_controller_project_specification.pdf)
@@ -40,36 +50,36 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
          The LCD screen is physically connected to the system and can be controlled with *4 buttons*. Due to lacking of physical buttons, 3 out of those 4 buttons can be combined with a control button to perform an alternative task. **A1** is the control button which will control how other buttons behave. **A2** and **A3**, in order, work as *UP* and *DOWN* buttons when user is browsing through the menu, and as *CONFIRM* and *BACK* when combined with the A1. **A4** performs the task of switching operation mode and will control whether the program should make connections with sensors and fan retries. **LCD** will display the values of the system measured in **both** operation modes. In auto mode, users can only configure the desired parameter of pressure inside the ventilation duct, the system will adjust the fan speed of the system and the LCD screen will display the updated value of other datas. On the other hand, user can only configure the fan speeed in the manual mode, in which the LCD screen will also continuously updating the remaining measurement results to the screen. Every other stats on the LCD menu are *read-only* values and cannot be configured. **Note:** *If the operation mode is modified when the user is setting a parameter of the system, all pending changes will not be saved and the parameter will be reset back to its original value.*
 
 ## Documentation
+- ### Embedded
+  - #### Microcontroller
 
-- #### Microcontroller
+	  The system is controlled by an **LPC1549** Microcontroller. The LPC1549 is a *ARM-Cortex M3* based microcontroller with multiple peripherals and lower power consumption. It contains built-in *Nested Vectored Interrupt Controller (NVIC)*, *Systick Timer*, upto *72MHz* in CPU clock speed, and a flash memory of *256kB*. This magic board also supports a various amount of protocols, with *UART, I2C and Modbus* being the most note-worthy ones. In general, it is powerful and power-efficient, suitable for embedded devices.
 
-	The system is controlled by an **LPC1549** Microcontroller. The LPC1549 is a *ARM-Cortex M3* based microcontroller with multiple peripherals and lower power consumption. It contains built-in *Nested Vectored Interrupt Controller (NVIC)*, *Systick Timer*, upto *72MHz* in CPU clock speed, and a flash memory of *256kB*. This magic board also supports a various amount of protocols, with *UART, I2C and Modbus* being the most note-worthy ones. In general, it is powerful and power-efficient, suitable for embedded devices.
+  - #### Sensors
+	  CO2 and RH&T Sensors are read with an interval of **0.5 seconds** continuously to avoid causing system overloadding and freezing, while Pressure Differential Sensor measurements are taken every **13 milliseconds**. These are estimates on theory and will not work exactly as each Modbus/I2C transaction takes around **20 milliseconds**. In case a sensor went down, it would be mark as **D** instead of **U** on the LCD UI and the last value measured will be used until the next valid read lands.
 
-- #### Sensors
-	CO2 and RH&T Sensors are read with an interval of **0.5 seconds** continuously to avoid causing system overloadding and freezing, while Pressure Differential Sensor measurements are taken every **13 milliseconds**. These are estimates on theory and will not work exactly as each Modbus/I2C transaction takes around **20 milliseconds**. In case a sensor went down, it would be mark as **D** instead of **U** on the LCD UI and the last value measured will be used until the next valid read lands.
+	  1. ###### GMP252 CO2 Sensor
+		  GMP252 CO2 Sensor communicates with LPC1549 through Modbus RTU over RS-845 interface. The Modbus address for the sensor is **240**. The measurement range is **0 <= co2 <= 10000** ppmCO2 (can reach upto 30000 ppmCO2 with reduced accuracy). *It can occasionally take the most recent relative humidity and pressure values as reference to produce extra precision in readings.*
+	  2. ###### HMP60 Relative Humidity and Temperature Sensor
+		  HMP60 RH&T Sensor also uses Modbus RTU over RS-845 interface to do transactions with the main control board, having a Modbus address of **241**. The limit for temperature measurements lie in range of **−40 <= t <= °C - 60 °C** and **0% <= rh <= 100%** for relative humidity reads.
+	  3. ###### SDP600 Differential Pressure Sensor
+		  SDP600 make use of I2C communication to exchange data with the MCU, with an I2C address of **0x40**. The limit range for SDP600 measurements in standard operation is **-500Pa <= p <= 500Pa**. The value read from the sensor is a **two's complement integer** and must be converted with a suitable scale factor, in our case **240 Pa^-1**.
 
-	1. ###### GMP252 CO2 Sensor
-		GMP252 CO2 Sensor communicates with LPC1549 through Modbus RTU over RS-845 interface. The Modbus address for the sensor is **240**. The measurement range is **0 <= co2 <= 10000** ppmCO2 (can reach upto 30000 ppmCO2 with reduced accuracy). *It can occasionally take the most recent relative humidity and pressure values as reference to produce extra precision in readings.*
-	2. ###### HMP60 Relative Humidity and Temperature Sensor
-		HMP60 RH&T Sensor also uses Modbus RTU over RS-845 interface to do transactions with the main control board, having a Modbus address of **241**. The limit for temperature measurements lie in range of **−40 <= t <= °C - 60 °C** and **0% <= rh <= 100%** for relative humidity reads.
-	3. ###### SDP600 Differential Pressure Sensor
-		SDP600 make use of I2C communication to exchange data with the MCU, with an I2C address of **0x40**. The limit range for SDP600 measurements in standard operation is **-500Pa <= p <= 500Pa**. The value read from the sensor is a **two's complement integer** and must be converted with a suitable scale factor, in our case **240 Pa^-1**.
+  - #### Actuator
+	  The Produal MIO 12-V IO device is attached to the system as the only actuator. Its usage is to control the operation inside the duct, adjusting the fan speed to serve the wanted conditions to end user. The device uses Modbus with an address of **0x01**. The fan produces pulses that is being monitored by MIO which reports the status of the fan (if it is on spinning or not). It uses an output level of **0-10V** with 0V being no output at all and 10V setting the fan to the highest power. 
 
-- #### Actuator
-	The Produal MIO 12-V IO device is attached to the system as the only actuator. Its usage is to control the operation inside the duct, adjusting the fan speed to serve the wanted conditions to end user. The device uses Modbus with an address of **0x01**. The fan produces pulses that is being monitored by MIO which reports the status of the fan (if it is on spinning or not). It uses an output level of **0-10V** with 0V being no output at all and 10V setting the fan to the highest power. 
-
-- #### Communication Protocols
-	1. ###### Message Queuing Telemetry Transport (MQTT)
+- ### Communication Protocols
+	- #### Message Queuing Telemetry Transport (MQTT)
 		MQTT was used as a bridge for communication purposes between the Internet part and the Things part of the system. Whenever a change occurs, either the modification was made through LCD or Web Interface, a **JSON-formatted** message is published to MQTT server's topic, to which either the LPC1549 or the webpage subscribe. Both parties should receive messages from the MQTT Broker, react and work in sync.
-	2. ###### Modbus Remote Terminal Unit (Modbus RTU) 
+	- #### Modbus Remote Terminal Unit (Modbus RTU) 
 		Most of the devices we were working with communicates through Modbus RTU. Although it Modbus was not super difficult to use, the process of checking control registers and reading floating point values was challenging.
-	3. ######   Inter-Integrated Circuit (I2C)
+	- ####   Inter-Integrated Circuit (I2C)
 		I2C is made use of by the SDP600 Pressure Sensor.
-- #### Website
-	1. ###### Front-End User Interface
-		The front end is a basic page using **EJS (Embedded JavaScript)** Templating Language along with **CSS**. In order to use the Web Interace, a user must be authenticated. The login authenticated flag is kept in check by **cookies** shared by the client side with the server. Live data being displayed in charts (with the help of **ChartJs**) are fetched through a data route every 5 seconds using **AJAX** calls. Most views have logout buttons for the sake of convinience for end users. Session data is also managed to automatically log a user out if they do not perform the log out manually. The input fields, intended for posting data to server requires confirmation with a button click/Enter press to prevent accidental touches/keyboard scraps. 
+- ### Website
+	- #### Front-End User Interface
+		The front end is a basic page using **EJS (Embedded JavaScript)** Templating Language along with **CSS**. In order to use the Web Interace, a user must be authenticated. The login authenticated flag is kept in check by **cookies** shared by the client side with the server. Live data being displayed in charts (with the help of **ChartJs**) are fetched through a data route every 5 seconds using **AJAX** calls. These graphs data can be filtered through time unit. Most views have logout buttons for the sake of convinience for end users. Session data is also managed to automatically log a user out if they do not perform the log out manually, as well as logging out if there's no activities on the web for **30 minutes** (5 minutes warning pre-logout). The input fields, intended for posting data to server requires confirmation with a button click/Enter press to prevent accidental touches/keyboard scraps. 
 
-	2. ###### Back-End
+	- #### Back-End
 		1. ###### Server
 			The language choice for backend server was NodeJs along with Express. The server was implemented with simplicity in mind, so it only contains most basic routes for login, signup, logout, posting data and sending views. The authentication system used **PBKDF2** for password encryption. MQTT messages were not being polled to reduce overload potential of the server. The server has access to cookies and it takes part in managing the state of the website.
 		2. ###### Database
