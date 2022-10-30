@@ -21,9 +21,9 @@
 #include "StateMachine.h"
 #include "Networking.h"
 
-#define SSID	    "DBIN" //SmartIotMQTT  /* Use home localhost for test*/
-#define PASSWORD    "WAASAdb81" //SmartIot /* Use home wifi password */
-#define BROKER_IP   "10.0.1.3"  //192.168.1.254 /* Broker_IP is the home IP address */
+#define SSID	    "SmartIotMQTT" //SmartIotMQTT
+#define PASSWORD    "SmartIot" //SmartIot 
+#define BROKER_IP   "192.168.1.254"  //192.168.1.254 
 #define BROKER_PORT  1883
 
 //DEBUG DEFINES //Leave only one ON, or none.
