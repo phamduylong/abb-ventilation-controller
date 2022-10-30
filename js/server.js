@@ -6,8 +6,6 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const mqtt = require('mqtt');
-const {SerialPort} = require('serialport');
-const {ReadlineParser} = require("@serialport/parser-readline");
 const {hashPassword, verifyPassword} = require("./pbkdf2");
 const MongoClient = require('mongodb').MongoClient;
 const app = express();
@@ -26,8 +24,6 @@ const port = process.env.PORT || 3000;
 const broker_url = 'mqtt://127.0.0.1:1883';
 const mongo_url = "mongodb://localhost:27017";
 const client = mqtt.connect(broker_url, { clientId: 'node', clean: true });
-const serial_port_nr = "COM23";
-const serial_baud_rate = 115200;
 const settings_topic = "controller/settings";
 const status_topic = "controller/status";
 
