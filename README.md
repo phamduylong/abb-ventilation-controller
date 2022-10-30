@@ -1,30 +1,62 @@
 # ABB Ventilation Control System
 
-<em>The system is not yet a complete product and require slight modifications to function properly.</em>
+- [Description](https://github.com/phamduylong/abb-ventilation-controller#description)
 
-## Contributors
+- [User Manual](https://github.com/phamduylong/abb-ventilation-controller#user-manual)
 
-[Daniil Marinec](https://github.com/Redperij)
+	- [Operation](https://github.com/phamduylong/abb-ventilation-controller#operation)
 
-[Dongbin Yang](https://github.com/DBYang81)
+		- [Automatic Mode](https://github.com/phamduylong/abb-ventilation-controller#automatic-mode)
+		
+		- [Manual Mode](https://github.com/phamduylong/abb-ventilation-controller#manual-mode)
+	
+	- [Interfaces](https://github.com/phamduylong/abb-ventilation-controller#interfaces)
+	
+		- [Web Interface](https://github.com/phamduylong/abb-ventilation-controller#web-interface)
+		
+		- [LCD Interface](https://github.com/phamduylong/abb-ventilation-controller#lcd-interface)
 
-[Kendrick Kwong](https://github.com/kendrick-807)
+- [Documentation](https://github.com/phamduylong/abb-ventilation-controller#description)
 
-[Long Pham](https://github.com/phamduylong)
+	- [Embedded](https://github.com/phamduylong/abb-ventilation-controller#embedded)
+	
+		- [Microcontroller](https://github.com/phamduylong/abb-ventilation-controller#microcontroller)
+		
+		- [Sensors](https://github.com/phamduylong/abb-ventilation-controller#sensors)
+		
+			- [GMP252 CO2 Sensor](https://github.com/phamduylong/abb-ventilation-controller#gmp252-co2-sensor)
+			
+			- [HMP60 Relative Humidity and Temperature Sensor](https://github.com/phamduylong/abb-ventilation-controller#hmp60-relative-humidity-and-temperature-sensor)
+			
+			- [SDP600 Differential Pressure Sensor](https://github.com/phamduylong/abb-ventilation-controller#sdp600-differential-pressure-sensor)
+			
+		- [Actuator](https://github.com/phamduylong/abb-ventilation-controller#actuator)
+		
+	- [Communication Protocols](https://github.com/phamduylong/abb-ventilation-controller#communication-protocols)
+	
+		- [MQTT](https://github.com/phamduylong/abb-ventilation-controller#message-queuing-telemetry-transport-mqtt)
+		
+		- [Modbus RTU](https://github.com/phamduylong/abb-ventilation-controller#modbus-remote-terminal-unit-modbus-rtu)
+		
+		- [I2C](https://github.com/phamduylong/abb-ventilation-controller#inter-integrated-circuit-i2c)
+		
+		- [UART](https://github.com/phamduylong/abb-ventilation-controller#universal-asynchronous-receiver-transmitter-uart)
+		
+	- [Website](https://github.com/phamduylong/abb-ventilation-controller#website)
+	
+		- [Front-End User Interface](https://github.com/phamduylong/abb-ventilation-controller#front-end-user-interface)
+		- [Back-End](https://github.com/phamduylong/abb-ventilation-controller#back-end)
+		
+			- [Server](https://github.com/phamduylong/abb-ventilation-controller#server)
+			
+			- [Database](https://github.com/phamduylong/abb-ventilation-controller#database)
 
-## Device Manuals
+- [Issues](https://github.com/phamduylong/abb-ventilation-controller#issues)
 
-[PDF](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/Ventilation_controller_project_specification.pdf)
+- [Device Manuals](https://github.com/phamduylong/abb-ventilation-controller#device-manuals)
 
-[GMP252 CO2 Sensor Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/GMP252-User-Guide-in-English-M211897EN.pdf)
+- [Contributor](https://github.com/phamduylong/abb-ventilation-controller#contributors)
 
-[HMP60 Temperature and Humidity Probe Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/HMP60-User-guide.pdf)
-
-[Produal MIO 12V Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/MIO12-V_181024_UG_en.pdf)
-
-[SDP600 Differential Pressure Sensor Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/Sensirion_Differential_Pressure_SDP6x0series_Datas-767275.pdf)
-
-[LPC1549 Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/UM10736.pdf)
 
 ## Description
 
@@ -43,7 +75,7 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
   
     1. ###### Web Interface: 
  
-         User is required to log in using their credentials. There is a page where users can create their account if they have not had one. A page of auto mode will be shown on default after user have logged in, which displays the current fan speed inside the duct. In addition, the pressure level will be shown and the user can modify it through an input field, and the fan speed will adjust until it reaches the desired pressure level. There is a switch in the page to change the operation mode of the system to manual and vice versa. Manual mode tab contains a chart that displays the current pressure value of the system. User can change the fan speed arbitrarily and the other components of the system shall act accordingly. User can inspect statistical data through the **See Full Statistics** button, where it will display the graph of pressure data, fan speed data and the user data. These graphs can be displayed in a better solution, separately. For user's activities analyctics, it will show the amount of time that individual user spent on the page in a scale of 24 hours. 
+         User is required to log in using their credentials. There is a page where users can create their account if they have not had one. A page of auto mode will be shown on default after user have logged in, which displays the current fan speed inside the duct. In addition, the pressure level will be shown and the user can modify  through an input field, and the fan speed will adjust until it reaches the desired pressure level. There is a switch in the page to change the operation mode of the system to manual and vice versa. Manual mode tab contains a chart that displays the current pressure value of the system. User can change the fan speed arbitrarily and the other components of the system shall act accordingly. User can inspect statistical data through the **See Full Statistics** button, where it will display the graph of pressure data, fan speed data and the user data. These graphs can be displayed in a better solution, separately. For user's activities analyctics, it will show the amount of time that individual user spent on the page in a scale of 24 hours. 
  
     2. ###### LCD Interface: 
  
@@ -77,15 +109,19 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
 		Most of the devices we were working with communicates through Modbus RTU. Although it Modbus was not super difficult to use, the process of checking control registers and reading floating point values was challenging.
 	- ####   Inter-Integrated Circuit (I2C)
 		I2C is made use of by the SDP600 Pressure Sensor.
+	- #### Universal Asynchronous Receiver-Transmitter (UART)
+		UART is used in this project for debugging purposes.
 - ### Website
 	- #### Front-End User Interface
-		The front end is a basic page using **EJS (Embedded JavaScript)** Templating Language along with **CSS**. In order to use the Web Interace, a user must be authenticated. The login authenticated flag is kept in check by **cookies** shared by the client side with the server. Live data being displayed in charts (with the help of **ChartJs**) are fetched through a data route every 5 seconds using **AJAX** calls. These graphs data can be filtered through time unit. Most views have logout buttons for the sake of convinience for end users. Session data is also managed to automatically log a user out if they do not perform the log out manually, as well as logging out if there's no activities on the web for **30 minutes** (5 minutes warning pre-logout). The input fields, intended for posting data to server requires confirmation with a button click/Enter press to prevent accidental touches/keyboard scraps. 
+		The front end is a basic page using **EJS (Embedded JavaScript)** Templating Language along with **CSS**. In order to use the Web Interace, a user must be authenticated. The login authenticated flag is kept in check by **cookies** shared by the client side with the server. Live data being displayed in charts (with the help of **ChartJs**) are fetched through a data route every 5 seconds using **AJAX** calls. These graphs data can be filtered through time unit. Most views have logout buttons for the sake of convinience for end users. Session data is also managed to automatically log a user out if they do not perform the log out manually, as well as logging out if there's no activities on the web for **30 minutes** (5 minutes warning pre-logout). The input fields, intended for posting data to server requires confirmation with a button click/Enter press to prevent accidental touches/keyboard scraps. User input fields are equipped with the required attribute along with limits (for numeric inputs) and regex (for text inputs).
 
 	- #### Back-End
 		1. ###### Server
 			The language choice for backend server was NodeJs along with Express. The server was implemented with simplicity in mind, so it only contains most basic routes for login, signup, logout, posting data and sending views. The authentication system used **PBKDF2** for password encryption. MQTT messages were not being polled to reduce overload potential of the server. The server has access to cookies and it takes part in managing the state of the website.
 		2. ###### Database
 			MongoDB was the go to option for this project due to ease of use and its compability with NodeJs and its popularity among the web devs community. The app uses 2 collections, **users** and **stats**. Users collection, obviously contain user credentials, activities history. Stats collection store data collected from the devices and received from MQTT's server. User's ID can be implemented but with Mongo DB's built-in auto ID assignment it is not necessary for now.
+	- #### Testing
+		The site is tested with the help of **Selenium Library** and **Robot Framework**. More testcases should be implemented in the future to test the main operation of the page as currently at the time of this writing there are only testcases for login and signup actions. 
 			
 ## Issues
 - Implementing MQTT to work properly on the embedded side is a forseeable challenge waiting to be solved. 
@@ -94,5 +130,31 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
 - User's usage time chart on the web contains minor cases with inconsistent behaviours if the user uses it from one day to another (through the night at the 12AM mark).
 - After posting data on the web, the site will be reloaded as a default action, which could be changed to provide a better user's experience.
 - Error handing has not been implemented for the web side. If no data is received from the physical devices, an error message should be displayed.
+
+## Device Manuals
+
+[PDF](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/Ventilation_controller_project_specification.pdf)
+
+[GMP252 CO2 Sensor Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/GMP252-User-Guide-in-English-M211897EN.pdf)
+
+[HMP60 Temperature and Humidity Probe Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/HMP60-User-guide.pdf)
+
+[Produal MIO 12V Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/MIO12-V_181024_UG_en.pdf)
+
+[SDP600 Differential Pressure Sensor Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/Sensirion_Differential_Pressure_SDP6x0series_Datas-767275.pdf)
+
+[LPC1549 Manual](https://github.com/phamduylong/abb-ventilation-controller/blob/master/pdfs/UM10736.pdf)
+
+## Contributors
+
+[Daniil Marinec](https://github.com/Redperij)
+
+[Dongbin Yang](https://github.com/DBYang81)
+
+[Kendrick Kwong](https://github.com/kendrick-807)
+
+[Long Pham](https://github.com/phamduylong)
+
+
 
 
