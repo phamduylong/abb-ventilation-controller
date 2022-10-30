@@ -85,12 +85,11 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
 		1. ###### Server
 			The language choice for backend server was NodeJs along with Express. The server was implemented with simplicity in mind, so it only contains most basic routes for login, signup, logout, posting data and sending views. The authentication system used **PBKDF2** for password encryption. MQTT messages were not being polled to reduce overload potential of the server. The server has access to cookies and it takes part in managing the state of the website.
 		2. ###### Database
-			MongoDB was the go to option for this project due to ease of use and its compability with NodeJs and its popularity among the web devs community. The app uses 2 collections, **users** and **stats**. Users collection, obviously contain user credentials, activities history. Stats collection store data collected from the devices and received from MQTT's server. User's ID can be implemented but with Mongo's built-in auto ID assignment it is not necessary for now.
+			MongoDB was the go to option for this project due to ease of use and its compability with NodeJs and its popularity among the web devs community. The app uses 2 collections, **users** and **stats**. Users collection, obviously contain user credentials, activities history. Stats collection store data collected from the devices and received from MQTT's server. User's ID can be implemented but with Mongo DB's built-in auto ID assignment it is not necessary for now.
 			
 ## Issues
 - Implementing MQTT to work properly on the embedded side is a forseeable challenge waiting to be solved. 
-- Categorizing account type for admin and casual user will also be considered carefully. 
-- Selenium Robot Framework Test should be written for web testing purposes as it could be very problematic to test the whole website manually.
+- Categorizing account type for admin and casual user will also be considered carefully.
 - The embedded side has some inconsistence, data readings could very well be wrong and requires small delays to retry the reading turn.
 - User's usage time chart on the web contains minor cases with inconsistent behaviours if the user uses it from one day to another (through the night at the 12AM mark).
 - After posting data on the web, the site will be reloaded as a default action, which could be changed to provide a better user's experience.
