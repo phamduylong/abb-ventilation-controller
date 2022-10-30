@@ -30,10 +30,10 @@ Input Username
     [Arguments]         ${username}
     Input Text          username    ${username}
 
-Input Password
+Input Account Password
     [Documentation]     Input password to the password field inside of the form
     [Arguments]         ${password}
-    Input Text          password    ${password}
+    Input Password      password    ${password}
 
 Submit Credentials
     [Documentation]     Submit the form
@@ -48,13 +48,13 @@ Home Page Should Be Open
     Title Should Be     Home Page
 
 Pop Up Text Signup Successful
-    [Documentation]             A pop up text should be displayed to notify user they have signed up successfully
-    Element Text Should Be      err     New User Created!
+    [Documentation]                 A pop up text should be displayed to notify user they have signed up successfully
+    Element Text Should Be          err     New User Created!
 
 Pop Up Text Signup Failed
-    [Documentation]     A pop up text should be displayed to notify user signing up process has failed
+    [Documentation]                 A pop up text should be displayed to notify user signing up process has failed
     Element Text Should Not Be      err     New User Created!
 
 Pop Up Text Incorrect Credentials
-    [Documentation]     A pop up text should be displayed to notify user they have entered incorrect credentials
-    Element Text Should Be      err     Username or password is incorrect
+    [Documentation]                 A pop up text should be displayed to notify user they have entered incorrect credentials
+    Element Text Should Be          err     Username or password is incorrect
