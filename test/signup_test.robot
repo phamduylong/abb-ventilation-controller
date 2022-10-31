@@ -22,6 +22,7 @@ Valid Signup
     Submit Credentials
     Home Page Should Be Open
     Pop Up Text Signup Successful
+    Check Cookie Not Logged In
     Sleep                                   2 seconds
 
 Invalid Signup Duplicate Username
@@ -32,4 +33,5 @@ Invalid Signup Duplicate Username
     Submit Credentials
     Home Page Should Be Open
     Pop Up Text Signup Failed
+    Check Cookie Not Logged In
     Sleep                                   2 seconds

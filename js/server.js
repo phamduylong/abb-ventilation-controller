@@ -44,12 +44,14 @@ let session_data = [];
 
 //login page
 app.get('/', async (req, res) => {
+    res.cookie("loggedIn", false);
     res.render("login");
 });
 
 //sign up page
 app.get('/signup', (req, res) => {
     if(req.cookies.loggedIn === "true") return res.redirect('/auto');
+    res.cookie("loggedIn", false);
     res.render('signup');
 });
 

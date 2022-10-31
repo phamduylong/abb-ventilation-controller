@@ -20,6 +20,7 @@ Invalid Login Wrong Username And Password
     Submit Credentials
     Home Page Should Be Open
     Pop Up Text Incorrect Credentials
+    Check Cookie Not Logged In
     Sleep                                   2 seconds
 
 
@@ -30,6 +31,7 @@ Invalid Login Wrong Password
     Submit Credentials
     Home Page Should Be Open
     Pop Up Text Incorrect Credentials
+    Check Cookie Not Logged In
     Sleep                                   2 seconds
 
 
@@ -39,5 +41,6 @@ Valid Login
     Input Account Password                  Ziggs2305
     Submit Credentials
     Auto Mode Page Should Be Open
+    Check Cookie Logged In 
     Sleep                                   2 seconds
 

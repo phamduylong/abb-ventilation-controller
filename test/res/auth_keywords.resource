@@ -58,3 +58,15 @@ Pop Up Text Signup Failed
 Pop Up Text Incorrect Credentials
     [Documentation]                 A pop up text should be displayed to notify user they have entered incorrect credentials
     Element Text Should Be          err     Username or password is incorrect
+
+Check Cookie Logged In 
+    [Documentation]                 Check if cookie indicates a user logged in
+    ${cookie}=	                    Get Cookie          loggedIn          
+    Should Be Equal	                ${cookie.name}	    loggedIn
+    Should Be Equal	                ${cookie.value}     true
+
+Check Cookie Not Logged In
+    [Documentation]                 Check if cookie indicates that no user is logged in
+    ${cookie}=	                    Get Cookie          loggedIn          
+    Should Be Equal	                ${cookie.name}	    loggedIn
+    Should Be Equal	                ${cookie.value}     false
