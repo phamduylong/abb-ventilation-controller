@@ -3,21 +3,21 @@ Documentation     Custom keyword to test authenticate functions
 Library           SeleniumLibrary
 Library           FakerLibrary  locale=fi_FI
 
-
 *** Variables ***
-${RAND USERNAME}
-${RAND PASSWORD}
-
+${LOGIN URL}                                http://localhost:3000
+${SIGNUP URL}                               http://localhost:3000/signup
+${LOGIN PAGE TITLE}                         Home Page
+${SIGNUP PAGE TITLE}                        Sign Up    
+${BROWSER}                                  Edge
 
 *** Keywords ***
 Get Random Username 
-    [Documentation]       Generate random username
-    ${RAND USERNAME}=     FakerLibrary.User Name
-    [Return]              ${RAND USERNAME}
+    [Documentation]       Generate random username     
+    [Return]              FakerLibrary.User Name
+    
 Get Random Password
-    [Documentation]       Generate random password
-    ${RAND PASSWORD}=     FakerLibrary.Password    12    False    True    True    True
-    [Return]              ${RAND PASSWORD}
+    [Documentation]       Generate random password     
+    [Return]              FakerLibrary.Password    12    False    True    True    True
 
 Open Browser To Page And Check Title    
     [Documentation]     Open a page and check page title
