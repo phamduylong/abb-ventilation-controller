@@ -19,17 +19,6 @@
 #include "Event.h"
 #include "EventQueue.h"
 #include "StateMachine.h"
-#include "Networking.h"
-
-#define SSID	    "SmartIotMQTT" //SmartIotMQTT
-#define PASSWORD    "SmartIot" //SmartIot 
-#define BROKER_IP   "192.168.1.254"  //192.168.1.254 
-#define BROKER_PORT  1883
-
-//DEBUG DEFINES //Leave only one ON, or none.
-#define MQTT_TEST 0
-#define SOCKET_TEST 0
-// /DEBUG DEFINES
 
 static volatile int counter = 0;
 static volatile unsigned int systicks = 0;
@@ -67,11 +56,6 @@ void Sleep(int ms)
 		__WFI();
 	}
 }
-
-#if MQTT_TEST
-void socketTest();
-void mqttTest();
-#endif
 
 int main(void) {
 
@@ -125,15 +109,6 @@ int main(void) {
 
 	StateMachine base(lcd, true);
 	EventQueue events;
-
-	/*
-	Networking network(SSID, PASSWORD, BROKER_IP, BROKER_PORT);
-
-	while(1){
-		network.MQTT_subscribe("controller/setting");
-		network.MQTT_yield(25);
-	}
-	*/
 
 	unsigned int back_timer = 0;
 	unsigned int back_timout = 10000;
@@ -215,112 +190,3 @@ int main(void) {
 	}
 	return 0;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// WEB STUFF ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#if SOCKET_TEST  // example of opening a plain socket
-void socketTest()
-{
-
-	esp_socket(SSID, PASSWORD);
-
-	const char *http_request = "GET / HTTP/1.0\r\n\r\n"; // HTTP requires cr-lf to end a line
-
-	for(int i = 0; i < 2; ++i) {
-		printf("\nopen socket\n");
-		esp_connect(1,  "www.metropolia.fi", 80);
-		printf("\nsend request\n");
-		esp_write(1, http_request, strlen(http_request));
-
-		uint32_t now = get_ticks();
-		printf("\nreply:\n");
-
-		while(get_ticks() - now < 3000) {
-			char buffer[64];
-			memset(buffer, 0, 64);
-			if(esp_read(1, buffer, 63) > 0) {
-				fputs(buffer,stdout);
-			}
-		}
-		esp_close(1);
-
-		printf("\nsocket closed\n");
-	}
-
-}
-#endif
-
-#if MQTT_TEST
-
-void messageArrived(MessageData* data)
-{
-	printf("Message arrived on topic %.*s: %.*s\n", data->topicName->lenstring.len, data->topicName->lenstring.data,
-			data->message->payloadlen, (char *)data->message->payload);
-}
-
-void mqttTest()
-{
-	/* connect to mqtt broker, subscribe to a topic, send and receive messages regularly every 1 sec */
-	MQTTClient client;
-	Network network;
-	unsigned char sendbuf[256], readbuf[256];
-	int rc = 0, count = 0;
-	MQTTPacket_connectData connectData = MQTTPacket_connectData_initializer;
-
-	NetworkInit(&network,SSID,PASSWORD);
-	MQTTClientInit(&client, &network, 30000, sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
-
-	char* address = (char *)BROKER_IP;
-	if ((rc = NetworkConnect(&network, address, BROKER_PORT)) != 0)
-		printf("Return code from network connect is %d\n", rc);
-
-
-	connectData.MQTTVersion = 3;
-	connectData.clientID.cstring = (char *)"esp_test";
-
-	if ((rc = MQTTConnect(&client, &connectData)) != 0)
-		printf("Return code from MQTT connect is %d\n", rc);
-	else
-		printf("MQTT Connected\n");
-
-	if ((rc = MQTTSubscribe(&client, "controller/setting", QOS2, messageArrived)) != 0)
-		printf("Return code from MQTT subscribe is %d\n", rc);
-
-	uint32_t sec = 0;
-	while (true)
-	{
-		// send one message per second
-		if(get_ticks() / 1000 != sec) {
-			MQTTMessage message;
-			char payload[256];
-
-			sec = get_ticks() / 1000;
-			++count;
-
-			message.qos = QOS1;
-			message.retained = 0;
-			message.payload = payload;
-			sprintf(payload, "{\"nr\": %d, \"Speed\": %d, \"Setpoint\": %d, \"Pressure\": %d, \"auto\": %s, \"error\": %s, \"co2\": %d, \"rh\": %d, \"temp\": %d}", count, 23, 32, 10, "false", "false", 200, 37, 25);
-			message.payloadlen = strlen(payload);
-
-			if ((rc = MQTTPublish(&client, "controller/status", &message)) != 0)
-				printf("Return code from MQTT publish is %d\n", rc);
-		}
-
-		if(rc != 0) {
-			NetworkDisconnect(&network);
-			// we should re-establish connection!!
-			break;
-		}
-
-		// run MQTT for 100 ms
-		if ((rc = MQTTYield(&client, 100)) != 0)
-			printf("Return code from yield is %d\n", rc);
-	}
-
-	printf("MQTT connection closed!\n");
-
-}
-#endif

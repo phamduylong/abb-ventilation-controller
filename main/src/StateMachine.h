@@ -124,7 +124,7 @@ private:
 	bool fast;        //Set true to skip retries on manual/auto switch.
 	bool unreachable; //Set true when unable to reach desired pressure using the fan in automatic mode.
 	bool mod;         //State of modifying interface value flag.
-	//Sensor/Devices flags.
+	//Sensors/Actuators flags.
 	bool sfrht_up;
 	bool sfco2_up;
 	bool sfpres_up;

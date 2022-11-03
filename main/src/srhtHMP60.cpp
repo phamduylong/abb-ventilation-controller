@@ -247,8 +247,8 @@ bool srhtHMP60::check_status() {
 	if( res == 0 ) {
 		volatile int err = this->get_error();
 		if(err != 0) printf("Rel humidity sensor error: %d\n", err);
-		#if ARDUINO_SIM
-		return true;
+		#if ARDUINO_SIM //Arduino board, simulating the sensors has a bug in it's code, returning wrong status value. ('0' value should be returned in case there is an error.)
+		return true; //But with arduino simulator 0 is returned on no errors.
 		#else
 		return false;
 		#endif
