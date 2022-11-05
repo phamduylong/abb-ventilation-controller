@@ -44,9 +44,9 @@ public:
 	std::string stringify(const status_data& json);
 	std::string stringify(const settings_data& json);
 private:
-	static constexpr const char* STATUS_FORMAT = "{nr: %hu, speed: %hu, setpoint: %hu, pressure: %.2f, auto: %s, error: %s, co2: %.2f, rh: %.2f, temp: %.2f}";
-	static constexpr const char* SETTINGS_FORMAT_AUTO = "{auto: true, pressure: %.2f}";
-	static constexpr const char* SETTINGS_FORMAT_MAN = "{auto: false, speed: %hu}";
+	static constexpr const char* STATUS_FORMAT = "{\"nr\": %hu, \"speed\": %hu, \"setpoint\": %hu, \"pressure\": %.2f, \"auto\": \"%s\", \"error\": \"%s\", \"co2\": %.2f, \"rh\": %.2f, \"temp\": %.2f}";
+	static constexpr const char* SETTINGS_FORMAT_AUTO = "{\"auto\": \"true\", \"pressure\": %.2f}";
+	static constexpr const char* SETTINGS_FORMAT_MAN = "{\"auto\": \"false\", \"speed\": %hu}";
 	std::string json_str;
 	settings_data settings_json_obj;
 	status_data status_json_obj;

@@ -182,7 +182,6 @@ void StateMachine::sauto(const Event& e) {
 			break;
 		case eFastToggle:
 			this->fast = !this->fast;
-			//this->mqtt_get_data();
 			break;
 		default:
 			break;
@@ -304,7 +303,6 @@ void StateMachine::smanual(const Event& e) {
 			break;
 		case eFastToggle:
 			this->fast = !this->fast;
-			//this->mqtt_get_data();
 			break;
 		default:
 			break;
@@ -678,6 +676,10 @@ void StateMachine::screens_pres_fan_update() {
 	//Show everything on LCD
 	this->menu.event(MenuItem::show);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// Unfinished MQTT ///////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 
 /**
  * @brief TODO:
