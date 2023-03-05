@@ -51,6 +51,8 @@
 			
 			- [Database](https://github.com/phamduylong/abb-ventilation-controller#database)
 
+- [Setup](https://github.com/phamduylong/abb-ventilation-controller#server-setup)
+
 - [Issues](https://github.com/phamduylong/abb-ventilation-controller#issues)
 
 - [Device Manuals](https://github.com/phamduylong/abb-ventilation-controller#device-manuals)
@@ -123,6 +125,26 @@ The project is combination of a Ventilation Fan System with Vaisala's GMP252 Car
 	- #### Testing
 		The site is tested with the help of **Selenium Library** and **Robot Framework**. More testcases should be implemented in the future to test the main operation of the page as currently at the time of this writing there are only testcases for login and signup actions. 
 			
+## Server Setup
+#### Cloning Repo
+```bash
+git clone https://github.com/phamduylong/abb-ventilation-controller.git
+```
+#### Move to repo directory
+```bash
+cd abb-ventilation-controller
+```
+
+#### Install Packages
+```bash
+npm install
+```
+
+#### Run server
+```bash
+nodemon ./js/server.js
+```
+
 ## Issues
 - Implementing MQTT to work properly on the embedded side is a forseeable challenge waiting to be solved. 
 - Categorizing account type for admin and casual user will also be considered carefully.
